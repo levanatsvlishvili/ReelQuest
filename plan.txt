@@ -1,0 +1,22 @@
+[ეტაპი 1: დაგეგმვა & Blueprint] 
+  ├── 1.1 ბრენდინგი & კონცეფციის დამტკიცება
+  ├── 1.2 UI/UX სტილისტიკის და დიზაინის შერჩევა (Tailwind / Dark Cinema Theme)
+  └── 1.3 System Architecture Blueprint (AWS სერვისები, DynamoDB სქემა, SAGA/Outbox დიაგრამა)
+[ეტაპი 2: რეპოზიტორია, გარემო & IaC]
+  ├── 2.1 Git Repository & Monorepo/Multi-repo სტრუქტურის გამართვა
+  ├── 2.2 AWS CDK / Terraform საბაზისო ინფრასტრუქტურის მომზადება
+  └── 2.3 CI/CD (GitHub Actions) პაიპლაინი
+[ეტაპი 3: Data Pipeline (ETL)]
+  ├── 3.1 IMDb/TMDB 30,000 ფილმის დაპარსვა და გრაფის ოპტიმიზებული აგება
+  └── 3.2 DynamoDB-ში მონაცემების ჩატვირთვა
+[ეტაპი 4: Backend Core (Java 21)]
+  ├── 4.1 Bidirectional BFS ალგორითმის იმპლემენტაცია
+  ├── 4.2 Lambda Handlers & API Gateway
+  └── 4.3 Transactional Outbox & Leaderboard Engine
+[ეტაპი 5: Frontend & Visual Graph]
+  ├── 5.1 React + Vite + Tailwind UI
+  └── 5.2 ინტერაქციული გრაფის ვიზუალიზაცია
+[ეტაპი 6: Auth, SAGA & Deploy]
+  ├── 6.1 Cognito Guest/User Auth
+  ├── 6.2 Stripe Sandbox SAGA Orchestration
+  └── 6.3 საბოლოო ტესტირება და Production დეპლოი ($0 Free Tier)
