@@ -1,0 +1,40 @@
+name: "Backend CI (Java 21)"
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  build-and-test:
+    name: "Build & Test Backend"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Set up JDK 21"
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: "Build with Maven"
+        run: |
+          if [ -f "pom.xml" ]; then
+            mvn -B clean test
+          else
+            echo "pom.xml not yet present, skipping Maven execution until Step 4"
+          fi
