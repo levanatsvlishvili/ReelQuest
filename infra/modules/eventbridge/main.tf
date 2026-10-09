@@ -58,8 +58,8 @@ resource "aws_sqs_queue_policy" "leaderboard_queue_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "AllowEventBridgeToSendMessages"
-        Effect    = "Allow"
+        Sid    = "AllowEventBridgeToSendMessages"
+        Effect = "Allow"
         Principal = {
           Service = "events.amazonaws.com"
         }

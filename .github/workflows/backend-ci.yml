@@ -29,12 +29,11 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
-          cache: "maven"
 
       - name: "Build with Maven"
         run: |
           if [ -f "pom.xml" ]; then
             mvn -B clean test
           else
-            echo "pom.xml not yet present, skipping Maven execution until Step 4"
+            echo "pom.xml not yet created in backend directory. Skipping until Step 4 implementation."
           fi

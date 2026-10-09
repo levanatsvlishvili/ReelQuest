@@ -95,3 +95,4 @@ venv.bak/
 secrets.json
 *.pem
 *.key
+plan.txt
