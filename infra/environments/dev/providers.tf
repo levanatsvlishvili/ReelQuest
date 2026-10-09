@@ -8,8 +8,12 @@ terraform {
     }
   }
 
-  # For remote state in production, an S3 backend + DynamoDB lock can be configured here.
-  # For local/dev bootstrapping, local state is used by default.
+  backend "s3" {
+    bucket  = "reelquest-terraform-state-007400345180"
+    key     = "dev/terraform.tfstate"
+    region  = "eu-central-1"
+    encrypt = true
+  }
 }
 
 provider "aws" {
