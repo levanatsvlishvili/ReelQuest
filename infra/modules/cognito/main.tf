@@ -47,6 +47,8 @@ resource "aws_cognito_user_pool_client" "spa_client" {
   allowed_oauth_flows_user_pool_client = true
   allowed_oauth_flows                  = ["code", "implicit"]
   allowed_oauth_scopes                 = ["email", "openid", "profile"]
+  callback_urls                        = ["http://localhost:5173"]
+  logout_urls                          = ["http://localhost:5173"]
   supported_identity_providers         = ["COGNITO"]
 
   explicit_auth_flows = [
