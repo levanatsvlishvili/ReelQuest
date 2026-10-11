@@ -1,4 +1,4 @@
-name: "Frontend CI (React)"
+name: "Frontend CI/CD (React)"
 
 on:
   push:
@@ -13,8 +13,8 @@ on:
       - ".github/workflows/frontend-ci.yml"
 
 jobs:
-  build-and-lint:
-    name: "Build & Verify Frontend"
+  build-and-deploy:
+    name: "Build & Deploy Frontend"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,11 +29,16 @@ jobs:
         with:
           node-version: "22"
 
-      - name: "Build & Lint"
+      - name: "Install & Build"
         run: |
-          if [ -f "package.json" ]; then
-            npm ci
-            npm run build
-          else
-            echo "package.json not yet created in frontend directory. Skipping until Step 5 implementation."
-          fi
+          npm ci
+          npm run build
+
+      - name: "Deploy to S3 Bucket"
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "eu-central-1"
+        run: |
+          aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete

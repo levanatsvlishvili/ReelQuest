@@ -32,3 +32,18 @@ output "cognito_app_client_id" {
   description = "Cognito SPA Client ID"
   value       = module.cognito.client_id
 }
+
+output "api_gateway_endpoint" {
+  description = "API Gateway HTTP API Invoke Endpoint"
+  value       = module.api_gateway.api_endpoint
+}
+
+output "frontend_s3_bucket" {
+  description = "Frontend S3 Bucket Name"
+  value       = module.static_hosting.bucket_name
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront Distribution Domain URL"
+  value       = module.static_hosting.cloudfront_domain_name
+}
