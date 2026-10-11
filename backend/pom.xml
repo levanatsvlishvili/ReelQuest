@@ -15,6 +15,7 @@
         <module>core-domain</module>
         <module>data-seeder</module>
         <module>game-service</module>
+        <module>outbox-relay</module>
     </modules>
 
     <properties>

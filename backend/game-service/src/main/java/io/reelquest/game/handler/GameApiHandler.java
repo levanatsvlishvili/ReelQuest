@@ -17,12 +17,14 @@ import io.reelquest.domain.idempotency.IdempotencyRecord;
 import io.reelquest.domain.idempotency.IdempotencyService;
 import io.reelquest.domain.idempotency.IdempotencyStatus;
 import io.reelquest.game.dto.DailyChallengeResponse;
+import io.reelquest.game.dto.LeaderboardEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.Put;
+import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 
@@ -30,6 +32,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -107,6 +110,14 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 return response(200, result);
             }
 
+            if ("GET".equalsIgnoreCase(httpMethod) && path.endsWith("/leaderboard")) {
+                Map<String, String> queryParams = request.getQueryStringParameters();
+                String date = queryParams != null && queryParams.containsKey("date")
+                        ? queryParams.get("date")
+                        : LocalDate.now().toString();
+                return handleGetLeaderboard(date);
+            }
+
             if ("POST".equalsIgnoreCase(httpMethod) && path.endsWith("/games/submit")) {
                 return handleSubmitGame(request);
             }
@@ -116,6 +127,32 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             log.error("Unhandled exception processing request: {}", e.getMessage(), e);
             return response(500, Map.of("error", "Internal server error: " + e.getMessage()));
         }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetLeaderboard(String date) {
+        QueryRequest query = QueryRequest.builder()
+                .tableName(tableName)
+                .indexName("GSI1")
+                .keyConditionExpression("GSI1PK = :pk")
+                .expressionAttributeValues(Map.of(
+                        ":pk", AttributeValue.fromS("LEADERBOARD#" + date)
+                ))
+                .scanIndexForward(true)
+                .limit(50)
+                .build();
+
+        var response = dynamoDbClient.query(query);
+        List<LeaderboardEntry> entries = response.items().stream()
+                .map(item -> new LeaderboardEntry(
+                        item.get("userId").s(),
+                        Long.parseLong(item.get("score").n()),
+                        Integer.parseInt(item.get("moves").n()),
+                        Long.parseLong(item.get("durationSeconds").n()),
+                        item.containsKey("updatedAt") ? item.get("updatedAt").s() : ""
+                ))
+                .toList();
+
+        return response(200, entries);
     }
 
     private APIGatewayProxyResponseEvent handleSubmitGame(APIGatewayProxyRequestEvent request) throws Exception {
