@@ -1,4 +1,4 @@
-# Dummy fallback archive for initial terraform plan when jar is not yet built
+# Fallback archive for initial terraform plan when jar is not yet built
 data "archive_file" "placeholder" {
   type        = "zip"
   output_path = "${path.module}/placeholder.zip"
@@ -10,8 +10,13 @@ data "archive_file" "placeholder" {
 }
 
 locals {
-  game_jar   = var.game_service_jar_path != "" && fileexists(var.game_service_jar_path) ? var.game_service_jar_path : data.archive_file.placeholder.output_path
-  outbox_jar = var.outbox_relay_jar_path != "" && fileexists(var.outbox_relay_jar_path) ? var.outbox_relay_jar_path : data.archive_file.placeholder.output_path
+  game_jar_exists = var.game_service_jar_path != "" && fileexists(var.game_service_jar_path)
+  game_jar        = local.game_jar_exists ? var.game_service_jar_path : data.archive_file.placeholder.output_path
+  game_jar_hash   = local.game_jar_exists ? filebase64sha256(var.game_service_jar_path) : data.archive_file.placeholder.output_base64sha256
+
+  outbox_jar_exists = var.outbox_relay_jar_path != "" && fileexists(var.outbox_relay_jar_path)
+  outbox_jar        = local.outbox_jar_exists ? var.outbox_relay_jar_path : data.archive_file.placeholder.output_path
+  outbox_jar_hash   = local.outbox_jar_exists ? filebase64sha256(var.outbox_relay_jar_path) : data.archive_file.placeholder.output_base64sha256
 }
 
 # ==========================================
@@ -74,7 +79,7 @@ resource "aws_lambda_function" "game_service" {
   timeout       = 15
 
   filename         = local.game_jar
-  source_code_hash = filebase64sha256(local.game_jar)
+  source_code_hash = local.game_jar_hash
   publish          = true
 
   snap_start {
@@ -122,6 +127,11 @@ resource "aws_iam_role_policy_attachment" "outbox_relay_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "outbox_relay_dynamodb_stream" {
+  role       = aws_iam_role.outbox_relay.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaDynamoDBExecutionRole"
+}
+
 resource "aws_iam_role_policy" "outbox_relay_policy" {
   name = "${var.app_name}-${var.environment}-outbox-relay-policy"
   role = aws_iam_role.outbox_relay.id
@@ -129,16 +139,6 @@ resource "aws_iam_role_policy" "outbox_relay_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetRecords",
-          "dynamodb:GetShardIterator",
-          "dynamodb:DescribeStream",
-          "dynamodb:ListStreams"
-        ]
-        Resource = var.dynamodb_stream_arn
-      },
       {
         Effect = "Allow"
         Action = [
@@ -167,7 +167,7 @@ resource "aws_lambda_function" "outbox_relay" {
   timeout       = 30
 
   filename         = local.outbox_jar
-  source_code_hash = filebase64sha256(local.outbox_jar)
+  source_code_hash = local.outbox_jar_hash
 
   environment {
     variables = {
@@ -211,6 +211,11 @@ resource "aws_iam_role_policy_attachment" "leaderboard_consumer_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "leaderboard_consumer_sqs" {
+  role       = aws_iam_role.leaderboard_consumer.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaSQSQueueExecutionRole"
+}
+
 resource "aws_iam_role_policy" "leaderboard_consumer_policy" {
   name = "${var.app_name}-${var.environment}-leaderboard-consumer-policy"
   role = aws_iam_role.leaderboard_consumer.id
@@ -218,15 +223,6 @@ resource "aws_iam_role_policy" "leaderboard_consumer_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes"
-        ]
-        Resource = var.leaderboard_queue_arn
-      },
       {
         Effect = "Allow"
         Action = [
@@ -253,7 +249,7 @@ resource "aws_lambda_function" "leaderboard_consumer" {
   timeout       = 30
 
   filename         = local.outbox_jar
-  source_code_hash = filebase64sha256(local.outbox_jar)
+  source_code_hash = local.outbox_jar_hash
 
   environment {
     variables = {
