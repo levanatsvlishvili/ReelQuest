@@ -89,7 +89,6 @@ resource "aws_lambda_function" "game_service" {
   environment {
     variables = {
       DYNAMODB_TABLE = var.dynamodb_table_name
-      AWS_REGION     = "eu-central-1"
     }
   }
 
@@ -173,7 +172,6 @@ resource "aws_lambda_function" "outbox_relay" {
     variables = {
       EVENT_BUS_NAME = var.eventbridge_bus_name
       DYNAMODB_TABLE = var.dynamodb_table_name
-      AWS_REGION     = "eu-central-1"
     }
   }
 
@@ -254,7 +252,6 @@ resource "aws_lambda_function" "leaderboard_consumer" {
   environment {
     variables = {
       DYNAMODB_TABLE = var.dynamodb_table_name
-      AWS_REGION     = "eu-central-1"
     }
   }
 
