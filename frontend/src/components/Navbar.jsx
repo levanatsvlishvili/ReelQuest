@@ -1,6 +1,11 @@
-import { Film, Trophy, HelpCircle, Flame, Crown } from 'lucide-react';
+import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro }) {
+export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
+  const { user, stats, isAuthenticated } = useAuth();
+
+  const currentStreak = stats?.streak || 3;
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -23,10 +28,10 @@ export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
             <Flame className="h-4 w-4 fill-orange-400/20" />
-            <span>3 Day Streak</span>
+            <span>{currentStreak} Day Streak</span>
           </div>
 
           <button
@@ -47,11 +52,31 @@ export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro }) {
 
           <button
             onClick={onOpenPro}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-3.5 py-1.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-90"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-3 py-1.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-90"
           >
             <Crown className="h-3.5 w-3.5 fill-cinema-black" />
-            <span>PRO</span>
+            <span className="hidden sm:inline">PRO</span>
           </button>
+
+          {isAuthenticated ? (
+            <button
+              onClick={onOpenProfile}
+              className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-surface py-1 pl-2 pr-3 text-xs font-medium text-slate-200 transition hover:border-gold/60"
+            >
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gold/20 text-[10px] font-bold text-gold">
+                {user.username.substring(0, 2).toUpperCase()}
+              </div>
+              <span className="max-w-[80px] truncate sm:max-w-[110px]">{user.username}</span>
+            </button>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              className="flex items-center gap-1.5 rounded-lg border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cinema-muted hover:text-white"
+            >
+              <LogIn className="h-4 w-4 text-cinema-muted" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </div>
     </header>

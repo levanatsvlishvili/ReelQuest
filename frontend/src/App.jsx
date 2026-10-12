@@ -8,6 +8,8 @@ import { VictoryModal } from './components/VictoryModal';
 import { LeaderboardDrawer } from './components/LeaderboardDrawer';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { ProSubscriptionModal } from './components/ProSubscriptionModal';
+import { AuthModal } from './components/AuthModal';
+import { UserProfileModal } from './components/UserProfileModal';
 import { Film } from 'lucide-react';
 
 export default function App() {
@@ -36,6 +38,8 @@ export default function App() {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
@@ -43,6 +47,8 @@ export default function App() {
         onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenPro={() => setIsProModalOpen(true)}
+        onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
@@ -120,6 +126,17 @@ export default function App() {
       <ProSubscriptionModal
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
+      />
+
+      <UserProfileModal
+        isOpen={isProfileOpen}
+        onClose={() => setIsProfileOpen(false)}
+        onOpenPro={() => setIsProModalOpen(true)}
       />
     </div>
   );

@@ -6,8 +6,10 @@ import {
   findLocalShortestPath,
   submitGameScore
 } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 
 export function useGameSession() {
+  const { user, recordGame } = useAuth();
   const [challenge, setChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentActor, setCurrentActor] = useState(null);
@@ -92,16 +94,24 @@ export function useGameSession() {
 
       submitGameScore({
         challengeId: challenge.challengeId,
-        userId: 'local-cinephile',
-        username: 'You',
+        userId: user?.id || 'guest-cinephile',
+        username: user?.username || 'You',
         hops: moves + 1,
         durationSeconds: timerSeconds,
         startActorId: challenge.startActor.id,
         targetActorId: challenge.targetActor.id,
-        path: submittedPath
+        path: submittedPath,
+        isPro: user?.isPro || false
+      });
+
+      recordGame({
+        date: challenge.date,
+        won: true,
+        hops: moves + 1,
+        durationSeconds: timerSeconds
       });
     }
-  }, [selectedMovie, currentActor, challenge, chain, moves, timerSeconds]);
+  }, [selectedMovie, currentActor, challenge, chain, moves, timerSeconds, user, recordGame]);
 
   const undoLastMove = useCallback(() => {
     if (chain.length <= 1 || gameStatus !== 'PLAYING') return;
@@ -132,7 +142,14 @@ export function useGameSession() {
     const shortest = findLocalShortestPath(challenge.startActor.id, challenge.targetActor.id);
     setOptimalPath(shortest);
     setShowVictory(true);
-  }, [challenge]);
+
+    recordGame({
+      date: challenge.date,
+      won: false,
+      hops: moves,
+      durationSeconds: timerSeconds
+    });
+  }, [challenge, moves, timerSeconds, recordGame]);
 
   return {
     challenge,
