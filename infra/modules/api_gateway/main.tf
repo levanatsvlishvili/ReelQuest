@@ -44,6 +44,24 @@ resource "aws_apigatewayv2_route" "submit_game" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "actor_movies" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /actors/{actorId}/movies"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "movie_cast" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /movies/{movieId}/cast"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "default" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.main.id
   name        = "$default"

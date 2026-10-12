@@ -39,9 +39,13 @@ class GameApiHandlerTest {
         idempotencyService = new TestIdempotencyService();
         dailyService = new DailyChallengeService(dataProvider, bfsFinder);
 
+        dataProvider.addActor(new Actor("31", "Tom Hanks", 95.0, null));
+        dataProvider.addActor(new Actor("6193", "Leonardo DiCaprio", 98.0, null));
         dataProvider.addActor(new Actor("nm0000158", "Tom Hanks", 95.0, null));
         dataProvider.addActor(new Actor("nm0000138", "Leonardo DiCaprio", 98.0, null));
         dataProvider.addMovie(new Movie("m_catch", "Catch Me If You Can", 2002, 8.1, null, 100));
+        dataProvider.addEdge("31", "m_catch", "Carl", 1);
+        dataProvider.addEdge("6193", "m_catch", "Frank", 2);
         dataProvider.addEdge("nm0000158", "m_catch", "Carl", 1);
         dataProvider.addEdge("nm0000138", "m_catch", "Frank", 2);
 
@@ -114,6 +118,33 @@ class GameApiHandlerTest {
 
         assertThat(response.getStatusCode()).isEqualTo(200);
         assertThat(response.getBody()).isEqualTo("{\"cached\":true}");
+    }
+
+    @Test
+    @DisplayName("GET /actors/{actorId}/movies should return filmography")
+    void shouldReturnActorMovies() {
+        APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("GET")
+                .withPath("/actors/31/movies");
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(response.getBody()).contains("Catch Me If You Can");
+    }
+
+    @Test
+    @DisplayName("GET /movies/{movieId}/cast should return movie cast")
+    void shouldReturnMovieCast() {
+        APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("GET")
+                .withPath("/movies/m_catch/cast");
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(200);
+        assertThat(response.getBody()).contains("Tom Hanks");
+        assertThat(response.getBody()).contains("Leonardo DiCaprio");
     }
 
     private static class TestIdempotencyService implements IdempotencyService {

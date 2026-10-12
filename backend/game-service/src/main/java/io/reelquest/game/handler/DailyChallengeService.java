@@ -18,13 +18,16 @@ public class DailyChallengeService {
     public record ChallengePair(String startActorId, String targetActorId) {}
 
     private static final List<ChallengePair> CHALLENGE_POOL = List.of(
-            new ChallengePair("nm0000158", "nm0000138"), // Tom Hanks -> Leonardo DiCaprio
-            new ChallengePair("nm0000138", "nm0000134"), // Leonardo DiCaprio -> Robert De Niro
-            new ChallengePair("nm0000093", "nm0000288"), // Brad Pitt -> Christian Bale
-            new ChallengePair("nm0000199", "nm0000158"), // Al Pacino -> Tom Hanks
-            new ChallengePair("nm0614165", "nm0000093"), // Cillian Murphy -> Brad Pitt
-            new ChallengePair("nm0000375", "nm0000199"), // Robert Downey Jr. -> Al Pacino
-            new ChallengePair("nm0000206", "nm0000354")  // Keanu Reeves -> Matt Damon
+            new ChallengePair("31", "6193"),    // Tom Hanks -> Leonardo DiCaprio
+            new ChallengePair("6193", "380"),   // Leonardo DiCaprio -> Robert De Niro
+            new ChallengePair("287", "3894"),   // Brad Pitt -> Christian Bale
+            new ChallengePair("1158", "31"),    // Al Pacino -> Tom Hanks
+            new ChallengePair("2037", "287"),   // Cillian Murphy -> Brad Pitt
+            new ChallengePair("3223", "1158"),  // Robert Downey Jr. -> Al Pacino
+            new ChallengePair("6384", "1892"),  // Keanu Reeves -> Matt Damon
+            new ChallengePair("500", "2231"),   // Tom Cruise -> Samuel L. Jackson
+            new ChallengePair("1245", "3894"),  // Scarlett Johansson -> Christian Bale
+            new ChallengePair("192", "31")      // Morgan Freeman -> Tom Hanks
     );
 
     public DailyChallengeService(GraphDataProvider dataProvider, BidirectionalBfsFinder bfsFinder) {

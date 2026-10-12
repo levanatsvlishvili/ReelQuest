@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   fetchDailyChallenge,
-  getActorMovies,
-  getMovieCast,
-  findLocalShortestPath,
+  fetchActorMovies,
+  fetchMovieCast,
+  fetchOptimalPath,
   submitGameScore
 } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -20,6 +20,10 @@ export function useGameSession() {
   const [gameStatus, setGameStatus] = useState('PLAYING');
   const [optimalPath, setOptimalPath] = useState([]);
   const [showVictory, setShowVictory] = useState(false);
+  const [availableMovies, setAvailableMovies] = useState([]);
+  const [availableCast, setAvailableCast] = useState([]);
+  const [moviesLoading, setMoviesLoading] = useState(false);
+  const [castLoading, setCastLoading] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -47,14 +51,44 @@ export function useGameSession() {
     return () => clearInterval(interval);
   }, [gameStatus, loading]);
 
-  const availableMovies = useMemo(() => {
-    if (!currentActor) return [];
-    return getActorMovies(currentActor.id);
+  useEffect(() => {
+    if (!currentActor) {
+      setAvailableMovies([]);
+      return;
+    }
+    let cancelled = false;
+    setMoviesLoading(true);
+    fetchActorMovies(currentActor.id)
+      .then(movies => {
+        if (!cancelled) {
+          setAvailableMovies(movies || []);
+          setMoviesLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setMoviesLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [currentActor]);
 
-  const availableCast = useMemo(() => {
-    if (!selectedMovie || !currentActor) return [];
-    return getMovieCast(selectedMovie.id, currentActor.id);
+  useEffect(() => {
+    if (!selectedMovie || !currentActor) {
+      setAvailableCast([]);
+      return;
+    }
+    let cancelled = false;
+    setCastLoading(true);
+    fetchMovieCast(selectedMovie.id, currentActor.id)
+      .then(cast => {
+        if (!cancelled) {
+          setAvailableCast(cast || []);
+          setCastLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCastLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [selectedMovie, currentActor]);
 
   const selectMovie = useCallback((movie) => {
@@ -79,9 +113,10 @@ export function useGameSession() {
 
     if (actor.id === challenge.targetActor.id) {
       setGameStatus('WON');
-      const shortest = findLocalShortestPath(challenge.startActor.id, challenge.targetActor.id);
-      setOptimalPath(shortest);
       setShowVictory(true);
+
+      fetchOptimalPath(challenge.startActor.id, challenge.targetActor.id)
+        .then(shortest => setOptimalPath(shortest || []));
 
       const submittedPath = [];
       for (let i = 1; i < newChain.length; i++) {
@@ -139,8 +174,8 @@ export function useGameSession() {
   const giveUp = useCallback(() => {
     if (!challenge) return;
     setGameStatus('GAVE_UP');
-    const shortest = findLocalShortestPath(challenge.startActor.id, challenge.targetActor.id);
-    setOptimalPath(shortest);
+    fetchOptimalPath(challenge.startActor.id, challenge.targetActor.id)
+      .then(shortest => setOptimalPath(shortest || []));
     setShowVictory(true);
 
     recordGame({
@@ -163,6 +198,8 @@ export function useGameSession() {
     optimalPath,
     availableMovies,
     availableCast,
+    moviesLoading,
+    castLoading,
     showVictory,
     setShowVictory,
     selectMovie,

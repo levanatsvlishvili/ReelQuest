@@ -6,11 +6,16 @@ public record Actor(
         String id,
         String name,
         double popularity,
-        String profilePath
+        String profilePath,
+        String knownForDepartment
 ) {
     public Actor {
         Objects.requireNonNull(id, "Actor ID must not be null");
         Objects.requireNonNull(name, "Actor name must not be null");
+    }
+
+    public Actor(String id, String name, double popularity, String profilePath) {
+        this(id, name, popularity, profilePath, null);
     }
 
     public String partitionKey() {

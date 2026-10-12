@@ -95,8 +95,16 @@ export async function fetchDailyChallenge() {
   }
 
   const todayStr = new Date().toISOString().slice(0, 10);
-  const startActor = CURATED_GRAPH.actors.find(a => a.id === 'nm0000158'); // Tom Hanks
-  const targetActor = CURATED_GRAPH.actors.find(a => a.id === 'nm0614165'); // Cillian Murphy
+  const startActor = CURATED_GRAPH.actors.find(a => a.id === '31') || CURATED_GRAPH.actors.find(a => a.id === 'nm0000158') || {
+    id: '31',
+    name: 'Tom Hanks',
+    profilePath: '/xndWFsBlClOJFRdhSt4NBwiPq2o.jpg'
+  };
+  const targetActor = CURATED_GRAPH.actors.find(a => a.id === '6193') || CURATED_GRAPH.actors.find(a => a.id === 'nm0614165') || {
+    id: '6193',
+    name: 'Leonardo DiCaprio',
+    profilePath: '/wo2hJpn04vbtmh0B9utCFdsQhxM.jpg'
+  };
 
   return {
     challengeId: `daily-${todayStr}`,
@@ -105,6 +113,76 @@ export async function fetchDailyChallenge() {
     targetActor,
     optimalHops: 2
   };
+}
+
+const actorMoviesCache = new Map();
+const movieCastCache = new Map();
+
+export async function fetchActorMovies(actorId) {
+  if (!actorId) return [];
+  if (actorMoviesCache.has(actorId)) {
+    return actorMoviesCache.get(actorId);
+  }
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/actors/${actorId}/movies`);
+      if (res.ok) {
+        const data = await res.json();
+        actorMoviesCache.set(actorId, data);
+        return data;
+      }
+    } catch {
+      // Fallback to local
+    }
+  }
+  const local = getActorMovies(actorId);
+  actorMoviesCache.set(actorId, local);
+  return local;
+}
+
+export async function fetchMovieCast(movieId, excludeActorId) {
+  if (!movieId) return [];
+  const cacheKey = `${movieId}-${excludeActorId}`;
+  if (movieCastCache.has(cacheKey)) {
+    return movieCastCache.get(cacheKey);
+  }
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/movies/${movieId}/cast`);
+      if (res.ok) {
+        const data = await res.json();
+        const filtered = data.filter(a => a.id !== excludeActorId);
+        movieCastCache.set(cacheKey, filtered);
+        return filtered;
+      }
+    } catch {
+      // Fallback to local
+    }
+  }
+  const local = getMovieCast(movieId, excludeActorId);
+  movieCastCache.set(cacheKey, local);
+  return local;
+}
+
+export async function fetchOptimalPath(startActorId, targetActorId) {
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/shortest-path?start=${startActorId}&target=${targetActorId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found && data.path && data.path.length > 0) {
+          return data.path.map(step => ({
+            actor: { id: step.fromActorId, name: step.fromActorName },
+            movie: { id: step.movieId, title: step.movieTitle },
+            nextActor: { id: step.toActorId, name: step.toActorName }
+          }));
+        }
+      }
+    } catch {
+      // Fallback to local
+    }
+  }
+  return findLocalShortestPath(startActorId, targetActorId);
 }
 
 export function getActorMovies(actorId) {

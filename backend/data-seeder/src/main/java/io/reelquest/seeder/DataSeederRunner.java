@@ -15,16 +15,19 @@ import software.amazon.awssdk.services.dynamodb.model.BatchWriteItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutRequest;
 import software.amazon.awssdk.services.dynamodb.model.WriteRequest;
 
+import io.reelquest.seeder.tmdb.TmdbApiClient;
+import io.reelquest.seeder.tmdb.TmdbIngestionPipeline;
+
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-
 
 public class DataSeederRunner {
 
@@ -33,41 +36,91 @@ public class DataSeederRunner {
     private static final int BATCH_SIZE = 25;
 
     public static void main(String[] args) {
-        String tableName = args.length > 0 ? args[0] : System.getenv().getOrDefault("DYNAMODB_TABLE", DEFAULT_TABLE);
-        String regionStr = System.getenv().getOrDefault("AWS_REGION", "eu-central-1");
+        String resolvedTable = System.getenv().getOrDefault("DYNAMODB_TABLE", DEFAULT_TABLE);
+        for (String arg : args) {
+            if (!arg.startsWith("--") && !arg.isBlank()) {
+                resolvedTable = arg;
+                break;
+            }
+        }
+        final String tableName = resolvedTable;
+        final String regionStr = System.getenv().getOrDefault("AWS_REGION", "eu-central-1");
+
+        Integer customMovieCount = null;
+        for (String arg : args) {
+            if (arg.startsWith("--movies=")) {
+                try {
+                    customMovieCount = Integer.parseInt(arg.substring("--movies=".length()));
+                } catch (NumberFormatException ignored) {}
+            } else if (arg.equals("--tmdb-1000")) {
+                customMovieCount = 1000;
+            }
+        }
+
+        boolean isTmdbTest = Arrays.asList(args).contains("--tmdb-test");
+        boolean isTmdbFull = Arrays.asList(args).contains("--tmdb-full");
+        boolean isTmdb = isTmdbTest || isTmdbFull || customMovieCount != null;
+        int finalMovieCount = isTmdbTest ? 20 : isTmdbFull ? 5000 : (customMovieCount != null ? customMovieCount : 0);
 
         log.info("==========================================================");
         log.info("🎬 ReelQuest Data Seeder (Java 21 Virtual Threads)");
         log.info("Target Table: {}", tableName);
         log.info("AWS Region:   {}", regionStr);
+        log.info("Mode:         {}", isTmdb ? "TMDB Ingestion (" + finalMovieCount + " Movies)" : "Curated Baseline");
         log.info("==========================================================");
 
         Instant start = Instant.now();
 
-        try (DynamoDbClient dynamoDb = DynamoDbClient.builder()
-                .region(Region.of(regionStr))
-                .build()) {
+        try {
+            if (isTmdb) {
+                try (TmdbApiClient apiClient = new TmdbApiClient()) {
+                    TmdbIngestionPipeline pipeline = new TmdbIngestionPipeline(apiClient);
 
-            List<Map<String, AttributeValue>> allItems = loadCuratedDataset();
-            log.info("Loaded {} graph items (Movies, Actors, Edges). Beginning batch ingestion...", allItems.size());
+                    TmdbIngestionPipeline.IngestionConfig config = isTmdbTest
+                            ? TmdbIngestionPipeline.IngestionConfig.testConfig(tableName, regionStr)
+                            : isTmdbFull
+                            ? TmdbIngestionPipeline.IngestionConfig.fullConfig(tableName, regionStr)
+                            : TmdbIngestionPipeline.IngestionConfig.custom(finalMovieCount, tableName, regionStr);
 
-            List<List<Map<String, AttributeValue>>> batches = partition(allItems, BATCH_SIZE);
-            log.info("Created {} DynamoDB write batches (max {} items/batch)", batches.size(), BATCH_SIZE);
+                    var summary = pipeline.run(config);
 
-            try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-                List<CompletableFuture<Void>> futures = batches.stream()
-                        .map(batch -> CompletableFuture.runAsync(() -> writeBatchWithRetry(dynamoDb, tableName, batch), executor))
-                        .toList();
-
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                    log.info("==========================================================");
+                    log.info("✅ TMDB ingestion completed successfully!");
+                    log.info("Movies:       {}", summary.moviesCount());
+                    log.info("Actors:       {}", summary.actorsCount());
+                    log.info("Edges:        {}", summary.edgesCount());
+                    log.info("Dynamo Items: {}", summary.totalDynamoItems());
+                    log.info("Duration:     {} ms", summary.elapsedMillis());
+                    log.info("==========================================================");
+                    return;
+                }
             }
 
-            Duration elapsed = Duration.between(start, Instant.now());
-            log.info("==========================================================");
-            log.info("✅ Graph seeding completed successfully!");
-            log.info("Total items written: {}", allItems.size());
-            log.info("Execution time:      {} ms", elapsed.toMillis());
-            log.info("==========================================================");
+            try (DynamoDbClient dynamoDb = DynamoDbClient.builder()
+                    .region(Region.of(regionStr))
+                    .build()) {
+
+                List<Map<String, AttributeValue>> allItems = loadCuratedDataset();
+                log.info("Loaded {} graph items (Movies, Actors, Edges). Beginning batch ingestion...", allItems.size());
+
+                List<List<Map<String, AttributeValue>>> batches = partition(allItems, BATCH_SIZE);
+                log.info("Created {} DynamoDB write batches (max {} items/batch)", batches.size(), BATCH_SIZE);
+
+                try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+                    List<CompletableFuture<Void>> futures = batches.stream()
+                            .map(batch -> CompletableFuture.runAsync(() -> writeBatchWithRetry(dynamoDb, tableName, batch), executor))
+                            .toList();
+
+                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+                }
+
+                Duration elapsed = Duration.between(start, Instant.now());
+                log.info("==========================================================");
+                log.info("✅ Graph seeding completed successfully!");
+                log.info("Total items written: {}", allItems.size());
+                log.info("Execution time:      {} ms", elapsed.toMillis());
+                log.info("==========================================================");
+            }
 
         } catch (Exception e) {
             log.error("❌ Data seeding failed: {}", e.getMessage(), e);

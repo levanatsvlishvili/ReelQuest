@@ -6,12 +6,12 @@ import io.reelquest.domain.model.MovieActorEdge;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class DynamoDbAdjacencyMapper {
 
     private DynamoDbAdjacencyMapper() {}
-
 
     public static Map<String, AttributeValue> toItem(Movie movie) {
         Map<String, AttributeValue> item = new HashMap<>();
@@ -30,6 +30,21 @@ public final class DynamoDbAdjacencyMapper {
         if (movie.posterPath() != null && !movie.posterPath().isBlank()) {
             item.put("posterPath", AttributeValue.fromS(movie.posterPath()));
         }
+        if (movie.overview() != null && !movie.overview().isBlank()) {
+            item.put("overview", AttributeValue.fromS(movie.overview()));
+        }
+        if (movie.genres() != null && !movie.genres().isEmpty()) {
+            item.put("genres", AttributeValue.fromL(movie.genres().stream().map(AttributeValue::fromS).toList()));
+        }
+        if (movie.director() != null && !movie.director().isBlank()) {
+            item.put("director", AttributeValue.fromS(movie.director()));
+        }
+        if (movie.releaseDate() != null && !movie.releaseDate().isBlank()) {
+            item.put("releaseDate", AttributeValue.fromS(movie.releaseDate()));
+        }
+        if (movie.backdropPath() != null && !movie.backdropPath().isBlank()) {
+            item.put("backdropPath", AttributeValue.fromS(movie.backdropPath()));
+        }
 
         return item;
     }
@@ -41,10 +56,24 @@ public final class DynamoDbAdjacencyMapper {
         double rating = Double.parseDouble(item.get("rating").n());
         int voteCount = item.containsKey("voteCount") ? Integer.parseInt(item.get("voteCount").n()) : 0;
         String posterPath = item.containsKey("posterPath") ? item.get("posterPath").s() : null;
+        String overview = item.containsKey("overview") ? item.get("overview").s() : null;
 
-        return new Movie(id, title, year, rating, posterPath, voteCount);
+        List<String> genres = List.of();
+        if (item.containsKey("genres")) {
+            AttributeValue genresAttr = item.get("genres");
+            if (genresAttr.hasL()) {
+                genres = genresAttr.l().stream().map(AttributeValue::s).toList();
+            } else if (genresAttr.hasSs()) {
+                genres = genresAttr.ss();
+            }
+        }
+
+        String director = item.containsKey("director") ? item.get("director").s() : null;
+        String releaseDate = item.containsKey("releaseDate") ? item.get("releaseDate").s() : null;
+        String backdropPath = item.containsKey("backdropPath") ? item.get("backdropPath").s() : null;
+
+        return new Movie(id, title, year, rating, posterPath, voteCount, overview, genres, director, releaseDate, backdropPath);
     }
-
 
     public static Map<String, AttributeValue> toItem(Actor actor) {
         Map<String, AttributeValue> item = new HashMap<>();
@@ -61,6 +90,9 @@ public final class DynamoDbAdjacencyMapper {
         if (actor.profilePath() != null && !actor.profilePath().isBlank()) {
             item.put("profilePath", AttributeValue.fromS(actor.profilePath()));
         }
+        if (actor.knownForDepartment() != null && !actor.knownForDepartment().isBlank()) {
+            item.put("knownForDepartment", AttributeValue.fromS(actor.knownForDepartment()));
+        }
 
         return item;
     }
@@ -70,8 +102,9 @@ public final class DynamoDbAdjacencyMapper {
         String name = item.get("name").s();
         double popularity = Double.parseDouble(item.get("popularity").n());
         String profilePath = item.containsKey("profilePath") ? item.get("profilePath").s() : null;
+        String knownForDepartment = item.containsKey("knownForDepartment") ? item.get("knownForDepartment").s() : null;
 
-        return new Actor(id, name, popularity, profilePath);
+        return new Actor(id, name, popularity, profilePath, knownForDepartment);
     }
 
 

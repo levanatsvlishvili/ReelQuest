@@ -83,4 +83,50 @@ class DynamoDbAdjacencyMapperTest {
         MovieActorEdge restored = DynamoDbAdjacencyMapper.toEdge(item);
         assertThat(restored).isEqualTo(edge);
     }
+
+    @Test
+    @DisplayName("Should correctly serialize and deserialize enriched Movie with overview, genres, and director")
+    void shouldMapEnrichedMovieToDynamoDbItemAndBack() {
+        Movie movie = new Movie(
+                "27205",
+                "Inception",
+                2010,
+                8.4,
+                "/ljsZTbVsrQSqZgWeep2B1QiDKuh.jpg",
+                36000,
+                "Cobb steals secrets from subconscious minds.",
+                java.util.List.of("Action", "Science Fiction", "Adventure"),
+                "Christopher Nolan",
+                "2010-07-15",
+                "/s3TBrRGB1jav7cUUtMVrvNz9GmP.jpg"
+        );
+
+        Map<String, AttributeValue> item = DynamoDbAdjacencyMapper.toItem(movie);
+
+        assertThat(item.get("overview").s()).isEqualTo("Cobb steals secrets from subconscious minds.");
+        assertThat(item.get("director").s()).isEqualTo("Christopher Nolan");
+        assertThat(item.get("releaseDate").s()).isEqualTo("2010-07-15");
+        assertThat(item.get("genres").l()).hasSize(3);
+
+        Movie restored = DynamoDbAdjacencyMapper.toMovie(item);
+        assertThat(restored).isEqualTo(movie);
+    }
+
+    @Test
+    @DisplayName("Should correctly serialize and deserialize enriched Actor with department")
+    void shouldMapEnrichedActorToDynamoDbItemAndBack() {
+        Actor actor = new Actor(
+                "6193",
+                "Leonardo DiCaprio",
+                88.5,
+                "/wo2Configuration.jpg",
+                "Acting"
+        );
+
+        Map<String, AttributeValue> item = DynamoDbAdjacencyMapper.toItem(actor);
+        assertThat(item.get("knownForDepartment").s()).isEqualTo("Acting");
+
+        Actor restored = DynamoDbAdjacencyMapper.toActor(item);
+        assertThat(restored).isEqualTo(actor);
+    }
 }

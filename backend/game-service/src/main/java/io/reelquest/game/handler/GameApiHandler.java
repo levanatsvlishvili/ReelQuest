@@ -28,12 +28,18 @@ import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 
+import io.reelquest.domain.model.Actor;
+import io.reelquest.domain.model.Movie;
+import io.reelquest.domain.model.MovieActorEdge;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -118,6 +124,16 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 return handleGetLeaderboard(date);
             }
 
+            if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/actors/[^/]+/movies/?$")) {
+                String actorId = path.replaceAll(".*/actors/([^/]+)/movies/?$", "$1");
+                return handleGetActorMovies(actorId);
+            }
+
+            if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/movies/[^/]+/cast/?$")) {
+                String movieId = path.replaceAll(".*/movies/([^/]+)/cast/?$", "$1");
+                return handleGetMovieCast(movieId);
+            }
+
             if ("POST".equalsIgnoreCase(httpMethod) && path.endsWith("/games/submit")) {
                 return handleSubmitGame(request);
             }
@@ -127,6 +143,37 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             log.error("Unhandled exception processing request: {}", e.getMessage(), e);
             return response(500, Map.of("error", "Internal server error: " + e.getMessage()));
         }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetActorMovies(String actorId) {
+        List<MovieActorEdge> edges = dataProvider.findMoviesByActor(actorId);
+        List<Movie> movies = edges.parallelStream()
+                .map(e -> dataProvider.findMovieById(e.movieId()))
+                .flatMap(Optional::stream)
+                .sorted(Comparator.comparingInt(Movie::voteCount).reversed())
+                .toList();
+        return response(200, movies);
+    }
+
+    private APIGatewayProxyResponseEvent handleGetMovieCast(String movieId) {
+        List<MovieActorEdge> edges = dataProvider.findActorsByMovie(movieId);
+        List<Map<String, Object>> cast = edges.parallelStream()
+                .map(e -> {
+                    Optional<Actor> actor = dataProvider.findActorById(e.actorId());
+                    if (actor.isEmpty()) return null;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", actor.get().id());
+                    map.put("name", actor.get().name());
+                    map.put("popularity", actor.get().popularity());
+                    map.put("profilePath", actor.get().profilePath());
+                    map.put("character", e.character());
+                    map.put("billingOrder", e.billingOrder());
+                    return map;
+                })
+                .filter(Objects::nonNull)
+                .sorted(Comparator.comparingInt(m -> (int) m.get("billingOrder")))
+                .toList();
+        return response(200, cast);
     }
 
     private APIGatewayProxyResponseEvent handleGetLeaderboard(String date) {

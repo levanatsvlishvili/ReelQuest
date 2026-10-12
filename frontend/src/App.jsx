@@ -25,6 +25,8 @@ export default function App() {
     optimalPath,
     availableMovies,
     availableCast,
+    moviesLoading,
+    castLoading,
     showVictory,
     setShowVictory,
     selectMovie,
@@ -79,6 +81,8 @@ export default function App() {
               selectedMovie={selectedMovie}
               availableMovies={availableMovies}
               availableCast={availableCast}
+              moviesLoading={moviesLoading}
+              castLoading={castLoading}
               targetActor={challenge?.targetActor}
               onSelectMovie={selectMovie}
               onClearMovie={clearSelectedMovie}
