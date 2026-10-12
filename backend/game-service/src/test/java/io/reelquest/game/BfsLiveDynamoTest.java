@@ -8,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
+@EnabledIfEnvironmentVariable(named = "RUN_LIVE_TESTS", matches = "true")
 class BfsLiveDynamoTest {
 
     @Test
