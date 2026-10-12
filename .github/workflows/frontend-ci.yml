@@ -30,14 +30,18 @@ jobs:
           node-version: "22"
 
       - name: "Install & Build"
+        env:
+          VITE_API_BASE_URL: "https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com"
         run: |
           npm ci
           npm run build
 
-      - name: "Deploy to S3 Bucket"
+      - name: "Deploy to S3 & Invalidate CloudFront"
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-central-1"
-        run: aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete
+        run: |
+          aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete
+          aws cloudfront create-invalidation --distribution-id E2ROZR17BH3MH9 --paths "/*"
