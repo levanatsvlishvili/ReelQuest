@@ -19,6 +19,16 @@ variable "game_service_function_name" {
   type        = string
 }
 
+variable "billing_service_lambda_arn" {
+  description = "ARN of Billing Service Lambda (SnapStart alias)"
+  type        = string
+}
+
+variable "billing_service_function_name" {
+  description = "Name of Billing Service Lambda function"
+  type        = string
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)

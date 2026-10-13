@@ -6,7 +6,8 @@ import {
   signOut,
   getStoredAuth,
   getUserStats,
-  recordGameResult
+  recordGameResult,
+  fetchUserProfile
 } from '../api/auth';
 
 const AuthContext = createContext(null);
@@ -21,6 +22,23 @@ export function AuthProvider({ children }) {
     if (stored?.user) {
       setUser(stored.user);
       setStats(getUserStats(stored.user.id));
+
+      fetchUserProfile(stored.user.id)
+        .then(profile => {
+          if (profile) {
+            const isPro = profile.tier === 'PRO';
+            if (isPro !== stored.user.isPro) {
+              const updatedUser = { ...stored.user, isPro };
+              setUser(updatedUser);
+              const authData = getStoredAuth();
+              if (authData) {
+                authData.user = updatedUser;
+                localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+              }
+            }
+          }
+        })
+        .catch(() => {});
     } else {
       setStats(getUserStats('guest'));
     }
@@ -31,6 +49,15 @@ export function AuthProvider({ children }) {
     const loggedUser = await signIn(email, password);
     setUser(loggedUser);
     setStats(getUserStats(loggedUser.id));
+
+    fetchUserProfile(loggedUser.id)
+      .then(profile => {
+        if (profile && profile.tier === 'PRO') {
+          setProStatus(true);
+        }
+      })
+      .catch(() => {});
+
     return loggedUser;
   };
 
@@ -40,6 +67,19 @@ export function AuthProvider({ children }) {
 
   const confirm = async (email, code) => {
     return await confirmSignUp(email, code);
+  };
+
+  const setProStatus = (isPro) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, isPro };
+      const authData = getStoredAuth();
+      if (authData) {
+        authData.user = updated;
+        localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+      }
+      return updated;
+    });
   };
 
   const logout = () => {
@@ -65,7 +105,8 @@ export function AuthProvider({ children }) {
         register,
         confirm,
         logout,
-        recordGame
+        recordGame,
+        setProStatus
       }}
     >
       {children}

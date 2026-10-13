@@ -1,22 +1,46 @@
 import { useState } from 'react';
-import { X, Crown, Check, Zap, Sparkles } from 'lucide-react';
+import { X, Crown, Check, Sparkles, AlertCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { createCheckoutSession, simulatePaymentWebhook } from '../api/auth';
 
-export function ProSubscriptionModal({ isOpen, onClose }) {
+export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
+  const { user, isAuthenticated, setProStatus } = useAuth();
   const [subscribing, setSubscribing] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
+  const [error, setError] = useState(null);
 
   if (!isOpen) return null;
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
+    if (!isAuthenticated) {
+      onClose();
+      if (onOpenAuth) onOpenAuth();
+      return;
+    }
+
     setSubscribing(true);
-    setTimeout(() => {
-      setSubscribing(false);
+    setError(null);
+
+    try {
+      // Step 1 & 2: Initiate Checkout SAGA via Stripe Sandbox Adapter
+      const session = await createCheckoutSession(user.id, user.email);
+
+      // Step 3 & 4: Simulate Sandbox Webhook & Entitlement Provisioning
+      await simulatePaymentWebhook(session.orderId, true);
+
+      // Step 5: Update application auth state
+      setProStatus(true);
       setSubscribed(true);
+
       setTimeout(() => {
         onClose();
         setSubscribed(false);
-      }, 1500);
-    }, 1000);
+      }, 2000);
+    } catch (err) {
+      setError(err.message || 'Payment processing failed. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   return (
@@ -39,10 +63,12 @@ export function ProSubscriptionModal({ isOpen, onClose }) {
           </span>
 
           <h3 className="mt-2 text-xl font-black text-white sm:text-2xl">
-            Upgrade Your Cinephile Experience
+            {user?.isPro ? 'You are a PRO Cinephile!' : 'Upgrade Your Cinephile Experience'}
           </h3>
           <p className="mt-1 text-xs text-cinema-muted">
-            Unlock infinite graph exploration, custom challenges, and competitive perks.
+            {user?.isPro
+              ? 'Your subscription is active with full access to all premium features.'
+              : 'Unlock infinite graph exploration, custom challenges, and competitive perks.'}
           </p>
         </div>
 
@@ -63,33 +89,57 @@ export function ProSubscriptionModal({ isOpen, onClose }) {
           ))}
         </div>
 
-        <div className="mb-6 rounded-xl border border-gold/30 bg-cinema-card/80 p-4 text-center">
-          <div className="flex items-baseline justify-center gap-1">
-            <span className="text-3xl font-extrabold text-white">$4.99</span>
-            <span className="text-xs text-cinema-muted">/ month</span>
+        {!user?.isPro && (
+          <div className="mb-6 rounded-xl border border-gold/30 bg-cinema-card/80 p-4 text-center">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-3xl font-extrabold text-white">$4.99</span>
+              <span className="text-xs text-cinema-muted">/ month</span>
+            </div>
+            <p className="mt-1 text-[11px] text-cinema-muted">Cancel anytime in account settings</p>
+            <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] text-blue-400 border border-blue-500/20">
+              <span>Stripe Sandbox Simulator Active</span>
+            </div>
           </div>
-          <p className="mt-1 text-[11px] text-cinema-muted">Cancel anytime in account settings</p>
-        </div>
+        )}
 
-        <button
-          onClick={handleSubscribe}
-          disabled={subscribing || subscribed}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark py-3 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-95 disabled:opacity-50"
-        >
-          {subscribed ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Subscription Active!</span>
-            </>
-          ) : subscribing ? (
-            <span className="animate-pulse">Processing checkout...</span>
-          ) : (
-            <>
-              <Sparkles className="h-4 w-4" />
-              <span>Unlock ReelQuest PRO</span>
-            </>
-          )}
-        </button>
+        {error && (
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {user?.isPro ? (
+          <div className="flex w-full items-center justify-center gap-2 rounded-xl bg-gold/20 py-3 text-xs font-bold text-gold border border-gold/40">
+            <Crown className="h-4 w-4 fill-gold" />
+            <span>PRO Plan Active</span>
+          </div>
+        ) : (
+          <button
+            onClick={handleSubscribe}
+            disabled={subscribing || subscribed}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark py-3 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-95 disabled:opacity-50"
+          >
+            {subscribed ? (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Subscription Active!</span>
+              </>
+            ) : subscribing ? (
+              <span className="animate-pulse">Processing SAGA Payment...</span>
+            ) : !isAuthenticated ? (
+              <>
+                <Sparkles className="h-4 w-4" />
+                <span>Sign In to Unlock PRO</span>
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" />
+                <span>Unlock ReelQuest PRO ($4.99/mo)</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     </div>
   );

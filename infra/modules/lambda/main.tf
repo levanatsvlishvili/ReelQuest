@@ -17,6 +17,10 @@ locals {
   outbox_jar_exists = var.outbox_relay_jar_path != "" && fileexists(var.outbox_relay_jar_path)
   outbox_jar        = local.outbox_jar_exists ? var.outbox_relay_jar_path : data.archive_file.placeholder.output_path
   outbox_jar_hash   = local.outbox_jar_exists ? filebase64sha256(var.outbox_relay_jar_path) : data.archive_file.placeholder.output_base64sha256
+
+  billing_jar_exists = var.billing_service_jar_path != "" && fileexists(var.billing_service_jar_path)
+  billing_jar        = local.billing_jar_exists ? var.billing_service_jar_path : data.archive_file.placeholder.output_path
+  billing_jar_hash   = local.billing_jar_exists ? filebase64sha256(var.billing_service_jar_path) : data.archive_file.placeholder.output_base64sha256
 }
 
 # ==========================================
@@ -262,4 +266,97 @@ resource "aws_lambda_event_source_mapping" "sqs_to_leaderboard" {
   event_source_arn = var.leaderboard_queue_arn
   function_name    = aws_lambda_function.leaderboard_consumer.arn
   batch_size       = 10
+}
+
+# ==========================================
+# 4. Billing Service Lambda (SAGA Orchestrator + SnapStart)
+# ==========================================
+
+resource "aws_iam_role" "billing_service" {
+  name = "${var.app_name}-${var.environment}-billing-service-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "lambda.amazonaws.com" }
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "billing_service_basic" {
+  role       = aws_iam_role.billing_service.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "billing_service_policy" {
+  name = "${var.app_name}-${var.environment}-billing-service-policy"
+  role = aws_iam_role.billing_service.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:TransactWriteItems"
+        ]
+        Resource = [
+          var.dynamodb_table_arn,
+          "${var.dynamodb_table_arn}/index/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminGetUser"
+        ]
+        Resource = var.cognito_user_pool_arn != "" ? var.cognito_user_pool_arn : "*"
+      }
+    ]
+  })
+}
+
+resource "aws_lambda_function" "billing_service" {
+  function_name = "${var.app_name}-${var.environment}-billing-service"
+  role          = aws_iam_role.billing_service.arn
+  handler       = "io.reelquest.billing.handler.BillingApiHandler::handleRequest"
+  runtime       = "java21"
+  architectures = ["x86_64"]
+  memory_size   = 512
+  timeout       = 15
+
+  filename         = local.billing_jar
+  source_code_hash = local.billing_jar_hash
+  publish          = true
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
+
+  environment {
+    variables = {
+      DYNAMODB_TABLE       = var.dynamodb_table_name
+      COGNITO_USER_POOL_ID = var.cognito_user_pool_id
+    }
+  }
+
+  tags = var.tags
+}
+
+resource "aws_lambda_alias" "billing_service_live" {
+  name             = "live"
+  description      = "Active SnapStart alias for Billing Service"
+  function_name    = aws_lambda_function.billing_service.function_name
+  function_version = aws_lambda_function.billing_service.version
 }

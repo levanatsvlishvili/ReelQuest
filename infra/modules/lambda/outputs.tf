@@ -22,3 +22,19 @@ output "leaderboard_consumer_function_name" {
   description = "Name of the Leaderboard Consumer Lambda function"
   value       = aws_lambda_function.leaderboard_consumer.function_name
 }
+
+output "billing_service_function_name" {
+  description = "Name of the Billing Service Lambda function"
+  value       = aws_lambda_function.billing_service.function_name
+}
+
+output "billing_service_function_arn" {
+  description = "ARN of the Billing Service Lambda function"
+  value       = aws_lambda_function.billing_service.arn
+}
+
+output "billing_service_alias_arn" {
+  description = "SnapStart live alias ARN for Billing Service Lambda"
+  value       = aws_lambda_alias.billing_service_live.arn
+}
+

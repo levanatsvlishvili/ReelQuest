@@ -130,6 +130,7 @@ export default function App() {
       <ProSubscriptionModal
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
+        onOpenAuth={() => setIsAuthOpen(true)}
       />
 
       <AuthModal

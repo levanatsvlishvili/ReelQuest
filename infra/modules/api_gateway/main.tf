@@ -5,7 +5,7 @@ resource "aws_apigatewayv2_api" "main" {
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["GET", "POST", "OPTIONS"]
-    allow_headers = ["Content-Type", "Idempotency-Key", "Authorization"]
+    allow_headers = ["Content-Type", "Idempotency-Key", "Authorization", "Stripe-Signature"]
     max_age       = 300
   }
 
@@ -16,6 +16,14 @@ resource "aws_apigatewayv2_integration" "game_service" {
   api_id                 = aws_apigatewayv2_api.main.id
   integration_type       = "AWS_PROXY"
   integration_uri        = var.game_service_lambda_arn
+  integration_method     = "POST"
+  payload_format_version = "1.0"
+}
+
+resource "aws_apigatewayv2_integration" "billing_service" {
+  api_id                 = aws_apigatewayv2_api.main.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = var.billing_service_lambda_arn
   integration_method     = "POST"
   payload_format_version = "1.0"
 }
@@ -56,6 +64,42 @@ resource "aws_apigatewayv2_route" "movie_cast" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "billing_checkout" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /billing/checkout"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "billing_webhook" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /billing/webhook"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "billing_simulate_webhook" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /billing/simulate-webhook"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "billing_order" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /billing/orders/{orderId}"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_profile" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /users/{userId}"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_sync" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /users/sync"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "default" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "$default"
@@ -74,6 +118,15 @@ resource "aws_lambda_permission" "api_gateway" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
   function_name = var.game_service_function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
+  qualifier     = "live"
+}
+
+resource "aws_lambda_permission" "billing_api_gateway" {
+  statement_id  = "AllowExecutionFromAPIGatewayBilling"
+  action        = "lambda:InvokeFunction"
+  function_name = var.billing_service_function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.main.execution_arn}/*/*"
   qualifier     = "live"

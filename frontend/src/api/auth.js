@@ -1,6 +1,7 @@
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
 const COGNITO_ENDPOINT = `https://cognito-idp.${REGION}.amazonaws.com/`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 const STORAGE_KEY = 'reelquest_auth';
 const STATS_KEY = 'reelquest_user_stats';
@@ -94,6 +95,7 @@ export async function signIn(email, password) {
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(authData));
+    syncUserProfile(authData.user).catch(() => {});
     return authData.user;
   }
 
@@ -111,7 +113,6 @@ export function getStoredAuth() {
     const parsed = JSON.parse(raw);
     const claims = parseJwt(parsed.tokens?.IdToken);
     
-    // Check token expiration
     if (claims && claims.exp * 1000 < Date.now()) {
       localStorage.removeItem(STORAGE_KEY);
       return null;
@@ -120,6 +121,78 @@ export function getStoredAuth() {
   } catch {
     return null;
   }
+}
+
+export async function syncUserProfile(user) {
+  if (!API_BASE_URL || !user) return null;
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.id || user.userId,
+        email: user.email,
+        username: user.username,
+        isPro: Boolean(user.isPro)
+      })
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Graceful fallback to client-only state
+  }
+  return null;
+}
+
+export async function fetchUserProfile(userId) {
+  if (!API_BASE_URL || !userId) return null;
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/${userId}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {
+    // Graceful fallback
+  }
+  return null;
+}
+
+export async function createCheckoutSession(userId, email) {
+  if (!API_BASE_URL) {
+    throw new Error('API Gateway URL not configured');
+  }
+  const res = await fetch(`${API_BASE_URL}/billing/checkout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId,
+      email,
+      successUrl: window.location.origin,
+      cancelUrl: window.location.origin
+    })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Failed to create checkout session');
+  }
+  return await res.json();
+}
+
+export async function simulatePaymentWebhook(orderId, success = true) {
+  if (!API_BASE_URL) {
+    throw new Error('API Gateway URL not configured');
+  }
+  const res = await fetch(`${API_BASE_URL}/billing/simulate-webhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ orderId, success })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || 'Failed to process payment webhook');
+  }
+  return await res.json();
 }
 
 export function getUserStats(userId) {

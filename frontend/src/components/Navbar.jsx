@@ -52,21 +52,30 @@ export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAu
 
           <button
             onClick={onOpenPro}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-3 py-1.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-90"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+              user?.isPro
+                ? 'border border-gold/40 bg-gold/15 text-gold shadow-gold-glow hover:bg-gold/25'
+                : 'bg-gradient-to-r from-gold via-amber-400 to-gold-dark text-cinema-black shadow-gold-glow hover:opacity-90'
+            }`}
           >
-            <Crown className="h-3.5 w-3.5 fill-cinema-black" />
-            <span className="hidden sm:inline">PRO</span>
+            <Crown className={`h-3.5 w-3.5 ${user?.isPro ? 'fill-gold text-gold' : 'fill-cinema-black text-cinema-black'}`} />
+            <span className="hidden sm:inline">{user?.isPro ? 'PRO Active' : 'PRO'}</span>
           </button>
 
           {isAuthenticated ? (
             <button
               onClick={onOpenProfile}
-              className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-surface py-1 pl-2 pr-3 text-xs font-medium text-slate-200 transition hover:border-gold/60"
+              className={`flex items-center gap-2 rounded-xl border ${user?.isPro ? 'border-gold/50 shadow-gold-glow/20' : 'border-cinema-border'} bg-cinema-surface py-1 pl-2 pr-3 text-xs font-medium text-slate-200 transition hover:border-gold/60`}
             >
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gold/20 text-[10px] font-bold text-gold">
-                {user.username.substring(0, 2).toUpperCase()}
+              <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${user?.isPro ? 'bg-gold text-cinema-black font-extrabold' : 'bg-gold/20 text-gold font-bold'} text-[10px]`}>
+                {user?.isPro ? <Crown className="h-3 w-3 fill-cinema-black" /> : user.username.substring(0, 2).toUpperCase()}
               </div>
               <span className="max-w-[80px] truncate sm:max-w-[110px]">{user.username}</span>
+              {user?.isPro && (
+                <span className="hidden sm:inline-flex rounded-full bg-gold/20 px-1.5 py-0.2 text-[9px] font-bold text-gold border border-gold/30">
+                  PRO
+                </span>
+              )}
             </button>
           ) : (
             <button

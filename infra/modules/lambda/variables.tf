@@ -51,6 +51,24 @@ variable "outbox_relay_jar_path" {
   default     = ""
 }
 
+variable "billing_service_jar_path" {
+  description = "Path to billing-service uber-JAR"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_user_pool_id" {
+  description = "ID of the Cognito User Pool"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_user_pool_arn" {
+  description = "ARN of the Cognito User Pool"
+  type        = string
+  default     = ""
+}
+
 variable "tags" {
   description = "Resource tags"
   type        = map(string)
