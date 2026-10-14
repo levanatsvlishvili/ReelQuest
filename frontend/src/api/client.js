@@ -273,21 +273,32 @@ export async function submitGameScore(payload) {
   return { status: 'ACCEPTED', entry };
 }
 
-export async function fetchLeaderboard(challengeId) {
+export async function fetchLeaderboard(challengeId, scope = 'daily') {
   if (API_BASE_URL) {
     try {
-      const date = challengeId?.replace('daily-', '') || new Date().toISOString().slice(0, 10);
+      const date = scope === 'all-time' ? 'all-time' : (challengeId?.replace('daily-', '') || new Date().toISOString().slice(0, 10));
       const res = await fetch(`${API_BASE_URL}/leaderboard?date=${date}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-          return data.map((item, idx) => ({
-            rank: idx + 1,
-            username: item.userId || `Player ${idx + 1}`,
-            hops: item.moves,
-            durationSeconds: item.durationSeconds,
-            isPro: item.isPro || false
-          }));
+          return data
+            .filter(item => {
+              const uid = item.userId || '';
+              const uname = item.username || '';
+              return !uid.startsWith('guest') && !uname.toLowerCase().includes('guest');
+            })
+            .map((item, idx) => ({
+              rank: idx + 1,
+              userId: item.userId,
+              username: item.username && !item.username.startsWith('guest') && !item.username.includes('-')
+                ? item.username
+                : (item.username || 'Cinephile'),
+              score: item.score || 0,
+              hops: item.moves || 0,
+              moves: item.moves || 0,
+              durationSeconds: item.durationSeconds || 0,
+              isPro: item.isPro || false
+            }));
         }
       }
     } catch (err) {
@@ -295,7 +306,9 @@ export async function fetchLeaderboard(challengeId) {
     }
   }
 
-  const storageKey = `reelquest_lb_${challengeId}`;
+  const storageKey = scope === 'all-time' ? 'reelquest_lb_all_time' : `reelquest_lb_${challengeId}`;
   const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  return local.map((item, idx) => ({ rank: idx + 1, ...item }));
+  return local
+    .filter(item => item.userId && !item.userId.startsWith('guest') && item.username && !item.username.toLowerCase().includes('guest'))
+    .map((item, idx) => ({ rank: idx + 1, ...item }));
 }

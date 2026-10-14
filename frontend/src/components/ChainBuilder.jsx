@@ -135,6 +135,21 @@ export function ChainBuilder({
       ) : (
         /* Movie is selected, pick co-star */
         <section className="space-y-4">
+          {/* Step-Back Action Bar for Movie Selection */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2 text-xs text-slate-200">
+              <span className="font-bold text-gold">Want to pick another film?</span>
+              <span className="text-cinema-muted hidden sm:inline">You can step back to {currentActor?.name}&apos;s full filmography anytime.</span>
+            </div>
+            <button
+              onClick={onUndo}
+              className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-cinema-card px-3 py-1.5 text-xs font-bold text-gold shadow-sm transition hover:bg-gold hover:text-cinema-black"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Step back to {currentActor?.name}&apos;s films</span>
+            </button>
+          </div>
+
           {/* Active movie banner */}
           <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3 shadow-sm">
             <div className="flex items-center gap-3">

@@ -77,18 +77,18 @@ export function ChallengeHeader({
             </div>
           </div>
 
-          {gameStatus === 'PLAYING' && (
-            <div className="mt-3 flex items-center gap-2">
-              <button
-                onClick={onUndo}
-                disabled={!canUndo}
-                className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1 text-xs font-medium text-slate-300 transition hover:border-cinema-muted hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                title="Undo last step"
-              >
-                <RotateCcw className="h-3 w-3" />
-                <span>Undo</span>
-              </button>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              onClick={onUndo}
+              disabled={!canUndo}
+              className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1 text-xs font-medium text-slate-300 transition hover:border-gold/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+              title="Step back to previous step or filmography"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>Step Back</span>
+            </button>
 
+            {gameStatus === 'PLAYING' && (
               <button
                 onClick={onGiveUp}
                 className="flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-400 transition hover:bg-red-500/20"
@@ -97,8 +97,8 @@ export function ChallengeHeader({
                 <Flag className="h-3 w-3" />
                 <span>Give Up</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Target Actor */}

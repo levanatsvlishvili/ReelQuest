@@ -1,7 +1,7 @@
 import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
+export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
   const { user, stats, isAuthenticated } = useAuth();
 
   const currentStreak = stats?.streak ?? 0;
@@ -41,7 +41,11 @@ export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAu
 
           <button
             onClick={onOpenLeaderboard}
-            className="flex items-center gap-1.5 rounded-lg border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-gold/50 hover:text-gold"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              isLeaderboardActive
+                ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
+                : 'border border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/50 hover:text-gold'
+            }`}
           >
             <Trophy className="h-4 w-4 text-gold" />
             <span className="hidden sm:inline">Leaderboard</span>

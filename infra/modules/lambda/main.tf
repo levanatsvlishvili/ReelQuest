@@ -145,7 +145,8 @@ resource "aws_iam_role_policy" "outbox_relay_policy" {
       {
         Effect = "Allow"
         Action = [
-          "dynamodb:UpdateItem"
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem"
         ]
         Resource = var.dynamodb_table_arn
       },
@@ -163,7 +164,7 @@ resource "aws_iam_role_policy" "outbox_relay_policy" {
 resource "aws_lambda_function" "outbox_relay" {
   function_name = "${var.app_name}-${var.environment}-outbox-relay"
   role          = aws_iam_role.outbox_relay.arn
-  handler       = "io.reelquest.outbox.handler.OutboxRelayHandler::handleRequest"
+  handler       = "io.reelquest.outbox.OutboxRelayHandler::handleRequest"
   runtime       = "java21"
   architectures = ["x86_64"]
   memory_size   = 512
@@ -244,7 +245,7 @@ resource "aws_iam_role_policy" "leaderboard_consumer_policy" {
 resource "aws_lambda_function" "leaderboard_consumer" {
   function_name = "${var.app_name}-${var.environment}-leaderboard-consumer"
   role          = aws_iam_role.leaderboard_consumer.arn
-  handler       = "io.reelquest.outbox.handler.LeaderboardConsumerHandler::handleRequest"
+  handler       = "io.reelquest.outbox.LeaderboardConsumerHandler::handleRequest"
   runtime       = "java21"
   architectures = ["x86_64"]
   memory_size   = 512

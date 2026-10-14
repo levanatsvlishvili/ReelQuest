@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.Put;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
@@ -35,6 +36,7 @@ import io.reelquest.domain.model.MovieActorEdge;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -131,7 +133,9 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 Map<String, String> queryParams = request.getQueryStringParameters();
                 String date = queryParams != null && queryParams.containsKey("date")
                         ? queryParams.get("date")
-                        : LocalDate.now().toString();
+                        : (queryParams != null && queryParams.containsKey("scope")
+                                ? queryParams.get("scope")
+                                : LocalDate.now().toString());
                 return handleGetLeaderboard(date);
             }
 
@@ -187,13 +191,21 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         return response(200, cast);
     }
 
-    private APIGatewayProxyResponseEvent handleGetLeaderboard(String date) {
+    private APIGatewayProxyResponseEvent handleGetLeaderboard(String dateOrScope) {
+        if (dynamoDbClient == null) {
+            return response(200, List.of());
+        }
+
+        String gsi1pk = "all-time".equalsIgnoreCase(dateOrScope)
+                ? "LEADERBOARD#ALL_TIME"
+                : "LEADERBOARD#" + dateOrScope;
+
         QueryRequest query = QueryRequest.builder()
                 .tableName(tableName)
                 .indexName("GSI1")
                 .keyConditionExpression("GSI1PK = :pk")
                 .expressionAttributeValues(Map.of(
-                        ":pk", AttributeValue.fromS("LEADERBOARD#" + date)
+                        ":pk", AttributeValue.fromS(gsi1pk)
                 ))
                 .scanIndexForward(true)
                 .limit(50)
@@ -201,11 +213,18 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
         var response = dynamoDbClient.query(query);
         List<LeaderboardEntry> entries = response.items().stream()
+                .filter(item -> {
+                    String uid = item.containsKey("userId") ? item.get("userId").s() : "";
+                    String uname = item.containsKey("username") ? item.get("username").s() : "";
+                    return !uid.isBlank() && !uid.startsWith("guest") && !uname.toLowerCase().contains("guest");
+                })
                 .map(item -> new LeaderboardEntry(
-                        item.get("userId").s(),
-                        Long.parseLong(item.get("score").n()),
-                        Integer.parseInt(item.get("moves").n()),
-                        Long.parseLong(item.get("durationSeconds").n()),
+                        item.containsKey("userId") ? item.get("userId").s() : "unknown",
+                        item.containsKey("username") ? item.get("username").s() : (item.containsKey("userId") ? item.get("userId").s() : "Cinephile"),
+                        item.containsKey("score") ? Long.parseLong(item.get("score").n()) : 0L,
+                        item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0,
+                        item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L,
+                        item.containsKey("isPro") && item.get("isPro").bool() != null ? item.get("isPro").bool() : false,
                         item.containsKey("updatedAt") ? item.get("updatedAt").s() : ""
                 ))
                 .toList();
@@ -249,10 +268,41 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
     }
 
     private void saveGameSessionAndOutboxEvent(GameSubmission submission, ValidationResult result) throws Exception {
+        if (dynamoDbClient == null) return;
         String dateStr = LocalDate.now().toString();
         String sessionId = UUID.randomUUID().toString();
         String eventId = UUID.randomUUID().toString();
         String timestamp = Instant.now().toString();
+
+        boolean isRegistered = submission.userId() != null
+                && !submission.userId().isBlank()
+                && !submission.userId().startsWith("guest");
+
+        String username = "Cinephile";
+        boolean isPro = false;
+
+        if (isRegistered) {
+            try {
+                var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of(
+                                "PK", AttributeValue.fromS("USER#" + submission.userId()),
+                                "SK", AttributeValue.fromS("PROFILE")
+                        ))
+                        .build());
+                if (profileRes.hasItem() && profileRes.item() != null) {
+                    Map<String, AttributeValue> item = profileRes.item();
+                    if (item.containsKey("username") && !item.get("username").s().isBlank()) {
+                        username = item.get("username").s();
+                    }
+                    if (item.containsKey("tier")) {
+                        isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to lookup profile for userId {}: {}", submission.userId(), e.getMessage());
+            }
+        }
 
         Map<String, AttributeValue> sessionItem = new HashMap<>();
         sessionItem.put("PK", AttributeValue.fromS("USER#" + submission.userId()));
@@ -271,6 +321,8 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         Map<String, Object> eventPayload = Map.of(
                 "eventId", eventId,
                 "userId", submission.userId(),
+                "username", username,
+                "isPro", isPro,
                 "date", dateStr,
                 "score", result.score(),
                 "moves", result.moves(),
@@ -287,11 +339,31 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         outboxItem.put("Payload", AttributeValue.fromS(payloadJson));
         outboxItem.put("Status", AttributeValue.fromS("PENDING"));
 
+        List<TransactWriteItem> txItems = new ArrayList<>();
+        txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(sessionItem).build()).build());
+        txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(outboxItem).build()).build());
+
+        if (isRegistered) {
+            String invertedScore = String.format("%08d", Math.max(0, 99_999_999L - result.score()));
+            Map<String, AttributeValue> leaderboardItem = new HashMap<>();
+            leaderboardItem.put("PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
+            leaderboardItem.put("SK", AttributeValue.fromS("USER#" + submission.userId()));
+            leaderboardItem.put("GSI1PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
+            leaderboardItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedScore));
+            leaderboardItem.put("Type", AttributeValue.fromS("LEADERBOARD_ENTRY"));
+            leaderboardItem.put("userId", AttributeValue.fromS(submission.userId()));
+            leaderboardItem.put("username", AttributeValue.fromS(username));
+            leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(result.score())));
+            leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(result.moves())));
+            leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(submission.durationSeconds())));
+            leaderboardItem.put("isPro", AttributeValue.fromBool(isPro));
+            leaderboardItem.put("updatedAt", AttributeValue.fromS(timestamp));
+
+            txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(leaderboardItem).build()).build());
+        }
+
         TransactWriteItemsRequest txRequest = TransactWriteItemsRequest.builder()
-                .transactItems(
-                        TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(sessionItem).build()).build(),
-                        TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(outboxItem).build()).build()
-                )
+                .transactItems(txItems)
                 .build();
 
         dynamoDbClient.transactWriteItems(txRequest);

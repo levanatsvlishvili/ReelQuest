@@ -15,6 +15,7 @@ import { UpcomingGamePreview } from './components/UpcomingGamePreview';
 import { DailyDateNavigator } from './components/DailyDateNavigator';
 import { DailyArchiveModal } from './components/DailyArchiveModal';
 import { CustomPathFinder } from './components/CustomPathFinder';
+import { LeaderboardView } from './components/LeaderboardView';
 import { Film } from 'lucide-react';
 
 export default function App() {
@@ -40,6 +41,7 @@ export default function App() {
     selectMovie,
     clearSelectedMovie,
     selectActor,
+    canUndo,
     undoLastMove,
     undoToStep,
     restartGame,
@@ -50,6 +52,7 @@ export default function App() {
     goToNextDay
   } = useGameSession();
 
+  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
   const [activeMode, setActiveMode] = useState('six-degrees');
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
@@ -61,7 +64,8 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenLeaderboard={() => setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard')}
+        isLeaderboardActive={currentView === 'leaderboard'}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenPro={() => setIsProModalOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
@@ -69,88 +73,104 @@ export default function App() {
       />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-        {/* Game Mode Navigation Tabs */}
-        <GameModeSelector
-          activeMode={activeMode}
-          onSelectMode={setActiveMode}
-        />
-
-        {activeMode === 'custom-path' ? (
-          <CustomPathFinder
-            onOpenPro={() => setIsProModalOpen(true)}
-            onPlayCustomChallenge={(customData) => {
-              loadCustomChallenge(customData);
-              setActiveMode('six-degrees');
+        {currentView === 'leaderboard' ? (
+          <LeaderboardView
+            onBackToGame={() => setCurrentView('game')}
+            activeChallenge={challenge}
+            activeDate={activeDate}
+            onSelectDate={(d) => loadDateChallenge(d)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onPlayChallenge={(d) => {
+              loadDateChallenge(d);
+              setCurrentView('game');
             }}
           />
-        ) : activeMode !== 'six-degrees' ? (
-          <UpcomingGamePreview
-            modeId={activeMode}
-            onBackToMain={() => setActiveMode('six-degrees')}
-            onOpenPro={() => setIsProModalOpen(true)}
-          />
-        ) : loading ? (
-          <div className="flex flex-col items-center justify-center py-24 space-y-4">
-            <div className="h-12 w-12 rounded-xl border-2 border-gold/40 border-t-gold animate-spin" />
-            <p className="text-sm font-medium text-cinema-muted">Loading Hollywood graph...</p>
-          </div>
         ) : (
           <>
-            {/* Daily Date & Archive Navigator */}
-            {!isCustom && (
-              <DailyDateNavigator
-                currentDate={activeDate}
-                isToday={isToday}
-                onPrevDay={goToPrevDay}
-                onNextDay={goToNextDay}
-                onOpenArchive={() => setIsArchiveOpen(true)}
-                onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+            {/* Game Mode Navigation Tabs */}
+            <GameModeSelector
+              activeMode={activeMode}
+              onSelectMode={setActiveMode}
+            />
+
+            {activeMode === 'custom-path' ? (
+              <CustomPathFinder
+                onOpenPro={() => setIsProModalOpen(true)}
+                onPlayCustomChallenge={(customData) => {
+                  loadCustomChallenge(customData);
+                  setActiveMode('six-degrees');
+                }}
               />
-            )}
-
-            {isCustom && (
-              <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-semibold text-gold">
-                <span>🎮 Custom Challenge Mode</span>
-                <button
-                  onClick={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
-                  className="rounded-lg bg-cinema-card border border-cinema-border px-2.5 py-1 text-slate-200 hover:text-gold transition"
-                >
-                  Return to Daily Challenge
-                </button>
+            ) : activeMode !== 'six-degrees' ? (
+              <UpcomingGamePreview
+                modeId={activeMode}
+                onBackToMain={() => setActiveMode('six-degrees')}
+                onOpenPro={() => setIsProModalOpen(true)}
+              />
+            ) : loading ? (
+              <div className="flex flex-col items-center justify-center py-24 space-y-4">
+                <div className="h-12 w-12 rounded-xl border-2 border-gold/40 border-t-gold animate-spin" />
+                <p className="text-sm font-medium text-cinema-muted">Loading Hollywood graph...</p>
               </div>
+            ) : (
+              <>
+                {/* Daily Date & Archive Navigator */}
+                {!isCustom && (
+                  <DailyDateNavigator
+                    currentDate={activeDate}
+                    isToday={isToday}
+                    onPrevDay={goToPrevDay}
+                    onNextDay={goToNextDay}
+                    onOpenArchive={() => setIsArchiveOpen(true)}
+                    onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                  />
+                )}
+
+                {isCustom && (
+                  <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-semibold text-gold">
+                    <span>🎮 Custom Challenge Mode</span>
+                    <button
+                      onClick={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                      className="rounded-lg bg-cinema-card border border-cinema-border px-2.5 py-1 text-slate-200 hover:text-gold transition"
+                    >
+                      Return to Daily Challenge
+                    </button>
+                  </div>
+                )}
+
+                <ChallengeHeader
+                  challenge={challenge}
+                  moves={moves}
+                  timerSeconds={timerSeconds}
+                  onUndo={undoLastMove}
+                  onGiveUp={giveUp}
+                  canUndo={canUndo}
+                  gameStatus={gameStatus}
+                />
+
+                <VisualGraph
+                  chain={chain}
+                  targetActor={challenge?.targetActor}
+                  onStepClick={undoToStep}
+                />
+
+                <ChainBuilder
+                  currentActor={currentActor}
+                  selectedMovie={selectedMovie}
+                  availableMovies={availableMovies}
+                  availableCast={availableCast}
+                  moviesLoading={moviesLoading}
+                  castLoading={castLoading}
+                  targetActor={challenge?.targetActor}
+                  onSelectMovie={selectMovie}
+                  onClearMovie={clearSelectedMovie}
+                  onSelectActor={selectActor}
+                  onUndo={undoLastMove}
+                  canUndo={canUndo}
+                  previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
+                />
+              </>
             )}
-
-            <ChallengeHeader
-              challenge={challenge}
-              moves={moves}
-              timerSeconds={timerSeconds}
-              onUndo={undoLastMove}
-              onGiveUp={giveUp}
-              canUndo={chain.length > 1}
-              gameStatus={gameStatus}
-            />
-
-            <VisualGraph
-              chain={chain}
-              targetActor={challenge?.targetActor}
-              onStepClick={undoToStep}
-            />
-
-            <ChainBuilder
-              currentActor={currentActor}
-              selectedMovie={selectedMovie}
-              availableMovies={availableMovies}
-              availableCast={availableCast}
-              moviesLoading={moviesLoading}
-              castLoading={castLoading}
-              targetActor={challenge?.targetActor}
-              onSelectMovie={selectMovie}
-              onClearMovie={clearSelectedMovie}
-              onSelectActor={selectActor}
-              onUndo={undoLastMove}
-              canUndo={chain.length > 1}
-              previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
-            />
           </>
         )}
       </main>
@@ -176,7 +196,7 @@ export default function App() {
         timerSeconds={timerSeconds}
         optimalPath={optimalPath}
         onRestart={restartGame}
-        onOpenLeaderboard={() => setIsLeaderboardOpen(true)}
+        onOpenLeaderboard={() => setCurrentView('leaderboard')}
       />
 
       <LeaderboardDrawer

@@ -244,29 +244,42 @@ export function useGameSession() {
     }
   }, [selectedMovie, currentActor, challenge, chain, moves, timerSeconds, user, recordGame, isCustom, saveSession]);
 
+  const canUndo = (chain.length > 1 || selectedMovie !== null) && gameStatus !== 'GAVE_UP';
+
   const undoLastMove = useCallback(() => {
-    if (chain.length <= 1 || gameStatus !== 'PLAYING' || !challenge) return;
+    if (!challenge) return;
 
-    const newChain = chain.slice(0, -1);
-    const prevNode = newChain[newChain.length - 1];
-    const newMoves = Math.max(0, moves - 1);
+    // 1. If a movie is currently selected, stepping back unselects the movie first!
+    if (selectedMovie) {
+      setSelectedMovie(null);
+      return;
+    }
 
-    setChain(newChain);
-    setCurrentActor(prevNode.actor);
-    setSelectedMovie(null);
-    setMoves(newMoves);
+    // 2. If chain has more than 1 actor, step back to previous actor
+    if (chain.length > 1) {
+      const newChain = chain.slice(0, -1);
+      const prevNode = newChain[newChain.length - 1];
+      const newMoves = Math.max(0, moves - 1);
 
-    saveSession(challenge.challengeId, {
-      chain: newChain,
-      currentActor: prevNode.actor,
-      moves: newMoves,
-      timerSeconds,
-      gameStatus
-    });
-  }, [chain, gameStatus, challenge, moves, timerSeconds, saveSession]);
+      setChain(newChain);
+      setCurrentActor(prevNode.actor);
+      setSelectedMovie(null);
+      setMoves(newMoves);
+      setGameStatus('PLAYING');
+      setShowVictory(false);
+
+      saveSession(challenge.challengeId, {
+        chain: newChain,
+        currentActor: prevNode.actor,
+        moves: newMoves,
+        timerSeconds,
+        gameStatus: 'PLAYING'
+      });
+    }
+  }, [chain, challenge, moves, timerSeconds, saveSession, selectedMovie]);
 
   const undoToStep = useCallback((targetIndex) => {
-    if (targetIndex < 0 || targetIndex >= chain.length - 1 || gameStatus !== 'PLAYING' || !challenge) return;
+    if (targetIndex < 0 || targetIndex >= chain.length - 1 || !challenge) return;
 
     const newChain = chain.slice(0, targetIndex + 1);
     const targetNode = newChain[targetIndex];
@@ -276,20 +289,22 @@ export function useGameSession() {
     setCurrentActor(targetNode.actor);
     setSelectedMovie(null);
     setMoves(newMoves);
+    setGameStatus('PLAYING');
+    setShowVictory(false);
 
     saveSession(challenge.challengeId, {
       chain: newChain,
       currentActor: targetNode.actor,
       moves: newMoves,
       timerSeconds,
-      gameStatus
+      gameStatus: 'PLAYING'
     });
-  }, [chain, gameStatus, challenge, timerSeconds, saveSession]);
+  }, [chain, challenge, timerSeconds, saveSession]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.key === 'Backspace' || (e.ctrlKey && e.key === 'z')) && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
-        if (chain.length > 1 && gameStatus === 'PLAYING') {
+        if ((chain.length > 1 || selectedMovie) && gameStatus !== 'GAVE_UP') {
           e.preventDefault();
           undoLastMove();
         }
@@ -297,7 +312,7 @@ export function useGameSession() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [chain.length, gameStatus, undoLastMove]);
+  }, [chain.length, selectedMovie, gameStatus, undoLastMove]);
 
   const restartGame = useCallback(() => {
     if (!challenge) return;
@@ -386,6 +401,7 @@ export function useGameSession() {
     selectMovie,
     clearSelectedMovie,
     selectActor,
+    canUndo,
     undoLastMove,
     undoToStep,
     restartGame,

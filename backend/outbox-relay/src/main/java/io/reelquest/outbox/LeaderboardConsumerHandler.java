@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.ReturnValue;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
 import java.util.HashMap;
@@ -64,11 +66,50 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
         JsonNode payload = root.has("detail") ? root.get("detail") : root;
 
         String userId = payload.get("userId").asText();
+        if (userId == null || userId.isBlank() || userId.startsWith("guest")) {
+            log.info("Skipping leaderboard aggregation for guest user: {}", userId);
+            return;
+        }
         String date = payload.get("date").asText();
         long score = payload.get("score").asLong();
         int moves = payload.get("moves").asInt();
         long durationSeconds = payload.get("durationSeconds").asLong();
         String timestamp = payload.has("timestamp") ? payload.get("timestamp").asText() : "";
+
+        String username = payload.has("username") ? payload.get("username").asText() : null;
+        Boolean isPro = payload.has("isPro") ? payload.get("isPro").asBoolean() : null;
+
+        if (username == null || isPro == null) {
+            if (userId != null && !userId.startsWith("guest")) {
+                try {
+                    var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                            .tableName(tableName)
+                            .key(Map.of(
+                                    "PK", AttributeValue.fromS("USER#" + userId),
+                                    "SK", AttributeValue.fromS("PROFILE")
+                            ))
+                            .build());
+                    if (profileRes.hasItem() && profileRes.item() != null) {
+                        Map<String, AttributeValue> item = profileRes.item();
+                        if (username == null && item.containsKey("username")) {
+                            username = item.get("username").s();
+                        }
+                        if (isPro == null && item.containsKey("tier")) {
+                            isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to lookup profile for userId {}: {}", userId, e.getMessage());
+                }
+            }
+        }
+
+        if (username == null || username.isBlank()) {
+            username = userId.startsWith("guest") ? "Guest Cinephile" : userId;
+        }
+        if (isPro == null) {
+            isPro = false;
+        }
 
         // Format inverted score so GSI1 naturally sorts highest score first
         String invertedScore = String.format("%08d", Math.max(0, 99_999_999L - score));
@@ -80,9 +121,11 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
         leaderboardItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedScore));
         leaderboardItem.put("Type", AttributeValue.fromS("LEADERBOARD_ENTRY"));
         leaderboardItem.put("userId", AttributeValue.fromS(userId));
+        leaderboardItem.put("username", AttributeValue.fromS(username));
         leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(score)));
         leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(moves)));
         leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(durationSeconds)));
+        leaderboardItem.put("isPro", AttributeValue.fromBool(isPro));
         leaderboardItem.put("updatedAt", AttributeValue.fromS(timestamp));
 
         dynamoDbClient.putItem(PutItemRequest.builder()
@@ -91,17 +134,55 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
                 .build());
 
         // Update User Aggregate Profile Stats
-        dynamoDbClient.updateItem(UpdateItemRequest.builder()
+        long newTotalScore = score;
+        int newGamesPlayed = 1;
+        try {
+            var updateRes = dynamoDbClient.updateItem(UpdateItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("USER#" + userId),
+                            "SK", AttributeValue.fromS("PROFILE")
+                    ))
+                    .updateExpression("ADD gamesPlayed :one, gamesWon :one, totalScore :score")
+                    .expressionAttributeValues(Map.of(
+                            ":one", AttributeValue.fromN("1"),
+                            ":score", AttributeValue.fromN(String.valueOf(score))
+                    ))
+                    .returnValues(ReturnValue.ALL_NEW)
+                    .build());
+
+            if (updateRes.hasAttributes() && updateRes.attributes() != null) {
+                var attrs = updateRes.attributes();
+                if (attrs.containsKey("totalScore")) {
+                    newTotalScore = Long.parseLong(attrs.get("totalScore").n());
+                }
+                if (attrs.containsKey("gamesPlayed")) {
+                    newGamesPlayed = Integer.parseInt(attrs.get("gamesPlayed").n());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not update profile stats for userId {}: {}", userId, e.getMessage());
+        }
+
+        // Update All-Time Leaderboard
+        String invertedAllTimeScore = String.format("%010d", Math.max(0, 999_999_999L - newTotalScore));
+        Map<String, AttributeValue> allTimeItem = new HashMap<>();
+        allTimeItem.put("PK", AttributeValue.fromS("LEADERBOARD#ALL_TIME"));
+        allTimeItem.put("SK", AttributeValue.fromS("USER#" + userId));
+        allTimeItem.put("GSI1PK", AttributeValue.fromS("LEADERBOARD#ALL_TIME"));
+        allTimeItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedAllTimeScore));
+        allTimeItem.put("Type", AttributeValue.fromS("LEADERBOARD_ALL_TIME"));
+        allTimeItem.put("userId", AttributeValue.fromS(userId));
+        allTimeItem.put("username", AttributeValue.fromS(username));
+        allTimeItem.put("score", AttributeValue.fromN(String.valueOf(newTotalScore)));
+        allTimeItem.put("moves", AttributeValue.fromN(String.valueOf(newGamesPlayed)));
+        allTimeItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(durationSeconds)));
+        allTimeItem.put("isPro", AttributeValue.fromBool(isPro));
+        allTimeItem.put("updatedAt", AttributeValue.fromS(timestamp));
+
+        dynamoDbClient.putItem(PutItemRequest.builder()
                 .tableName(tableName)
-                .key(Map.of(
-                        "PK", AttributeValue.fromS("USER#" + userId),
-                        "SK", AttributeValue.fromS("PROFILE")
-                ))
-                .updateExpression("ADD gamesPlayed :one, totalScore :score")
-                .expressionAttributeValues(Map.of(
-                        ":one", AttributeValue.fromN("1"),
-                        ":score", AttributeValue.fromN(String.valueOf(score))
-                ))
+                .item(allTimeItem)
                 .build());
     }
 }

@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.PutItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
@@ -27,11 +29,13 @@ class LeaderboardConsumerHandlerTest {
     }
 
     @Test
-    @DisplayName("Should process SQS GameCompleted event and update leaderboard and user profile")
+    @DisplayName("Should process SQS GameCompleted event and update daily leaderboard, all-time leaderboard and user profile")
     void shouldProcessSqsGameCompletedEvent() {
         String jsonPayload = """
                 {
                     "userId": "user123",
+                    "username": "CineMaster",
+                    "isPro": true,
                     "date": "2026-10-11",
                     "score": 9500,
                     "moves": 2,
@@ -49,16 +53,27 @@ class LeaderboardConsumerHandlerTest {
 
         handler.handleRequest(event, null);
 
-        assertThat(testDynamoDb.savedItems).hasSize(1);
-        var leaderboardItem = testDynamoDb.savedItems.getFirst().item();
-        assertThat(leaderboardItem.get("PK").s()).isEqualTo("LEADERBOARD#2026-10-11");
-        assertThat(leaderboardItem.get("userId").s()).isEqualTo("user123");
-        assertThat(leaderboardItem.get("score").n()).isEqualTo("9500");
+        // Daily item and All-Time item saved
+        assertThat(testDynamoDb.savedItems).hasSize(2);
+
+        var dailyItem = testDynamoDb.savedItems.get(0).item();
+        assertThat(dailyItem.get("PK").s()).isEqualTo("LEADERBOARD#2026-10-11");
+        assertThat(dailyItem.get("userId").s()).isEqualTo("user123");
+        assertThat(dailyItem.get("username").s()).isEqualTo("CineMaster");
+        assertThat(dailyItem.get("score").n()).isEqualTo("9500");
+        assertThat(dailyItem.get("isPro").bool()).isTrue();
+
+        var allTimeItem = testDynamoDb.savedItems.get(1).item();
+        assertThat(allTimeItem.get("PK").s()).isEqualTo("LEADERBOARD#ALL_TIME");
+        assertThat(allTimeItem.get("userId").s()).isEqualTo("user123");
+        assertThat(allTimeItem.get("username").s()).isEqualTo("CineMaster");
+        assertThat(allTimeItem.get("score").n()).isEqualTo("9500");
+        assertThat(allTimeItem.get("isPro").bool()).isTrue();
 
         assertThat(testDynamoDb.updatedItems).hasSize(1);
         var profileUpdate = testDynamoDb.updatedItems.getFirst();
         assertThat(profileUpdate.key().get("PK").s()).isEqualTo("USER#user123");
-        assertThat(profileUpdate.updateExpression()).contains("ADD gamesPlayed :one, totalScore :score");
+        assertThat(profileUpdate.updateExpression()).contains("ADD gamesPlayed :one, gamesWon :one, totalScore :score");
     }
 
     private static class TestDynamoDbClient implements DynamoDbClient {
@@ -70,6 +85,11 @@ class LeaderboardConsumerHandlerTest {
 
         @Override
         public void close() {}
+
+        @Override
+        public GetItemResponse getItem(GetItemRequest getItemRequest) {
+            return GetItemResponse.builder().build();
+        }
 
         @Override
         public PutItemResponse putItem(PutItemRequest putItemRequest) {
