@@ -99,7 +99,18 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
         try {
             if ("GET".equalsIgnoreCase(httpMethod) && path.endsWith("/daily")) {
-                DailyChallengeResponse challenge = dailyService.getDailyChallenge(LocalDate.now());
+                Map<String, String> queryParams = request.getQueryStringParameters();
+                String dateStr = queryParams != null ? queryParams.get("date") : null;
+                LocalDate targetDate = LocalDate.now();
+                if (dateStr != null && !dateStr.isBlank()) {
+                    try {
+                        LocalDate parsedDate = LocalDate.parse(dateStr);
+                        if (!parsedDate.isAfter(LocalDate.now())) {
+                            targetDate = parsedDate;
+                        }
+                    } catch (Exception ignored) {}
+                }
+                DailyChallengeResponse challenge = dailyService.getDailyChallenge(targetDate);
                 return response(200, challenge);
             }
 

@@ -75,10 +75,11 @@ function buildPathDetails(actorIds) {
   return result;
 }
 
-export async function fetchDailyChallenge() {
+export async function fetchDailyChallenge(dateStr = null) {
+  const query = dateStr ? `?date=${encodeURIComponent(dateStr)}` : '';
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/daily`);
+      const res = await fetch(`${API_BASE_URL}/daily${query}`);
       if (res.ok) {
         const data = await res.json();
         return {
@@ -94,7 +95,7 @@ export async function fetchDailyChallenge() {
     }
   }
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const effectiveDate = dateStr || new Date().toISOString().slice(0, 10);
   const startActor = CURATED_GRAPH.actors.find(a => a.id === '31') || CURATED_GRAPH.actors.find(a => a.id === 'nm0000158') || {
     id: '31',
     name: 'Tom Hanks',
@@ -107,12 +108,29 @@ export async function fetchDailyChallenge() {
   };
 
   return {
-    challengeId: `daily-${todayStr}`,
-    date: todayStr,
+    challengeId: `daily-${effectiveDate}`,
+    date: effectiveDate,
     startActor,
     targetActor,
     optimalHops: 2
   };
+}
+
+let cachedPopularActors = null;
+export async function fetchPopularActors() {
+  if (cachedPopularActors && cachedPopularActors.length > 0) {
+    return cachedPopularActors;
+  }
+  try {
+    const res = await fetch('/popular-actors.json');
+    if (res.ok) {
+      cachedPopularActors = await res.json();
+      return cachedPopularActors;
+    }
+  } catch (err) {
+    console.error('Failed to load popular actors:', err);
+  }
+  return CURATED_GRAPH.actors || [];
 }
 
 const actorMoviesCache = new Map();

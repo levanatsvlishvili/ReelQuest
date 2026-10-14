@@ -12,11 +12,17 @@ import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { GameModeSelector } from './components/GameModeSelector';
 import { UpcomingGamePreview } from './components/UpcomingGamePreview';
+import { DailyDateNavigator } from './components/DailyDateNavigator';
+import { DailyArchiveModal } from './components/DailyArchiveModal';
+import { CustomPathFinder } from './components/CustomPathFinder';
 import { Film } from 'lucide-react';
 
 export default function App() {
   const {
     challenge,
+    activeDate,
+    isToday,
+    isCustom,
     loading,
     currentActor,
     selectedMovie,
@@ -37,7 +43,11 @@ export default function App() {
     undoLastMove,
     undoToStep,
     restartGame,
-    giveUp
+    giveUp,
+    loadDateChallenge,
+    loadCustomChallenge,
+    goToPrevDay,
+    goToNextDay
   } = useGameSession();
 
   const [activeMode, setActiveMode] = useState('six-degrees');
@@ -46,6 +56,7 @@ export default function App() {
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
@@ -64,7 +75,15 @@ export default function App() {
           onSelectMode={setActiveMode}
         />
 
-        {activeMode !== 'six-degrees' ? (
+        {activeMode === 'custom-path' ? (
+          <CustomPathFinder
+            onOpenPro={() => setIsProModalOpen(true)}
+            onPlayCustomChallenge={(customData) => {
+              loadCustomChallenge(customData);
+              setActiveMode('six-degrees');
+            }}
+          />
+        ) : activeMode !== 'six-degrees' ? (
           <UpcomingGamePreview
             modeId={activeMode}
             onBackToMain={() => setActiveMode('six-degrees')}
@@ -77,6 +96,30 @@ export default function App() {
           </div>
         ) : (
           <>
+            {/* Daily Date & Archive Navigator */}
+            {!isCustom && (
+              <DailyDateNavigator
+                currentDate={activeDate}
+                isToday={isToday}
+                onPrevDay={goToPrevDay}
+                onNextDay={goToNextDay}
+                onOpenArchive={() => setIsArchiveOpen(true)}
+                onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+              />
+            )}
+
+            {isCustom && (
+              <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-semibold text-gold">
+                <span>🎮 Custom Challenge Mode</span>
+                <button
+                  onClick={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                  className="rounded-lg bg-cinema-card border border-cinema-border px-2.5 py-1 text-slate-200 hover:text-gold transition"
+                >
+                  Return to Daily Challenge
+                </button>
+              </div>
+            )}
+
             <ChallengeHeader
               challenge={challenge}
               moves={moves}
@@ -119,7 +162,7 @@ export default function App() {
           <span>— The Cinematic Six Degrees Engine</span>
         </div>
         <p className="text-[11px]">
-          Curated with TMDB dataset. Built with React 18, Tailwind CSS & AWS Serverless.
+          Curated with TMDB dataset (5,000+ Movies, 37,000+ Actors). Built with React 18, Tailwind CSS & AWS Serverless.
         </p>
       </footer>
 
@@ -162,6 +205,13 @@ export default function App() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         onOpenPro={() => setIsProModalOpen(true)}
+      />
+
+      <DailyArchiveModal
+        isOpen={isArchiveOpen}
+        onClose={() => setIsArchiveOpen(false)}
+        currentDate={activeDate}
+        onSelectDate={(targetDate) => loadDateChallenge(targetDate)}
       />
     </div>
   );

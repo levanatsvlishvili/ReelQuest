@@ -9,9 +9,14 @@ export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAu
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 text-gold border border-gold/30 shadow-gold-glow">
-            <Film className="h-5 w-5" />
+        <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => window.location.reload()}>
+          <div className="relative group">
+            <img
+              src="/favicon.svg"
+              alt="ReelQuest Logo"
+              className="h-10 w-10 rounded-xl shadow-gold-glow transition-transform duration-300 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 rounded-xl bg-gold/20 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
           </div>
           <div>
             <div className="flex items-center gap-2">

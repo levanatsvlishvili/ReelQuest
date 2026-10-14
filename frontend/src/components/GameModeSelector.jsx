@@ -10,6 +10,14 @@ export const GAME_MODES = [
     badge: 'LIVE'
   },
   {
+    id: 'custom-path',
+    title: 'Path Finder',
+    subtitle: 'Custom Stars',
+    icon: Sparkles,
+    status: 'ACTIVE',
+    badge: 'PRO'
+  },
+  {
     id: 'plot-guesser',
     title: 'Plot Guesser',
     subtitle: 'Logline Mystery',
