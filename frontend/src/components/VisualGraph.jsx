@@ -1,17 +1,18 @@
 import { ArrowRight, User, Film } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 
-export function VisualGraph({ chain, targetActor }) {
+export function VisualGraph({ chain, targetActor, onStepClick }) {
   if (!chain || chain.length === 0) return null;
 
   return (
     <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/80 p-4 backdrop-blur-sm">
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-2 flex items-center justify-between flex-wrap gap-1">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-cinema-muted">
           Current Chain Trail ({chain.length - 1} hops)
         </h3>
         <span className="text-[11px] text-cinema-muted">
           Goal: Reach <strong className="text-gold font-medium">{targetActor?.name}</strong>
+          {chain.length > 1 && <span className="hidden sm:inline text-gold/80"> (click previous step to revert)</span>}
         </span>
       </div>
 
@@ -19,6 +20,7 @@ export function VisualGraph({ chain, targetActor }) {
         {chain.map((node, index) => {
           const isOrigin = index === 0;
           const isTargetReached = targetActor && node.actor.id === targetActor.id;
+          const isPrevious = index < chain.length - 1;
 
           return (
             <div key={`${node.actor.id}-${index}`} className="flex items-center gap-3 shrink-0">
@@ -55,7 +57,12 @@ export function VisualGraph({ chain, targetActor }) {
 
               {/* Actor node */}
               <div
-                className={`flex items-center gap-2 rounded-xl border p-2 shadow-sm ${
+                onClick={() => onStepClick && isPrevious && onStepClick(index)}
+                role={isPrevious ? "button" : undefined}
+                title={isPrevious ? `Click to step back to ${node.actor.name}` : undefined}
+                className={`flex items-center gap-2 rounded-xl border p-2 shadow-sm transition ${
+                  isPrevious ? 'cursor-pointer hover:border-gold hover:bg-gold/10 hover:shadow-gold-glow' : ''
+                } ${
                   isTargetReached
                     ? 'border-gold bg-gold/10 shadow-gold-glow'
                     : isOrigin

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 export function Navbar({ onOpenLeaderboard, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
   const { user, stats, isAuthenticated } = useAuth();
 
-  const currentStreak = stats?.streak || 3;
+  const currentStreak = stats?.streak ?? 0;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">

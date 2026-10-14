@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Film, User, Star, Search, Sparkles, X } from 'lucide-react';
+import { Film, User, Star, Search, Sparkles, X, RotateCcw } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 
 export function ChainBuilder({
@@ -12,7 +12,10 @@ export function ChainBuilder({
   targetActor,
   onSelectMovie,
   onClearMovie,
-  onSelectActor
+  onSelectActor,
+  onUndo,
+  canUndo = false,
+  previousActor = null
 }) {
   const [movieFilter, setMovieFilter] = useState('');
   const [castFilter, setCastFilter] = useState('');
@@ -31,6 +34,23 @@ export function ChainBuilder({
       {/* If no movie is selected, show filmography of current actor */}
       {!selectedMovie ? (
         <section className="space-y-4">
+          {/* Step-Back Action Bar */}
+          {canUndo && previousActor && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 shadow-sm">
+              <div className="flex items-center gap-2 text-xs text-slate-200">
+                <span className="font-bold text-gold">Decided on another path?</span>
+                <span className="text-cinema-muted hidden sm:inline">You can step back one hop without resetting.</span>
+              </div>
+              <button
+                onClick={onUndo}
+                className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-cinema-card px-3 py-1.5 text-xs font-bold text-gold shadow-sm transition hover:bg-gold hover:text-cinema-black"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Step back to {previousActor.name}</span>
+              </button>
+            </div>
+          )}
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="flex items-center gap-2">

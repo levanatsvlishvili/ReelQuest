@@ -170,7 +170,7 @@ export async function fetchOptimalPath(startActorId, targetActorId) {
       const res = await fetch(`${API_BASE_URL}/shortest-path?start=${startActorId}&target=${targetActorId}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.found && data.path && data.path.length > 0) {
+        if (data.path && Array.isArray(data.path) && data.path.length > 0) {
           return data.path.map(step => ({
             actor: { id: step.fromActorId, name: step.fromActorName },
             movie: { id: step.movieId, title: step.movieTitle },
@@ -262,33 +262,22 @@ export async function fetchLeaderboard(challengeId) {
       const res = await fetch(`${API_BASE_URL}/leaderboard?date=${date}`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           return data.map((item, idx) => ({
             rank: idx + 1,
             username: item.userId || `Player ${idx + 1}`,
             hops: item.moves,
             durationSeconds: item.durationSeconds,
-            isPro: false
+            isPro: item.isPro || false
           }));
         }
       }
-    } catch {
-      // Fallback to local storage
+    } catch (err) {
+      console.warn('Failed to fetch remote leaderboard:', err);
     }
   }
 
   const storageKey = `reelquest_lb_${challengeId}`;
   const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  
-  if (local.length === 0) {
-    return [
-      { rank: 1, username: 'NolanFan_99', hops: 2, durationSeconds: 28, isPro: true },
-      { rank: 2, username: 'FilmBuffTbilisi', hops: 2, durationSeconds: 41, isPro: false },
-      { rank: 3, username: 'CinemaParadiso', hops: 3, durationSeconds: 35, isPro: true },
-      { rank: 4, username: 'TarantinoVault', hops: 3, durationSeconds: 56, isPro: false },
-      { rank: 5, username: 'ScorseseLover', hops: 4, durationSeconds: 72, isPro: false }
-    ];
-  }
-
   return local.map((item, idx) => ({ rank: idx + 1, ...item }));
 }

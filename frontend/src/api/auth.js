@@ -204,11 +204,11 @@ export function getUserStats(userId) {
     // Return defaults
   }
   return {
-    streak: 3,
-    gamesPlayed: 5,
-    gamesWon: 4,
-    totalHops: 13,
-    bestHops: 2,
+    streak: 0,
+    gamesPlayed: 0,
+    gamesWon: 0,
+    totalHops: 0,
+    bestHops: 0,
     history: []
   };
 }

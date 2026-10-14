@@ -112,7 +112,7 @@ export function VictoryModal({
         </div>
 
         {/* Shortest Path Reveal */}
-        {optimalPath && optimalPath.length > 0 && (
+        {optimalPath && optimalPath.length > 0 ? (
           <div className="mb-6 rounded-xl border border-cinema-border bg-cinema-surface/70 p-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-gold">
@@ -123,7 +123,7 @@ export function VictoryModal({
 
             <div className="space-y-2">
               {optimalPath.map((step, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-xs">
+                <div key={idx} className="flex items-center gap-2 text-xs flex-wrap sm:flex-nowrap">
                   <div className="flex items-center gap-1.5 font-medium text-slate-200">
                     <User className="h-3.5 w-3.5 text-cinema-muted" />
                     <span>{step.actor?.name}</span>
@@ -144,6 +144,13 @@ export function VictoryModal({
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-6 rounded-xl border border-cinema-border/50 bg-cinema-surface/40 p-4 text-center">
+            <div className="flex items-center justify-center gap-2 text-xs text-cinema-muted">
+              <div className="h-3.5 w-3.5 rounded-full border-2 border-gold/40 border-t-gold animate-spin" />
+              <span>Computing optimal Hollywood path...</span>
             </div>
           </div>
         )}

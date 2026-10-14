@@ -10,6 +10,8 @@ import { HowToPlayModal } from './components/HowToPlayModal';
 import { ProSubscriptionModal } from './components/ProSubscriptionModal';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
+import { GameModeSelector } from './components/GameModeSelector';
+import { UpcomingGamePreview } from './components/UpcomingGamePreview';
 import { Film } from 'lucide-react';
 
 export default function App() {
@@ -33,10 +35,12 @@ export default function App() {
     clearSelectedMovie,
     selectActor,
     undoLastMove,
+    undoToStep,
     restartGame,
     giveUp
   } = useGameSession();
 
+  const [activeMode, setActiveMode] = useState('six-degrees');
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -54,7 +58,19 @@ export default function App() {
       />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-        {loading ? (
+        {/* Game Mode Navigation Tabs */}
+        <GameModeSelector
+          activeMode={activeMode}
+          onSelectMode={setActiveMode}
+        />
+
+        {activeMode !== 'six-degrees' ? (
+          <UpcomingGamePreview
+            modeId={activeMode}
+            onBackToMain={() => setActiveMode('six-degrees')}
+            onOpenPro={() => setIsProModalOpen(true)}
+          />
+        ) : loading ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-4">
             <div className="h-12 w-12 rounded-xl border-2 border-gold/40 border-t-gold animate-spin" />
             <p className="text-sm font-medium text-cinema-muted">Loading Hollywood graph...</p>
@@ -74,6 +90,7 @@ export default function App() {
             <VisualGraph
               chain={chain}
               targetActor={challenge?.targetActor}
+              onStepClick={undoToStep}
             />
 
             <ChainBuilder
@@ -87,6 +104,9 @@ export default function App() {
               onSelectMovie={selectMovie}
               onClearMovie={clearSelectedMovie}
               onSelectActor={selectActor}
+              onUndo={undoLastMove}
+              canUndo={chain.length > 1}
+              previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
             />
           </>
         )}

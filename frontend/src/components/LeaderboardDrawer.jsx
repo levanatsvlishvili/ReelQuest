@@ -112,8 +112,14 @@ export function LeaderboardDrawer({ isOpen, onClose, challengeId }) {
           })}
 
           {leaderboard.length === 0 && !loading && (
-            <div className="py-12 text-center text-xs text-cinema-muted">
-              No entries recorded yet today. Be the first to finish!
+            <div className="flex flex-col items-center justify-center py-16 text-center space-y-3 px-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold border border-gold/30 shadow-gold-glow">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <h4 className="text-sm font-bold text-white">No Scores Recorded Today</h4>
+              <p className="text-xs text-cinema-muted max-w-xs">
+                Be the first cinephile to complete today's challenge and claim the #1 spot on the leaderboard!
+              </p>
             </div>
           )}
         </div>

@@ -160,6 +160,31 @@ export function useGameSession() {
     setMoves(prev => Math.max(0, prev - 1));
   }, [chain, gameStatus]);
 
+  const undoToStep = useCallback((targetIndex) => {
+    if (targetIndex < 0 || targetIndex >= chain.length - 1 || gameStatus !== 'PLAYING') return;
+
+    const newChain = chain.slice(0, targetIndex + 1);
+    const targetNode = newChain[targetIndex];
+
+    setChain(newChain);
+    setCurrentActor(targetNode.actor);
+    setSelectedMovie(null);
+    setMoves(targetIndex);
+  }, [chain, gameStatus]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.key === 'Backspace' || (e.ctrlKey && e.key === 'z')) && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+        if (chain.length > 1 && gameStatus === 'PLAYING') {
+          e.preventDefault();
+          undoLastMove();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [chain.length, gameStatus, undoLastMove]);
+
   const restartGame = useCallback(() => {
     if (!challenge) return;
     setCurrentActor(challenge.startActor);
@@ -206,6 +231,7 @@ export function useGameSession() {
     clearSelectedMovie,
     selectActor,
     undoLastMove,
+    undoToStep,
     restartGame,
     giveUp
   };
