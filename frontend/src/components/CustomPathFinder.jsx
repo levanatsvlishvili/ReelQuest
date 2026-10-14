@@ -8,13 +8,10 @@ import {
   Crown,
   Play,
   Film,
-  User,
   CheckCircle2,
-  Lock,
-  Layers,
   Zap
 } from 'lucide-react';
-import { fetchPopularActors, fetchOptimalPath, getTmdbImageUrl } from '../api/client';
+import { fetchPopularActors, fetchOptimalPath } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 
 export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
@@ -99,7 +96,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
       if (result && Array.isArray(result) && result.length > 0) {
         setPathResult(result);
       } else {
-        setErrorMsg('No direct path found within 6 degrees in our curated graph.');
+        setErrorMsg('No direct movie path found between these two actors.');
       }
     } catch (err) {
       setErrorMsg('Failed to calculate shortest path. Please try another pair.');
@@ -126,7 +123,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
             </h2>
 
             <p className="text-sm text-slate-300 leading-relaxed">
-              Connect <strong className="text-white">ANY two actors in cinema history</strong> from our database of 37,000+ stars. Our Bidirectional BFS Graph Engine discovers the shortest chain of movies and co-stars in seconds.
+              Connect <strong className="text-white">ANY two actors in cinema history</strong>. Our Hollywood Graph Engine discovers the shortest chain of movies and co-stars in seconds.
             </p>
 
             {/* Feature Highlights Grid */}
@@ -135,9 +132,9 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15 text-gold mb-2.5">
                   <Search className="h-4 w-4" />
                 </div>
-                <h4 className="text-xs font-bold text-white">37,000+ Actors</h4>
+                <h4 className="text-xs font-bold text-white">Hollywood Legends</h4>
                 <p className="text-[11px] text-cinema-muted mt-1">
-                  Choose from Hollywood legends to modern indie stars.
+                  Select any starting and target star across cinema history.
                 </p>
               </div>
 
@@ -145,7 +142,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15 text-gold mb-2.5">
                   <Zap className="h-4 w-4" />
                 </div>
-                <h4 className="text-xs font-bold text-white">BFS Shortest Path</h4>
+                <h4 className="text-xs font-bold text-white">Shortest Path</h4>
                 <p className="text-[11px] text-cinema-muted mt-1">
                   Computes the mathematically optimal degrees of separation.
                 </p>
@@ -191,7 +188,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
           Shortest Hollywood Path Finder
         </h2>
         <p className="text-xs sm:text-sm text-cinema-muted">
-          Pick any two actors from our database of 37,000+ stars to compute their optimal connection
+          Pick any two actors to compute their optimal movie connection
         </p>
       </div>
 
@@ -234,22 +231,11 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
                     }}
                     className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-cinema-surface/80 text-left transition"
                   >
-                    <div className="h-8 w-8 rounded-full overflow-hidden bg-cinema-border/60 shrink-0">
-                      {actor.profilePath ? (
-                        <img
-                          src={getTmdbImageUrl(actor.profilePath)}
-                          alt={actor.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-cinema-muted text-xs">
-                          {actor.name.charAt(0)}
-                        </div>
-                      )}
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/10 text-gold border border-gold/30 shrink-0">
+                      <Sparkles className="h-3.5 w-3.5" />
                     </div>
                     <div className="truncate">
                       <div className="text-xs font-semibold text-white truncate">{actor.name}</div>
-                      <div className="text-[10px] text-cinema-muted">Star • Pop {Math.round(actor.popularity)}</div>
                     </div>
                   </button>
                 ))}
@@ -313,22 +299,11 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
                     }}
                     className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-cinema-surface/80 text-left transition"
                   >
-                    <div className="h-8 w-8 rounded-full overflow-hidden bg-cinema-border/60 shrink-0">
-                      {actor.profilePath ? (
-                        <img
-                          src={getTmdbImageUrl(actor.profilePath)}
-                          alt={actor.name}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center text-cinema-muted text-xs">
-                          {actor.name.charAt(0)}
-                        </div>
-                      )}
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/10 text-gold border border-gold/30 shrink-0">
+                      <Sparkles className="h-3.5 w-3.5" />
                     </div>
                     <div className="truncate">
                       <div className="text-xs font-semibold text-white truncate">{actor.name}</div>
-                      <div className="text-[10px] text-cinema-muted">Star • Pop {Math.round(actor.popularity)}</div>
                     </div>
                   </button>
                 ))}
@@ -346,7 +321,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-cinema-border/50">
           <div className="text-xs text-cinema-muted flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-gold" />
-            <span>Searchable pool: 3,500+ prominent Hollywood stars</span>
+            <span>Six Degrees Hollywood Connection</span>
           </div>
 
           <button
@@ -357,7 +332,7 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
             {calculating ? (
               <>
                 <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cinema-black border-t-transparent" />
-                <span>Exploring Graph Nodes...</span>
+                <span>Exploring Connection Graph...</span>
               </>
             ) : (
               <>

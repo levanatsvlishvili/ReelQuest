@@ -11,15 +11,17 @@ export function DailyDateNavigator({
 }) {
   const formatDateLabel = (dateStr) => {
     if (!dateStr) return 'Today';
-    const date = new Date(dateStr + 'T00:00:00');
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dateUtc = Date.UTC(y, m - 1, d);
+    const now = new Date();
+    const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
-    const diffDays = Math.round((today - date) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.round((todayUtc - dateUtc) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
 
-    return date.toLocaleDateString('en-US', {
+    return new Date(dateUtc).toLocaleDateString('en-US', {
+      timeZone: 'UTC',
       month: 'short',
       day: 'numeric',
       year: 'numeric'

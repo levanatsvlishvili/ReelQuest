@@ -162,7 +162,7 @@ export default function App() {
           <span>— The Cinematic Six Degrees Engine</span>
         </div>
         <p className="text-[11px]">
-          Curated with TMDB dataset (5,000+ Movies, 37,000+ Actors). Built with React 18, Tailwind CSS & AWS Serverless.
+          The ultimate movie connection trivia game. Powered by TMDB.
         </p>
       </footer>
 

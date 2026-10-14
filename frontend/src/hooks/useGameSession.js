@@ -343,20 +343,22 @@ export function useGameSession() {
     }
   }, [challenge, moves, timerSeconds, recordGame, isCustom, saveSession, chain, currentActor]);
 
+  function shiftDateStr(dateStr, days) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(Date.UTC(year, month - 1, day + days));
+    return d.toISOString().slice(0, 10);
+  }
+
   // Navigate to previous day
   const goToPrevDay = useCallback(() => {
-    const curr = new Date(activeDate + 'T00:00:00');
-    curr.setDate(curr.getDate() - 1);
-    const prevDateStr = curr.toISOString().slice(0, 10);
+    const prevDateStr = shiftDateStr(activeDate, -1);
     loadDateChallenge(prevDateStr);
   }, [activeDate, loadDateChallenge]);
 
   // Navigate to next day
   const goToNextDay = useCallback(() => {
     if (activeDate >= todayStr) return;
-    const curr = new Date(activeDate + 'T00:00:00');
-    curr.setDate(curr.getDate() + 1);
-    const nextDateStr = curr.toISOString().slice(0, 10);
+    const nextDateStr = shiftDateStr(activeDate, 1);
     if (nextDateStr <= todayStr) {
       loadDateChallenge(nextDateStr);
     }
