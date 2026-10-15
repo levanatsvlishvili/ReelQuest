@@ -3,8 +3,8 @@ import { GitFork, HelpCircle, DollarSign, History, Sparkles } from 'lucide-react
 export const GAME_MODES = [
   {
     id: 'six-degrees',
-    title: 'Six Degrees',
-    subtitle: 'Daily Challenge',
+    title: 'Beat Otara',
+    subtitle: 'Cinema Oracle Duel',
     icon: GitFork,
     status: 'ACTIVE',
     badge: 'LIVE'

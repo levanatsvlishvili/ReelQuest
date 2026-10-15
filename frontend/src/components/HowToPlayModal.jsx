@@ -56,13 +56,13 @@ export function HowToPlayModal({ isOpen, onClose }) {
           </div>
 
           <div className="flex gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
               <Zap className="h-4 w-4" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">Optimal BFS Path</h4>
+              <h4 className="text-sm font-semibold text-white">4. Beat Otara (The Cinema Oracle)</h4>
               <p className="text-xs text-cinema-muted">
-                Every daily puzzle is mathematically verified to have a shortest path. Try to match the optimal number of hops!
+                ოთარა ყოველდღიურად პოულობს უმოკლეს გზას. შეეჯიბრე ოთარას და ეცადე გაუთანაბრდე მის ნიშნულს!
               </p>
             </div>
           </div>

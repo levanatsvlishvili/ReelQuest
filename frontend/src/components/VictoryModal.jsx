@@ -73,20 +73,38 @@ export function VictoryModal({
         </button>
 
         <div className="text-center">
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold border border-gold/30 shadow-gold-glow">
-            {isWon ? <Trophy className="h-7 w-7" /> : <Sparkles className="h-7 w-7" />}
+          {/* Otara Reaction Mascot Badge */}
+          <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-2xl border-2 border-gold/70 bg-cinema-black shadow-gold-glow">
+            <img
+              src={
+                isWon
+                  ? isOptimal
+                    ? '/assets/otara/otara-impressed.jpg'
+                    : '/assets/otara/otara-encouraging.jpg'
+                  : '/assets/otara/otara-encouraging.jpg'
+              }
+              alt="Otara Reaction"
+              className="h-full w-full object-cover"
+            />
+            <span className="absolute bottom-1 left-1 right-1 rounded-md bg-cinema-black/85 px-1 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40">
+              ოთარა • Otara
+            </span>
           </div>
 
           <h2 className="text-xl font-extrabold text-white sm:text-2xl">
-            {isWon ? 'Cinematic Connection Complete!' : 'Challenge Revealed'}
-          </h2>
-
-          <p className="mt-1 text-xs text-cinema-muted">
             {isWon
               ? isOptimal
-                ? '🌟 Perfect Architect — you matched the optimal path!'
-                : 'Great detective work navigating Hollywood connections!'
-              : 'Here is the shortest path connection for today:'}
+                ? '🏆 ოთარას შედეგი გათანაბრებულია!'
+                : '🎬 კინოკავშირი დამყარებულია!'
+              : '🎬 ოთარას უმოკლესი გზა'}
+          </h2>
+
+          <p className="mt-2 text-xs sm:text-sm text-slate-300 italic px-2">
+            {isWon
+              ? isOptimal
+                ? `„საოცარია! შენ ზუსტად გაიმეორე ჩემი უმოკლესი გზა ${moves} სვლით! ნამდვილი კინომანი ხარ!“`
+                : `„ყოჩაღ, მიზნამდე მიხვედი ${moves} სვლით! ჩემი უმოკლესი გზა ${optimalHops} სვლა იყო. ნახე ჩემი მარშრუტი ქვემოთ!“`
+              : '„არაუშავს, ყველაზე დიდ რეჟისორებსაც ჭირდებათ რამდენიმე დუბლი! აი ჩემი უმოკლესი გზა:“'}
           </p>
         </div>
 

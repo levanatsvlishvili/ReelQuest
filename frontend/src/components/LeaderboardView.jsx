@@ -201,7 +201,7 @@ export function LeaderboardView({
               </h1>
             </div>
             <p className="text-xs text-cinema-muted">
-              Official Hollywood Six Degrees Hall of Fame & Daily Rankings
+              Official Beat Otara Hall of Fame & Daily Rankings
             </p>
           </div>
         </div>
@@ -240,7 +240,7 @@ export function LeaderboardView({
           }`}
         >
           <Trophy className="h-4 w-4" />
-          <span>Six Degrees</span>
+          <span>Beat Otara</span>
           <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[9px] font-bold text-emerald-400 border border-emerald-500/30">
             ACTIVE
           </span>

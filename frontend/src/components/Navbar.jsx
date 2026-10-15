@@ -28,7 +28,7 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
               </span>
             </div>
             <p className="text-[11px] text-cinema-muted hidden sm:block">
-              Six Degrees of Hollywood Cinema
+              The Hollywood Cinema Oracle • Beat Otara
             </p>
           </div>
         </div>

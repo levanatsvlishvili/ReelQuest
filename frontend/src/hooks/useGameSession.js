@@ -69,9 +69,10 @@ export function useGameSession() {
         setCurrentActor(saved.currentActor || saved.chain[saved.chain.length - 1].actor);
         setMoves(saved.moves || 0);
         setTimerSeconds(saved.timerSeconds || 0);
-        setGameStatus(saved.gameStatus || 'PLAYING');
+        const loadedStatus = saved.gameStatus || (saved.moves > 0 ? 'PLAYING' : 'READY');
+        setGameStatus(loadedStatus);
+        setShowVictory(false); // Never auto-popup modal when switching days or returning from leaderboard
         if (saved.gameStatus === 'WON' || saved.gameStatus === 'GAVE_UP') {
-          setShowVictory(true);
           fetchOptimalPath(daily.startActor.id, daily.targetActor.id)
             .then(shortest => setOptimalPath(shortest || []));
         }
@@ -80,8 +81,9 @@ export function useGameSession() {
         setChain([{ actor: daily.startActor, movie: null }]);
         setMoves(0);
         setTimerSeconds(0);
-        setGameStatus('PLAYING');
+        setGameStatus('READY');
         setOptimalPath([]);
+        setShowVictory(false);
       }
     } catch (err) {
       console.error('Failed to load challenge for date:', targetDateStr, err);
@@ -314,6 +316,18 @@ export function useGameSession() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [chain.length, selectedMovie, gameStatus, undoLastMove]);
 
+  const startGame = useCallback(() => {
+    if (!challenge) return;
+    setGameStatus('PLAYING');
+    saveSession(challenge.challengeId, {
+      chain,
+      currentActor,
+      moves,
+      timerSeconds,
+      gameStatus: 'PLAYING'
+    });
+  }, [challenge, chain, currentActor, moves, timerSeconds, saveSession]);
+
   const restartGame = useCallback(() => {
     if (!challenge) return;
     setCurrentActor(challenge.startActor);
@@ -321,7 +335,7 @@ export function useGameSession() {
     setChain([{ actor: challenge.startActor, movie: null }]);
     setMoves(0);
     setTimerSeconds(0);
-    setGameStatus('PLAYING');
+    setGameStatus('READY');
     setShowVictory(false);
 
     saveSession(challenge.challengeId, {
@@ -329,7 +343,7 @@ export function useGameSession() {
       currentActor: challenge.startActor,
       moves: 0,
       timerSeconds: 0,
-      gameStatus: 'PLAYING'
+      gameStatus: 'READY'
     });
   }, [challenge, saveSession]);
 
@@ -409,6 +423,8 @@ export function useGameSession() {
     loadDateChallenge,
     loadCustomChallenge,
     goToPrevDay,
-    goToNextDay
+    goToNextDay,
+    startGame,
+    openVictoryModal: () => setShowVictory(true)
   };
 }

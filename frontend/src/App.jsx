@@ -16,7 +16,8 @@ import { DailyDateNavigator } from './components/DailyDateNavigator';
 import { DailyArchiveModal } from './components/DailyArchiveModal';
 import { CustomPathFinder } from './components/CustomPathFinder';
 import { LeaderboardView } from './components/LeaderboardView';
-import { Film } from 'lucide-react';
+import { OtaraChallengeCard } from './components/OtaraChallengeCard';
+import { Film, Play } from 'lucide-react';
 
 export default function App() {
   const {
@@ -49,7 +50,9 @@ export default function App() {
     loadDateChallenge,
     loadCustomChallenge,
     goToPrevDay,
-    goToNextDay
+    goToNextDay,
+    startGame,
+    openVictoryModal
   } = useGameSession();
 
   const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
@@ -138,37 +141,85 @@ export default function App() {
                   </div>
                 )}
 
-                <ChallengeHeader
-                  challenge={challenge}
-                  moves={moves}
-                  timerSeconds={timerSeconds}
-                  onUndo={undoLastMove}
-                  onGiveUp={giveUp}
-                  canUndo={canUndo}
-                  gameStatus={gameStatus}
-                />
+                {/* Pre-Game READY State: Otara's Briefing & Start Challenge Button */}
+                {gameStatus === 'READY' ? (
+                  <div className="space-y-6">
+                    <OtaraChallengeCard
+                      challenge={challenge}
+                      gameStatus={gameStatus}
+                      moves={moves}
+                      timerSeconds={timerSeconds}
+                      onStart={startGame}
+                    />
 
-                <VisualGraph
-                  chain={chain}
-                  targetActor={challenge?.targetActor}
-                  onStepClick={undoToStep}
-                />
+                    {/* Locked Filmography Teaser */}
+                    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-cinema-border/60 bg-cinema-surface/40 backdrop-blur-sm space-y-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold border border-gold/30">
+                        <Film className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-bold text-white">
+                          ფილმოგრაფია ჩაკეტილია • Filmography Locked
+                        </h3>
+                        <p className="mt-1 text-xs text-cinema-muted max-w-md mx-auto">
+                          დააჭირეთ „დაწყება“-ს ზემოთ, რათა დაიწყოს დროის ათვლა და გამოჩნდეს {challenge.startActor?.name}-ის სრული ფილმოგრაფია.
+                        </p>
+                      </div>
+                      <button
+                        onClick={startGame}
+                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-6 py-2.5 text-xs font-extrabold text-cinema-black shadow-gold-glow hover:opacity-90 transition active:scale-95"
+                      >
+                        <Play className="h-4 w-4 fill-cinema-black" />
+                        <span>დაწყება • Start Game</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <ChallengeHeader
+                      challenge={challenge}
+                      moves={moves}
+                      timerSeconds={timerSeconds}
+                      onUndo={undoLastMove}
+                      onGiveUp={giveUp}
+                      canUndo={canUndo}
+                      gameStatus={gameStatus}
+                      onViewSummary={openVictoryModal}
+                    />
 
-                <ChainBuilder
-                  currentActor={currentActor}
-                  selectedMovie={selectedMovie}
-                  availableMovies={availableMovies}
-                  availableCast={availableCast}
-                  moviesLoading={moviesLoading}
-                  castLoading={castLoading}
-                  targetActor={challenge?.targetActor}
-                  onSelectMovie={selectMovie}
-                  onClearMovie={clearSelectedMovie}
-                  onSelectActor={selectActor}
-                  onUndo={undoLastMove}
-                  canUndo={canUndo}
-                  previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
-                />
+                    {/* Otara's Live Coaching / Post-game Reaction */}
+                    <OtaraChallengeCard
+                      challenge={challenge}
+                      gameStatus={gameStatus}
+                      moves={moves}
+                      timerSeconds={timerSeconds}
+                      onStart={startGame}
+                      onOpenSummary={openVictoryModal}
+                    />
+
+                    <VisualGraph
+                      chain={chain}
+                      targetActor={challenge?.targetActor}
+                      onStepClick={undoToStep}
+                    />
+
+                    <ChainBuilder
+                      currentActor={currentActor}
+                      selectedMovie={selectedMovie}
+                      availableMovies={availableMovies}
+                      availableCast={availableCast}
+                      moviesLoading={moviesLoading}
+                      castLoading={castLoading}
+                      targetActor={challenge?.targetActor}
+                      onSelectMovie={selectMovie}
+                      onClearMovie={clearSelectedMovie}
+                      onSelectActor={selectActor}
+                      onUndo={undoLastMove}
+                      canUndo={canUndo}
+                      previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
+                    />
+                  </>
+                )}
               </>
             )}
           </>
@@ -179,7 +230,7 @@ export default function App() {
         <div className="flex items-center justify-center gap-2 mb-1">
           <Film className="h-3.5 w-3.5 text-gold" />
           <span className="font-semibold text-slate-300">ReelQuest</span>
-          <span>— The Cinematic Six Degrees Engine</span>
+          <span>— The Hollywood Cinema Oracle • Beat Otara</span>
         </div>
         <p className="text-[11px]">
           The ultimate movie connection trivia game. Powered by TMDB.

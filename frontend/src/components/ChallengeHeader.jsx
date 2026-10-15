@@ -8,11 +8,13 @@ export function ChallengeHeader({
   onUndo,
   onGiveUp,
   canUndo,
-  gameStatus
+  gameStatus,
+  onViewSummary
 }) {
   if (!challenge) return null;
 
   const { startActor, targetActor, date } = challenge;
+  const optimalHops = challenge.optimalHops || 2;
 
   const minutes = Math.floor(timerSeconds / 60);
   const seconds = timerSeconds % 60;
@@ -55,14 +57,26 @@ export function ChallengeHeader({
             <span className="rounded-full bg-cinema-border/70 px-2.5 py-0.5 text-[11px] font-medium text-cinema-muted">
               Daily #{date}
             </span>
+            <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+              Beat Otara
+            </span>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 sm:gap-6">
             <div className="flex items-center gap-2 text-slate-200">
               <Footprints className="h-4 w-4 text-gold" />
               <div className="text-center">
                 <span className="text-xs text-cinema-muted block">Hops</span>
                 <span className="text-base font-bold sm:text-lg">{moves}</span>
+              </div>
+            </div>
+
+            <div className="h-8 w-px bg-cinema-border" />
+
+            <div className="flex items-center gap-2 text-amber-300">
+              <div className="text-center">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Otara's Par</span>
+                <span className="text-base font-bold sm:text-lg text-amber-400">{optimalHops}</span>
               </div>
             </div>
 
@@ -96,6 +110,16 @@ export function ChallengeHeader({
               >
                 <Flag className="h-3 w-3" />
                 <span>Give Up</span>
+              </button>
+            )}
+
+            {gameStatus === 'WON' && onViewSummary && (
+              <button
+                onClick={onViewSummary}
+                className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold transition hover:bg-gold hover:text-cinema-black shadow-sm"
+                title="View Result Summary & Otara's praise"
+              >
+                <span>View Results</span>
               </button>
             )}
           </div>
