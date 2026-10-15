@@ -62,7 +62,7 @@ export function HowToPlayModal({ isOpen, onClose }) {
             <div>
               <h4 className="text-sm font-semibold text-white">4. Beat Otara (The Cinema Oracle)</h4>
               <p className="text-xs text-cinema-muted">
-                ოთარა ყოველდღიურად პოულობს უმოკლეს გზას. შეეჯიბრე ოთარას და ეცადე გაუთანაბრდე მის ნიშნულს!
+                Otara calculates the optimal route for every daily challenge. Compete against him and try to match his benchmark!
               </p>
             </div>
           </div>

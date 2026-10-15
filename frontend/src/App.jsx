@@ -159,10 +159,10 @@ export default function App() {
                       </div>
                       <div>
                         <h3 className="text-sm sm:text-base font-bold text-white">
-                          ფილმოგრაფია ჩაკეტილია • Filmography Locked
+                          Filmography Locked
                         </h3>
                         <p className="mt-1 text-xs text-cinema-muted max-w-md mx-auto">
-                          დააჭირეთ „დაწყება“-ს ზემოთ, რათა დაიწყოს დროის ათვლა და გამოჩნდეს {challenge.startActor?.name}-ის სრული ფილმოგრაფია.
+                          Click "Start Challenge" above to start the timer and reveal {challenge.startActor?.name}'s filmography.
                         </p>
                       </div>
                       <button
@@ -170,7 +170,7 @@ export default function App() {
                         className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-6 py-2.5 text-xs font-extrabold text-cinema-black shadow-gold-glow hover:opacity-90 transition active:scale-95"
                       >
                         <Play className="h-4 w-4 fill-cinema-black" />
-                        <span>დაწყება • Start Game</span>
+                        <span>Start Challenge</span>
                       </button>
                     </div>
                   </div>

@@ -73,38 +73,35 @@ export function VictoryModal({
         </button>
 
         <div className="text-center">
-          {/* Otara Reaction Mascot Badge */}
-          <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-2xl border-2 border-gold/70 bg-cinema-black shadow-gold-glow">
+          {/* Otara Reaction Mascot Badge (Unboxed Transparent Cutout) */}
+          <div className="relative mx-auto mb-3 h-32 w-28 sm:h-36 sm:w-32 animate-otara-float">
             <img
               src={
                 isWon
                   ? isOptimal
-                    ? '/assets/otara/otara-impressed.jpg'
-                    : '/assets/otara/otara-encouraging.jpg'
-                  : '/assets/otara/otara-encouraging.jpg'
+                    ? '/assets/otara/otara-impressed.png'
+                    : '/assets/otara/otara-encouraging.png'
+                  : '/assets/otara/otara-encouraging.png'
               }
               alt="Otara Reaction"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] drop-shadow-[0_0_20px_rgba(230,175,46,0.3)]"
             />
-            <span className="absolute bottom-1 left-1 right-1 rounded-md bg-cinema-black/85 px-1 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40">
-              ოთარა • Otara
-            </span>
           </div>
 
           <h2 className="text-xl font-extrabold text-white sm:text-2xl">
             {isWon
               ? isOptimal
-                ? '🏆 ოთარას შედეგი გათანაბრებულია!'
-                : '🎬 კინოკავშირი დამყარებულია!'
-              : '🎬 ოთარას უმოკლესი გზა'}
+                ? "🏆 Tied Otara's Benchmark!"
+                : '🎬 Cinematic Connection Complete!'
+              : "🎬 Otara's Optimal Route"}
           </h2>
 
           <p className="mt-2 text-xs sm:text-sm text-slate-300 italic px-2">
             {isWon
               ? isOptimal
-                ? `„საოცარია! შენ ზუსტად გაიმეორე ჩემი უმოკლესი გზა ${moves} სვლით! ნამდვილი კინომანი ხარ!“`
-                : `„ყოჩაღ, მიზნამდე მიხვედი ${moves} სვლით! ჩემი უმოკლესი გზა ${optimalHops} სვლა იყო. ნახე ჩემი მარშრუტი ქვემოთ!“`
-              : '„არაუშავს, ყველაზე დიდ რეჟისორებსაც ჭირდებათ რამდენიმე დუბლი! აი ჩემი უმოკლესი გზა:“'}
+                ? `"Brilliant! You matched my optimal route in ${moves} hops! A true cinephile!"`
+                : `"Well played! You reached the target in ${moves} hops! My shortest path was ${optimalHops} hops. Check my route below!"`
+              : '"No worries! Even master directors need a second take. Here is my optimal path:"'}
           </p>
         </div>
 
