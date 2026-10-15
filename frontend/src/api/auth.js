@@ -195,11 +195,63 @@ export async function simulatePaymentWebhook(orderId, success = true) {
   return await res.json();
 }
 
+export function shiftDateStr(dateStr, days) {
+  if (!dateStr || dateStr === 'Custom') return new Date().toISOString().slice(0, 10);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(Date.UTC(year, month - 1, day + days));
+  return d.toISOString().slice(0, 10);
+}
+
+export function calculateStreak(dailyWins = [], todayStr = new Date().toISOString().slice(0, 10)) {
+  const winSet = new Set(dailyWins || []);
+  if (winSet.size === 0) return 0;
+
+  let streak = 0;
+  let checkDate = todayStr;
+
+  // If today's challenge was won on-time:
+  if (winSet.has(checkDate)) {
+    streak += 1;
+    checkDate = shiftDateStr(checkDate, -1);
+    while (winSet.has(checkDate)) {
+      streak += 1;
+      checkDate = shiftDateStr(checkDate, -1);
+    }
+    return streak;
+  }
+
+  // Today has not yet been won: check if yesterday was won to preserve the streak
+  checkDate = shiftDateStr(todayStr, -1);
+  while (winSet.has(checkDate)) {
+    streak += 1;
+    checkDate = shiftDateStr(checkDate, -1);
+  }
+
+  return streak;
+}
+
 export function getUserStats(userId) {
   const key = `${STATS_KEY}_${userId || 'guest'}`;
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   try {
     const raw = localStorage.getItem(key);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      let dailyWins = parsed.dailyWins || [];
+      // If dailyWins is empty but history has won games, extract on-time wins
+      if (dailyWins.length === 0 && Array.isArray(parsed.history)) {
+        dailyWins = parsed.history
+          .filter(h => h.won && h.date)
+          .map(h => h.date);
+      }
+      const calculatedStreak = calculateStreak(dailyWins, todayStr);
+      return {
+        ...parsed,
+        dailyWins,
+        streak: Math.max(calculatedStreak, parsed.streak || 0)
+      };
+    }
   } catch {
     // Return defaults
   }
@@ -209,28 +261,45 @@ export function getUserStats(userId) {
     gamesWon: 0,
     totalHops: 0,
     bestHops: 0,
+    dailyWins: [],
     history: []
   };
 }
 
 export function recordGameResult(userId, gameResult) {
   const stats = getUserStats(userId);
+  const todayStr = new Date().toISOString().slice(0, 10);
   stats.gamesPlayed += 1;
+
   if (gameResult.won) {
     stats.gamesWon += 1;
-    stats.streak += 1;
     if (!stats.bestHops || gameResult.hops < stats.bestHops) {
       stats.bestHops = gameResult.hops;
     }
-  } else {
-    stats.streak = 0;
+
+    // STRICT CONSECUTIVE DAILY CHALLENGE STREAK RULE:
+    // Only completing today's challenge on its active calendar date counts towards the streak!
+    // Solving archive challenges (e.g. from 3 days ago) must NOT extend or increment the streak.
+    const isTodayChallenge = gameResult.date === todayStr;
+    if (isTodayChallenge) {
+      if (!stats.dailyWins) stats.dailyWins = [];
+      if (!stats.dailyWins.includes(todayStr)) {
+        stats.dailyWins.push(todayStr);
+      }
+    }
   }
-  stats.totalHops += gameResult.hops;
+
+  // Recalculate streak
+  stats.streak = calculateStreak(stats.dailyWins || [], todayStr);
+  stats.totalHops += (gameResult.hops || 0);
+
+  if (!stats.history) stats.history = [];
   stats.history.unshift({
     date: gameResult.date,
     won: gameResult.won,
     hops: gameResult.hops,
-    duration: gameResult.durationSeconds
+    duration: gameResult.durationSeconds,
+    timestamp: new Date().toISOString()
   });
 
   if (stats.history.length > 30) stats.history.pop();

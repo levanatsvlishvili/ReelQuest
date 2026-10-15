@@ -118,7 +118,7 @@ export default function App() {
                 {!isCustom && (
                   <DailyDateNavigator
                     currentDate={activeDate}
-                    isToday={isToday}
+                    onSelectDate={loadDateChallenge}
                     onPrevDay={goToPrevDay}
                     onNextDay={goToNextDay}
                     onOpenArchive={() => setIsArchiveOpen(true)}

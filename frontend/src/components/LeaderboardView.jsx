@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { 
   Trophy, Crown, ArrowLeft, RefreshCw, Calendar, Flame, Medal, Footprints, 
-  Clock, Play, ChevronLeft, ChevronRight, Sparkles, User, LogIn, Lock, Swords, Zap
+  Clock, Play, Sparkles, User, LogIn, Lock, Swords, Zap
 } from 'lucide-react';
 import { fetchLeaderboard, getTmdbImageUrl } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { DailyDateNavigator } from './DailyDateNavigator';
 
 export function LeaderboardView({ 
   onBackToGame, 
@@ -49,6 +50,133 @@ export function LeaderboardView({
   const nextDate = shiftDateStr(activeDate, 1);
   const todayStr = new Date().toISOString().slice(0, 10);
   const canGoForward = activeDate < todayStr;
+
+  const renderCard1 = (entry, isSolo = false) => (
+    <div className={`flex flex-col justify-between rounded-2xl border-2 border-gold/70 bg-gradient-to-b from-gold/20 via-cinema-card to-cinema-card p-6 shadow-gold-glow ${!isSolo ? 'order-1 md:order-2 md:-translate-y-2' : ''}`}>
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/30 border border-amber-500/50 px-3 py-1.5 text-xs font-black text-amber-400 shadow-sm">
+          <Crown className="h-4 w-4 fill-amber-400" />
+          #1 CHAMPION
+        </span>
+        {entry.isPro && (
+          <span className="flex items-center gap-0.5 rounded-full bg-gold/20 px-2.5 py-0.5 text-[10px] font-bold text-gold border border-gold/40">
+            PRO
+          </span>
+        )}
+      </div>
+
+      <div className="my-5 text-center">
+        <h4 className="text-lg sm:text-xl font-extrabold text-white truncate">{entry.username}</h4>
+        <span className="text-xs font-semibold text-gold">
+          {activeTab === 'daily' ? `${entry.hops} Hops Champion` : 'All-Time Grandmaster'}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-gold/30 pt-3 text-xs">
+        {activeTab === 'daily' ? (
+          <>
+            <div className="flex items-center gap-1.5 font-bold text-slate-100">
+              <Footprints className="h-4 w-4 text-gold" />
+              <span>{entry.hops} hops</span>
+            </div>
+            <div className="flex items-center gap-1 font-mono text-slate-300">
+              <Clock className="h-4 w-4 text-gold" />
+              <span>{Math.floor((entry.durationSeconds || 0) / 60)}m {(entry.durationSeconds || 0) % 60}s</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="font-semibold text-slate-300">{entry.moves || 1} games won</span>
+            <span className="text-sm font-extrabold text-gold">{(entry.score || 0).toLocaleString()} pts</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderCard2 = (entry) => (
+    <div className="order-2 md:order-1 flex flex-col justify-between rounded-2xl border border-slate-300/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 rounded-xl bg-slate-300/20 border border-slate-300/40 px-3 py-1 text-xs font-bold text-slate-200 shadow-sm">
+          <Medal className="h-4 w-4 text-slate-300" />
+          #2 RUNNER UP
+        </span>
+        {entry.isPro && (
+          <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
+            <Crown className="h-3 w-3" />
+            PRO
+          </span>
+        )}
+      </div>
+
+      <div className="my-4 text-center">
+        <h4 className="text-base sm:text-lg font-bold text-white truncate">{entry.username}</h4>
+        <span className="text-[11px] text-cinema-muted">Rank #2 Cinephile</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
+        {activeTab === 'daily' ? (
+          <>
+            <div className="flex items-center gap-1 text-slate-200">
+              <Footprints className="h-3.5 w-3.5 text-gold" />
+              <span>{entry.hops} hops</span>
+            </div>
+            <div className="flex items-center gap-1 font-mono text-cinema-muted">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{Math.floor((entry.durationSeconds || 0) / 60)}m {(entry.durationSeconds || 0) % 60}s</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-cinema-muted">{entry.moves || 1} games won</span>
+            <span className="font-bold text-gold">{(entry.score || 0).toLocaleString()} pts</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderCard3 = (entry) => (
+    <div className="order-3 flex flex-col justify-between rounded-2xl border border-amber-700/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 rounded-xl bg-amber-700/20 border border-amber-700/40 px-3 py-1 text-xs font-bold text-amber-500 shadow-sm">
+          <Medal className="h-4 w-4 text-amber-600" />
+          #3 BRONZE
+        </span>
+        {entry.isPro && (
+          <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
+            <Crown className="h-3 w-3" />
+            PRO
+          </span>
+        )}
+      </div>
+
+      <div className="my-4 text-center">
+        <h4 className="text-base sm:text-lg font-bold text-white truncate">{entry.username}</h4>
+        <span className="text-[11px] text-cinema-muted">Rank #3 Cinephile</span>
+      </div>
+
+      <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
+        {activeTab === 'daily' ? (
+          <>
+            <div className="flex items-center gap-1 text-slate-200">
+              <Footprints className="h-3.5 w-3.5 text-gold" />
+              <span>{entry.hops} hops</span>
+            </div>
+            <div className="flex items-center gap-1 font-mono text-cinema-muted">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{Math.floor((entry.durationSeconds || 0) / 60)}m {(entry.durationSeconds || 0) % 60}s</span>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="text-cinema-muted">{entry.moves || 1} games won</span>
+            <span className="font-bold text-gold">{(entry.score || 0).toLocaleString()} pts</span>
+          </>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
@@ -171,27 +299,17 @@ export function LeaderboardView({
 
         {/* Date Selector (Only when Daily is selected) */}
         {activeTab === 'daily' && (
-          <div className="flex items-center gap-2 self-start sm:self-auto rounded-xl border border-cinema-border bg-cinema-surface/60 px-2 py-1">
-            <button
-              onClick={() => onSelectDate(prevDate)}
-              className="rounded-lg p-1 text-cinema-muted hover:bg-cinema-surface hover:text-white transition"
-              title="Previous Day"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-
-            <span className="text-xs font-bold text-slate-200 min-w-[120px] text-center">
-              {activeDate === todayStr ? `Today (${activeDate})` : activeDate}
-            </span>
-
-            <button
-              onClick={() => onSelectDate(nextDate)}
-              disabled={!canGoForward}
-              className="rounded-lg p-1 text-cinema-muted hover:bg-cinema-surface hover:text-white transition disabled:cursor-not-allowed disabled:opacity-30"
-              title="Next Day"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+          <div className="w-full sm:w-auto">
+            <DailyDateNavigator
+              currentDate={activeDate}
+              onSelectDate={onSelectDate}
+              onPrevDay={() => onSelectDate(prevDate)}
+              onNextDay={() => {
+                if (canGoForward) onSelectDate(nextDate);
+              }}
+              onResetToToday={() => onSelectDate(todayStr)}
+              compact={true}
+            />
           </div>
         )}
       </div>
@@ -288,130 +406,21 @@ export function LeaderboardView({
 
       {/* Leaderboard Podium (Top 3) */}
       {top3.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          {/* #2 Silver */}
-          {top3[1] && (
-            <div className="order-2 md:order-1 flex flex-col justify-between rounded-2xl border border-slate-300/30 bg-cinema-surface/70 p-5 shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-300/20 text-slate-200 border border-slate-300/40 text-sm font-bold">
-                  🥈 #2
-                </span>
-                {top3[1].isPro && (
-                  <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
-                    <Crown className="h-3 w-3" />
-                    PRO
-                  </span>
-                )}
-              </div>
-
-              <div className="my-4 text-center">
-                <h4 className="text-base font-bold text-white truncate">{top3[1].username}</h4>
-                <span className="text-[11px] text-cinema-muted">Rank #2 Cinephile</span>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
-                {activeTab === 'daily' ? (
-                  <>
-                    <div className="flex items-center gap-1 text-slate-200">
-                      <Footprints className="h-3.5 w-3.5 text-gold" />
-                      <span>{top3[1].hops} hops</span>
-                    </div>
-                    <div className="flex items-center gap-1 font-mono text-cinema-muted">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{Math.floor((top3[1].durationSeconds || 0) / 60)}m {(top3[1].durationSeconds || 0) % 60}s</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-cinema-muted">{top3[1].moves || 1} games won</span>
-                    <span className="font-bold text-gold">{(top3[1].score || 0).toLocaleString()} pts</span>
-                  </>
-                )}
-              </div>
+        <div className="pt-2">
+          {top3.length === 1 ? (
+            <div className="max-w-md mx-auto">
+              {renderCard1(top3[0], true)}
             </div>
-          )}
-
-          {/* #1 Gold Champion */}
-          {top3[0] && (
-            <div className="order-1 md:order-2 flex flex-col justify-between rounded-2xl border-2 border-gold/60 bg-gradient-to-b from-gold/15 via-cinema-card to-cinema-card p-6 shadow-gold-glow md:-translate-y-2">
-              <div className="flex items-center justify-between">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/50 text-base font-extrabold shadow-sm">
-                  🥇 #1
-                </span>
-                <div className="flex items-center gap-1 rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-bold text-gold border border-gold/40">
-                  <Crown className="h-3.5 w-3.5 fill-gold" />
-                  <span>CHAMPION</span>
-                </div>
-              </div>
-
-              <div className="my-5 text-center">
-                <h4 className="text-lg font-extrabold text-white truncate">{top3[0].username}</h4>
-                <span className="text-xs font-semibold text-gold">
-                  {activeTab === 'daily' ? `${top3[0].hops} Hops Champion` : 'All-Time Grandmaster'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-gold/30 pt-3 text-xs">
-                {activeTab === 'daily' ? (
-                  <>
-                    <div className="flex items-center gap-1.5 font-bold text-slate-100">
-                      <Footprints className="h-4 w-4 text-gold" />
-                      <span>{top3[0].hops} hops</span>
-                    </div>
-                    <div className="flex items-center gap-1 font-mono text-slate-300">
-                      <Clock className="h-4 w-4 text-gold" />
-                      <span>{Math.floor((top3[0].durationSeconds || 0) / 60)}m {(top3[0].durationSeconds || 0) % 60}s</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="font-semibold text-slate-300">{top3[0].moves || 1} games won</span>
-                    <span className="text-sm font-extrabold text-gold">{(top3[0].score || 0).toLocaleString()} pts</span>
-                  </>
-                )}
-              </div>
+          ) : top3.length === 2 ? (
+            <div className="max-w-2xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+              {renderCard1(top3[0], true)}
+              {renderCard2(top3[1])}
             </div>
-          )}
-
-          {/* #3 Bronze */}
-          {top3[2] && (
-            <div className="order-3 flex flex-col justify-between rounded-2xl border border-amber-700/30 bg-cinema-surface/70 p-5 shadow-lg backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-700/20 text-amber-600 border border-amber-700/40 text-sm font-bold">
-                  🥉 #3
-                </span>
-                {top3[2].isPro && (
-                  <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
-                    <Crown className="h-3 w-3" />
-                    PRO
-                  </span>
-                )}
-              </div>
-
-              <div className="my-4 text-center">
-                <h4 className="text-base font-bold text-white truncate">{top3[2].username}</h4>
-                <span className="text-[11px] text-cinema-muted">Rank #3 Cinephile</span>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
-                {activeTab === 'daily' ? (
-                  <>
-                    <div className="flex items-center gap-1 text-slate-200">
-                      <Footprints className="h-3.5 w-3.5 text-gold" />
-                      <span>{top3[2].hops} hops</span>
-                    </div>
-                    <div className="flex items-center gap-1 font-mono text-cinema-muted">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{Math.floor((top3[2].durationSeconds || 0) / 60)}m {(top3[2].durationSeconds || 0) % 60}s</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-cinema-muted">{top3[2].moves || 1} games won</span>
-                    <span className="font-bold text-gold">{(top3[2].score || 0).toLocaleString()} pts</span>
-                  </>
-                )}
-              </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              {renderCard2(top3[1])}
+              {renderCard1(top3[0], false)}
+              {renderCard3(top3[2])}
             </div>
           )}
         </div>

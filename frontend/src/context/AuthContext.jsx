@@ -36,14 +36,18 @@ export function AuthProvider({ children }) {
                 localStorage.setItem('reelquest_auth', JSON.stringify(authData));
               }
             }
-            setStats(prev => ({
-              ...prev,
-              streak: profile.streak ?? prev?.streak ?? 0,
-              gamesPlayed: profile.gamesPlayed ?? prev?.gamesPlayed ?? 0,
-              gamesWon: profile.gamesWon ?? prev?.gamesWon ?? 0,
-              bestHops: profile.bestHops ?? prev?.bestHops ?? 0,
-              totalScore: profile.totalScore ?? prev?.totalScore ?? 0
-            }));
+            setStats(prev => {
+              const localStreak = prev?.streak ?? 0;
+              const profileStreak = profile.streak ?? 0;
+              return {
+                ...prev,
+                streak: Math.max(localStreak, profileStreak),
+                gamesPlayed: profile.gamesPlayed ?? prev?.gamesPlayed ?? 0,
+                gamesWon: profile.gamesWon ?? prev?.gamesWon ?? 0,
+                bestHops: profile.bestHops ?? prev?.bestHops ?? 0,
+                totalScore: profile.totalScore ?? prev?.totalScore ?? 0
+              };
+            });
           }
         })
         .catch(() => {});
@@ -64,14 +68,18 @@ export function AuthProvider({ children }) {
           if (profile.tier === 'PRO') {
             setProStatus(true);
           }
-          setStats(prev => ({
-            ...prev,
-            streak: profile.streak ?? 0,
-            gamesPlayed: profile.gamesPlayed ?? 0,
-            gamesWon: profile.gamesWon ?? 0,
-            bestHops: profile.bestHops ?? 0,
-            totalScore: profile.totalScore ?? 0
-          }));
+          setStats(prev => {
+            const localStreak = prev?.streak ?? 0;
+            const profileStreak = profile.streak ?? 0;
+            return {
+              ...prev,
+              streak: Math.max(localStreak, profileStreak),
+              gamesPlayed: profile.gamesPlayed ?? 0,
+              gamesWon: profile.gamesWon ?? 0,
+              bestHops: profile.bestHops ?? 0,
+              totalScore: profile.totalScore ?? 0
+            };
+          });
         }
       })
       .catch(() => {});
