@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
+import OtaraObservingMascot from './OtaraObservingMascot';
 
 export function OtaraChallengeCard({
   challenge,
@@ -156,44 +157,56 @@ export function OtaraChallengeCard({
     );
   }
 
-  // Active Gameplay HUD Banner: Otara is observing the player live
+  // Active Gameplay HUD: Otara is observing the player live with animated eye tracking!
   return (
-    <div className="flex items-center justify-between gap-3 rounded-2xl border border-cinema-border/70 bg-cinema-surface/60 px-4 py-2.5 backdrop-blur-md">
-      <div className="flex items-center gap-3">
-        <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-gold/70 bg-cinema-black/80 shadow-md animate-otara-glow">
-          <img
-            src="/assets/otara/otara-avatar.png"
-            alt="Otara Avatar"
-            className="h-full w-full object-cover"
-          />
+    <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3 sm:p-4 shadow-xl backdrop-blur-md">
+      {/* Subtle ambient light */}
+      <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-gold/10 blur-2xl pointer-events-none" />
+
+      <div className="flex items-center gap-4 sm:gap-6">
+        {/* Animated Observing Otara with live eye tracking */}
+        <div className="relative shrink-0 flex items-center justify-center">
+          <OtaraObservingMascot moves={moves} optimalHops={optimalHops} size="md" />
+          <div className="absolute bottom-1 right-2 flex h-3.5 w-3.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-cinema-black"></span>
+          </div>
         </div>
-        <div>
+
+        {/* Dynamic commentary speech bubble */}
+        <div className="flex-1 min-w-0 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="text-xs font-black text-white flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-gold fill-gold" />
+              Otara is Watching
             </span>
-            <span className="text-xs font-bold text-white">Otara is Watching</span>
-            <span className="rounded-full bg-gold/15 border border-gold/30 px-1.5 py-0.2 text-[9px] font-bold text-gold">
+            <span className="rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2 py-0.5 text-[9px] font-extrabold text-emerald-400 tracking-wider">
+              LIVE EYE TRACKING
+            </span>
+            <span className="hidden sm:inline-block rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[9px] font-bold text-gold">
               ORACLE
             </span>
           </div>
-          <p className="text-[11px] text-cinema-muted">
-            {moves === 0
-              ? `Otara's shortest path is ${optimalHops} hops. Pick your first movie!`
-              : moves < optimalHops
-                ? `Looking sharp! You're at ${moves} hops, right on pace with Otara.`
-                : moves === optimalHops
-                  ? `One more direct hop will tie Otara's benchmark!`
-                  : `Otara solved it in ${optimalHops} hops. You can still reach the target!`}
-          </p>
-        </div>
-      </div>
 
-      <div className="hidden sm:flex items-center gap-2 shrink-0">
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-center">
-          <span className="text-[9px] uppercase tracking-wider text-amber-400 block font-semibold">Otara's Par</span>
-          <span className="text-xs font-black text-white">{optimalHops} Hops</span>
+          <p className="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
+            {moves === 0
+              ? `„I already found the route in ${optimalHops} hops. Select your opening film...“`
+              : moves < optimalHops
+                ? `„Looking sharp! You're at ${moves} hops, right on pace with my calculation.“`
+                : moves === optimalHops
+                  ? `„Tense moment! One direct connection will tie my record!“`
+                  : `„You took a scenic detour, but the connection is still alive. Reach the target!“`}
+          </p>
+
+          <div className="pt-1 flex items-center gap-3 text-[11px] text-cinema-muted">
+            <span>
+              Your Hops: <strong className="text-white">{moves}</strong>
+            </span>
+            <span>•</span>
+            <span>
+              Otara's Par: <strong className="text-gold font-bold">{optimalHops} Hops</strong>
+            </span>
+          </div>
         </div>
       </div>
     </div>
