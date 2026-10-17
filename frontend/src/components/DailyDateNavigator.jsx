@@ -20,9 +20,18 @@ export function DailyDateNavigator({
     return date.toISOString().slice(0, 10);
   }
 
-  function getDayMeta(dateStr) {
+  function getDiffDaysFromToday(dateStr) {
+    if (!dateStr || dateStr === 'Custom') return 0;
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dateUtc = new Date(Date.UTC(y, m - 1, d));
+    const [ty, tm, td] = todayStr.split('-').map(Number);
+    const todayUtc = new Date(Date.UTC(ty, tm - 1, td));
+    return Math.round((todayUtc - dateUtc) / (1000 * 60 * 60 * 24));
+  }
+
+  function getDayMeta(dateStr, offset = 0) {
     if (!dateStr || dateStr === 'Custom') {
-      return { dateStr: todayStr, relative: 'Today', formatted: 'Today', isToday: true, isFuture: false };
+      return { dateStr: todayStr, relative: 'Today', formatted: 'Today', isToday: true, isFuture: false, offset };
     }
     const [y, m, d] = dateStr.split('-').map(Number);
     const dateUtc = new Date(Date.UTC(y, m - 1, d));
@@ -35,7 +44,6 @@ export function DailyDateNavigator({
     let relative = '';
     if (diffDays === 0) relative = 'Today';
     else if (diffDays === 1) relative = 'Yesterday';
-    else if (diffDays === 2) relative = '2 Days Ago';
     else if (isFuture) relative = 'Future';
     else {
       relative = dateUtc.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' });
@@ -52,30 +60,42 @@ export function DailyDateNavigator({
       relative,
       formatted,
       isToday: diffDays === 0,
-      isFuture
+      isFuture,
+      offset
     };
   }
 
-  // Generate date slots around currentDate
-  // Left: past days [-2, -1]
-  // Center: currentDate [0]
-  // Right: subsequent days [+1, +2] up to todayStr
-  const leftSlots = [
-    getDayMeta(shiftDateStr(currentDate, -2)),
-    getDayMeta(shiftDateStr(currentDate, -1))
-  ];
+  // Dynamic slot generation:
+  // Dynamically fills the navigator to eliminate empty space across all breakpoints.
+  // When on Today, shows up to 10 past days.
+  // When in the past, shows subsequent days up to todayStr, and earlier days to the left.
+  const daysFromToday = getDiffDaysFromToday(currentDate);
+  const maxRight = Math.min(Math.max(0, daysFromToday), 4);
+  const leftCount = Math.max(2, 10 - maxRight);
 
-  const centerSlot = getDayMeta(currentDate);
+  const leftSlots = [];
+  for (let i = leftCount; i >= 1; i--) {
+    leftSlots.push(getDayMeta(shiftDateStr(currentDate, -i), -i));
+  }
 
-  // Subsequent days: only include if <= todayStr
+  const centerSlot = getDayMeta(currentDate, 0);
+
   const rightSlots = [];
-  const next1Str = shiftDateStr(currentDate, 1);
-  if (next1Str <= todayStr) {
-    rightSlots.push(getDayMeta(next1Str));
-    const next2Str = shiftDateStr(currentDate, 2);
-    if (next2Str <= todayStr) {
-      rightSlots.push(getDayMeta(next2Str));
+  for (let i = 1; i <= maxRight; i++) {
+    const nextStr = shiftDateStr(currentDate, i);
+    if (nextStr <= todayStr) {
+      rightSlots.push(getDayMeta(nextStr, i));
     }
+  }
+
+  function getVisibilityClass(offset) {
+    const dist = Math.abs(offset);
+    if (dist <= 1) return 'flex';
+    if (dist <= 2) return 'hidden sm:flex';
+    if (dist <= 4) return 'hidden md:flex';
+    if (dist <= 6) return 'hidden lg:flex';
+    if (dist <= 8) return 'hidden xl:flex';
+    return 'hidden 2xl:flex';
   }
 
   const handleDateClick = (dateStr) => {
@@ -87,7 +107,7 @@ export function DailyDateNavigator({
   return (
     <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-2.5 sm:p-3 shadow-lg backdrop-blur-md ${compact ? 'w-full' : ''}`}>
       {/* Left controls & Carousel */}
-      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start overflow-x-auto py-0.5 scrollbar-none">
+      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-center sm:justify-start overflow-x-auto py-0.5 scrollbar-none">
         {/* Step backward */}
         <button
           onClick={onPrevDay}
@@ -98,38 +118,26 @@ export function DailyDateNavigator({
         </button>
 
         {/* Carousel Ribbon: [ Left Days ] [ ★ CENTER ACTIVE ★ ] [ Right Days ] */}
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          {/* Day - 2 (desktop only) */}
-          <button
-            onClick={() => handleDateClick(leftSlots[0].dateStr)}
-            className="hidden md:flex flex-col items-center justify-center rounded-xl border border-cinema-border/60 bg-cinema-black/40 px-2.5 py-1 text-slate-400 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95"
-            title={`Play ${leftSlots[0].relative} (${leftSlots[0].formatted})`}
-          >
-            <span className="text-[9px] font-semibold uppercase text-cinema-muted">
-              {leftSlots[0].relative}
-            </span>
-            <span className="text-xs font-bold text-slate-300 whitespace-nowrap">
-              {leftSlots[0].formatted}
-            </span>
-          </button>
-
-          {/* Day - 1 */}
-          <button
-            onClick={() => handleDateClick(leftSlots[1].dateStr)}
-            className="flex flex-col items-center justify-center rounded-xl border border-cinema-border/70 bg-cinema-black/50 px-2.5 py-1 text-slate-300 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95"
-            title={`Play ${leftSlots[1].relative} (${leftSlots[1].formatted})`}
-          >
-            <span className="text-[9px] font-semibold uppercase text-cinema-muted">
-              {leftSlots[1].relative}
-            </span>
-            <span className="text-xs font-bold text-slate-200 whitespace-nowrap">
-              {leftSlots[1].formatted}
-            </span>
-          </button>
+        <div className="flex items-center gap-1 sm:gap-1.5 flex-1 sm:flex-initial overflow-x-auto scrollbar-none py-0.5">
+          {leftSlots.map((slot) => (
+            <button
+              key={slot.dateStr}
+              onClick={() => handleDateClick(slot.dateStr)}
+              className={`${getVisibilityClass(slot.offset)} shrink-0 flex-col items-center justify-center rounded-xl border border-cinema-border/70 bg-cinema-black/50 px-2 sm:px-2.5 py-1 text-slate-300 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95`}
+              title={`Play ${slot.relative} (${slot.formatted})`}
+            >
+              <span className="text-[9px] font-semibold uppercase text-cinema-muted">
+                {slot.relative}
+              </span>
+              <span className="text-xs font-bold text-slate-300 whitespace-nowrap">
+                {slot.formatted}
+              </span>
+            </button>
+          ))}
 
           {/* ★ CENTER ACTIVE DAY (BOLD & GLOWING) ★ */}
           <div
-            className="flex flex-col items-center justify-center rounded-xl border-2 border-gold bg-gradient-to-r from-gold/25 via-amber-400/20 to-gold/25 px-3.5 sm:px-4 py-1.5 text-white shadow-gold-glow ring-2 ring-gold/30 transition-transform scale-105 select-none"
+            className="flex shrink-0 flex-col items-center justify-center rounded-xl border-2 border-gold bg-gradient-to-r from-gold/25 via-amber-400/20 to-gold/25 px-3 sm:px-4 py-1.5 text-white shadow-gold-glow ring-2 ring-gold/30 transition-transform scale-105 select-none"
           >
             <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-gold">
               <Sparkles className="h-2.5 w-2.5 fill-gold animate-pulse" />
@@ -140,37 +148,21 @@ export function DailyDateNavigator({
             </span>
           </div>
 
-          {/* Subsequent Day + 1 (if <= today) */}
-          {rightSlots[0] && (
+          {rightSlots.map((slot) => (
             <button
-              onClick={() => handleDateClick(rightSlots[0].dateStr)}
-              className="flex flex-col items-center justify-center rounded-xl border border-cinema-border/70 bg-cinema-black/50 px-2.5 py-1 text-slate-300 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95"
-              title={`Play ${rightSlots[0].relative} (${rightSlots[0].formatted})`}
+              key={slot.dateStr}
+              onClick={() => handleDateClick(slot.dateStr)}
+              className={`${getVisibilityClass(slot.offset)} shrink-0 flex-col items-center justify-center rounded-xl border border-cinema-border/70 bg-cinema-black/50 px-2 sm:px-2.5 py-1 text-slate-300 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95`}
+              title={`Play ${slot.relative} (${slot.formatted})`}
             >
               <span className="text-[9px] font-semibold uppercase text-cinema-muted">
-                {rightSlots[0].relative}
-              </span>
-              <span className="text-xs font-bold text-slate-200 whitespace-nowrap">
-                {rightSlots[0].formatted}
-              </span>
-            </button>
-          )}
-
-          {/* Subsequent Day + 2 (if <= today, desktop only) */}
-          {rightSlots[1] && (
-            <button
-              onClick={() => handleDateClick(rightSlots[1].dateStr)}
-              className="hidden md:flex flex-col items-center justify-center rounded-xl border border-cinema-border/60 bg-cinema-black/40 px-2.5 py-1 text-slate-400 transition hover:border-gold/50 hover:bg-gold/10 hover:text-white active:scale-95"
-              title={`Play ${rightSlots[1].relative} (${rightSlots[1].formatted})`}
-            >
-              <span className="text-[9px] font-semibold uppercase text-cinema-muted">
-                {rightSlots[1].relative}
+                {slot.relative}
               </span>
               <span className="text-xs font-bold text-slate-300 whitespace-nowrap">
-                {rightSlots[1].formatted}
+                {slot.formatted}
               </span>
             </button>
-          )}
+          ))}
         </div>
 
         {/* Step forward */}
