@@ -2,12 +2,12 @@ name: "Frontend CI/CD (React)"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yml"
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "develop" ]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yml"
@@ -29,15 +29,26 @@ jobs:
         with:
           node-version: "22"
 
-      - name: "Install & Build"
+      - name: "Install Dependencies"
+        run: npm ci
+
+      # Build for Dev (develop branch)
+      - name: "Build Frontend (Dev)"
+        if: github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.base_ref == 'develop')
         env:
           VITE_API_BASE_URL: "https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com"
-        run: |
-          npm ci
-          npm run build
+        run: npm run build
 
-      - name: "Deploy to S3 & Invalidate CloudFront"
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      # Build for Prod (main branch)
+      - name: "Build Frontend (Prod)"
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+        env:
+          VITE_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL || 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com' }}
+        run: npm run build
+
+      # Deploy to DEV S3 & Invalidate DEV CloudFront
+      - name: "Deploy to DEV S3 & Invalidate CloudFront"
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -45,3 +56,16 @@ jobs:
         run: |
           aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete
           aws cloudfront create-invalidation --distribution-id E2ROZR17BH3MH9 --paths "/*"
+
+      # Deploy to PROD S3 & Invalidate PROD CloudFront
+      - name: "Deploy to PROD S3 & Invalidate CloudFront"
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "eu-central-1"
+        run: |
+          aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180 --delete
+          if [ -n "${{ secrets.PROD_CLOUDFRONT_DIST_ID }}" ]; then
+            aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID }} --paths "/*"
+          fi
