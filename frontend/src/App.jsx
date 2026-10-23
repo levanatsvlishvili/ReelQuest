@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameSession } from './hooks/useGameSession';
 import { Navbar } from './components/Navbar';
 import { ChallengeHeader } from './components/ChallengeHeader';
@@ -17,6 +17,7 @@ import { DailyArchiveModal } from './components/DailyArchiveModal';
 import { CustomPathFinder } from './components/CustomPathFinder';
 import { LeaderboardView } from './components/LeaderboardView';
 import { OtaraChallengeCard } from './components/OtaraChallengeCard';
+import { DuelGameView } from './components/DuelGameView';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -57,6 +58,14 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
   const [activeMode, setActiveMode] = useState('six-degrees');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('duel')) {
+      setActiveMode('1v1-duel');
+    }
+  }, []);
+
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
@@ -103,6 +112,11 @@ export default function App() {
                   loadCustomChallenge(customData);
                   setActiveMode('six-degrees');
                 }}
+              />
+            ) : activeMode === '1v1-duel' ? (
+              <DuelGameView
+                onBackToMain={() => setActiveMode('six-degrees')}
+                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : activeMode !== 'six-degrees' ? (
               <UpcomingGamePreview

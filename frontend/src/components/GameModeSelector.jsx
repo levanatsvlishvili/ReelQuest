@@ -1,4 +1,4 @@
-import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame } from 'lucide-react';
+import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame, Swords } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const GAME_MODES = [
@@ -10,6 +10,15 @@ export const GAME_MODES = [
     status: 'ACTIVE',
     badge: 'LIVE',
     hasStreak: true
+  },
+  {
+    id: '1v1-duel',
+    title: '1v1 Duel',
+    subtitle: 'Online Multiplayer',
+    icon: Swords,
+    status: 'ACTIVE',
+    badge: 'NEW',
+    hasStreak: false
   },
   {
     id: 'custom-path',

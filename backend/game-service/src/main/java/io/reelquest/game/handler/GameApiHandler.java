@@ -16,8 +16,11 @@ import io.reelquest.domain.idempotency.DynamoDbIdempotencyService;
 import io.reelquest.domain.idempotency.IdempotencyRecord;
 import io.reelquest.domain.idempotency.IdempotencyService;
 import io.reelquest.domain.idempotency.IdempotencyStatus;
+import io.reelquest.game.dto.CreateDuelRequest;
 import io.reelquest.game.dto.DailyChallengeResponse;
+import io.reelquest.game.dto.DuelResponse;
 import io.reelquest.game.dto.LeaderboardEntry;
+import io.reelquest.game.dto.SubmitDuelScoreRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
@@ -25,10 +28,12 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.Put;
+import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
 import software.amazon.awssdk.services.dynamodb.model.Update;
+import software.amazon.awssdk.services.dynamodb.model.UpdateItemRequest;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.reelquest.domain.model.Actor;
@@ -155,6 +160,25 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
             if ("POST".equalsIgnoreCase(httpMethod) && path.endsWith("/games/submit")) {
                 return handleSubmitGame(request);
+            }
+
+            if ("POST".equalsIgnoreCase(httpMethod) && (path.endsWith("/duels") || path.endsWith("/duels/create"))) {
+                return handleCreateDuel(request);
+            }
+
+            if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/?$")) {
+                String duelId = path.replaceAll(".*/duels/([^/]+)/?$", "$1");
+                return handleGetDuel(duelId);
+            }
+
+            if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/join/?$")) {
+                String duelId = path.replaceAll(".*/duels/([^/]+)/join/?$", "$1");
+                return handleJoinDuel(duelId, request);
+            }
+
+            if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/submit/?$")) {
+                String duelId = path.replaceAll(".*/duels/([^/]+)/submit/?$", "$1");
+                return handleSubmitDuel(duelId, request);
             }
 
             return response(404, Map.of("error", "Resource not found", "path", path));
@@ -484,6 +508,321 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
         dynamoDbClient.transactWriteItems(txRequest);
         return newStreak;
+    }
+
+    private APIGatewayProxyResponseEvent handleCreateDuel(APIGatewayProxyRequestEvent request) {
+        if (dynamoDbClient == null) {
+            return response(500, Map.of("error", "Database not configured"));
+        }
+
+        try {
+            AuthenticatedUser authUser = extractAuthenticatedUser(request);
+            CreateDuelRequest req = (request.getBody() != null && !request.getBody().isBlank())
+                    ? objectMapper.readValue(request.getBody(), CreateDuelRequest.class)
+                    : new CreateDuelRequest(null, null, null);
+
+            String hostUserId = authUser != null ? authUser.userId() : "host-" + UUID.randomUUID().toString().substring(0, 8);
+            String hostUsername = authUser != null ? authUser.username()
+                    : (req.hostNickname() != null && !req.hostNickname().isBlank() ? req.hostNickname().trim() : "Host Cinephile");
+
+            Actor startActor;
+            Actor targetActor;
+            int optimalHops;
+
+            if (req.startActorId() != null && req.targetActorId() != null) {
+                startActor = dataProvider.findActorById(req.startActorId())
+                        .orElse(new Actor(req.startActorId(), "Unknown Actor", 0.0, null));
+                targetActor = dataProvider.findActorById(req.targetActorId())
+                        .orElse(new Actor(req.targetActorId(), "Unknown Actor", 0.0, null));
+                ShortestPathResult path = bfsFinder.findShortestPath(req.startActorId(), req.targetActorId());
+                optimalHops = path.degrees();
+            } else {
+                var daily = dailyService.getDailyChallenge(LocalDate.now());
+                startActor = daily.startActor();
+                targetActor = daily.targetActor();
+                optimalHops = daily.optimalDegrees();
+            }
+
+            String duelId = UUID.randomUUID().toString().substring(0, 8);
+            String now = Instant.now().toString();
+
+            Map<String, AttributeValue> item = new HashMap<>();
+            item.put("PK", AttributeValue.fromS("DUEL#" + duelId));
+            item.put("SK", AttributeValue.fromS("METADATA"));
+            item.put("Type", AttributeValue.fromS("DUEL"));
+            item.put("duelId", AttributeValue.fromS(duelId));
+            item.put("hostUserId", AttributeValue.fromS(hostUserId));
+            item.put("hostUsername", AttributeValue.fromS(hostUsername));
+            item.put("startActorId", AttributeValue.fromS(startActor.id()));
+            item.put("startActorName", AttributeValue.fromS(startActor.name()));
+            if (startActor.profilePath() != null) {
+                item.put("startActorImage", AttributeValue.fromS(startActor.profilePath()));
+            }
+            item.put("targetActorId", AttributeValue.fromS(targetActor.id()));
+            item.put("targetActorName", AttributeValue.fromS(targetActor.name()));
+            if (targetActor.profilePath() != null) {
+                item.put("targetActorImage", AttributeValue.fromS(targetActor.profilePath()));
+            }
+            item.put("optimalHops", AttributeValue.fromN(String.valueOf(optimalHops)));
+            item.put("status", AttributeValue.fromS("WAITING"));
+            item.put("createdAt", AttributeValue.fromS(now));
+            item.put("updatedAt", AttributeValue.fromS(now));
+
+            dynamoDbClient.putItem(PutItemRequest.builder()
+                    .tableName(tableName)
+                    .item(item)
+                    .build());
+
+            DuelResponse duel = new DuelResponse(
+                    duelId,
+                    hostUserId,
+                    hostUsername,
+                    null,
+                    null,
+                    startActor,
+                    targetActor,
+                    optimalHops,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "WAITING",
+                    null,
+                    now,
+                    now
+            );
+
+            return response(201, duel);
+        } catch (Exception e) {
+            log.error("Failed to create duel: {}", e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to create duel: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetDuel(String duelId) {
+        if (dynamoDbClient == null) {
+            return response(500, Map.of("error", "Database not configured"));
+        }
+
+        try {
+            var res = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "SK", AttributeValue.fromS("METADATA")
+                    ))
+                    .build());
+
+            if (!res.hasItem() || res.item() == null || res.item().isEmpty()) {
+                return response(404, Map.of("error", "Duel lobby not found"));
+            }
+
+            DuelResponse duel = mapToDuelResponse(res.item());
+            return response(200, duel);
+        } catch (Exception e) {
+            log.error("Failed to fetch duel {}: {}", duelId, e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to fetch duel: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleJoinDuel(String duelId, APIGatewayProxyRequestEvent request) {
+        if (dynamoDbClient == null) {
+            return response(500, Map.of("error", "Database not configured"));
+        }
+
+        try {
+            var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "SK", AttributeValue.fromS("METADATA")
+                    ))
+                    .build());
+
+            if (!getRes.hasItem() || getRes.item() == null || getRes.item().isEmpty()) {
+                return response(404, Map.of("error", "Duel lobby not found"));
+            }
+
+            Map<String, AttributeValue> item = getRes.item();
+            AuthenticatedUser authUser = extractAuthenticatedUser(request);
+
+            Map<String, Object> body = (request.getBody() != null && !request.getBody().isBlank())
+                    ? objectMapper.readValue(request.getBody(), Map.class)
+                    : Map.of();
+
+            String guestUserId = authUser != null ? authUser.userId()
+                    : (body.containsKey("guestUserId") ? (String) body.get("guestUserId") : "guest-" + UUID.randomUUID().toString().substring(0, 8));
+
+            String guestUsername = authUser != null ? authUser.username()
+                    : (body.containsKey("guestUsername") ? (String) body.get("guestUsername") : "Opponent Cinephile");
+
+            String now = Instant.now().toString();
+
+            String existingGuestId = item.containsKey("guestUserId") ? item.get("guestUserId").s() : null;
+            if (existingGuestId == null || existingGuestId.isBlank() || existingGuestId.equals(guestUserId)) {
+                dynamoDbClient.updateItem(UpdateItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of(
+                                "PK", AttributeValue.fromS("DUEL#" + duelId),
+                                "SK", AttributeValue.fromS("METADATA")
+                        ))
+                        .updateExpression("SET guestUserId = :gUid, guestUsername = :gName, #st = :st, updatedAt = :now")
+                        .expressionAttributeNames(Map.of("#st", "status"))
+                        .expressionAttributeValues(Map.of(
+                                ":gUid", AttributeValue.fromS(guestUserId),
+                                ":gName", AttributeValue.fromS(guestUsername),
+                                ":st", AttributeValue.fromS("IN_PROGRESS"),
+                                ":now", AttributeValue.fromS(now)
+                        ))
+                        .build());
+            }
+
+            return handleGetDuel(duelId);
+        } catch (Exception e) {
+            log.error("Failed to join duel {}: {}", duelId, e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to join duel: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleSubmitDuel(String duelId, APIGatewayProxyRequestEvent request) {
+        if (dynamoDbClient == null) {
+            return response(500, Map.of("error", "Database not configured"));
+        }
+
+        try {
+            var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "SK", AttributeValue.fromS("METADATA")
+                    ))
+                    .build());
+
+            if (!getRes.hasItem() || getRes.item() == null || getRes.item().isEmpty()) {
+                return response(404, Map.of("error", "Duel lobby not found"));
+            }
+
+            Map<String, AttributeValue> item = new HashMap<>(getRes.item());
+            SubmitDuelScoreRequest subReq = objectMapper.readValue(request.getBody(), SubmitDuelScoreRequest.class);
+            AuthenticatedUser authUser = extractAuthenticatedUser(request);
+
+            String playerId = authUser != null ? authUser.userId() : subReq.playerId();
+            String hostUserId = item.containsKey("hostUserId") ? item.get("hostUserId").s() : "";
+            String guestUserId = item.containsKey("guestUserId") ? item.get("guestUserId").s() : "";
+
+            boolean isHost = playerId != null && (playerId.equals(hostUserId) || (guestUserId != null && !playerId.equals(guestUserId)));
+            String now = Instant.now().toString();
+
+            if (isHost) {
+                item.put("hostMoves", AttributeValue.fromN(String.valueOf(subReq.moves())));
+                item.put("hostDurationSeconds", AttributeValue.fromN(String.valueOf(subReq.durationSeconds())));
+            } else {
+                item.put("guestMoves", AttributeValue.fromN(String.valueOf(subReq.moves())));
+                item.put("guestDurationSeconds", AttributeValue.fromN(String.valueOf(subReq.durationSeconds())));
+                if ((guestUserId == null || guestUserId.isBlank()) && playerId != null) {
+                    item.put("guestUserId", AttributeValue.fromS(playerId));
+                    if (subReq.playerName() != null) {
+                        item.put("guestUsername", AttributeValue.fromS(subReq.playerName()));
+                    }
+                }
+            }
+
+            Integer hostMoves = item.containsKey("hostMoves") ? Integer.parseInt(item.get("hostMoves").n()) : null;
+            Long hostDuration = item.containsKey("hostDurationSeconds") ? Long.parseLong(item.get("hostDurationSeconds").n()) : null;
+            Integer guestMoves = item.containsKey("guestMoves") ? Integer.parseInt(item.get("guestMoves").n()) : null;
+            Long guestDuration = item.containsKey("guestDurationSeconds") ? Long.parseLong(item.get("guestDurationSeconds").n()) : null;
+
+            String status = "IN_PROGRESS";
+            String winnerId = null;
+
+            if (hostMoves != null && guestMoves != null) {
+                status = "COMPLETED";
+                if (hostMoves < guestMoves) {
+                    winnerId = item.get("hostUserId").s();
+                } else if (guestMoves < hostMoves) {
+                    winnerId = item.get("guestUserId").s();
+                } else {
+                    // Tie-breaker: duration seconds
+                    if (hostDuration != null && guestDuration != null) {
+                        if (hostDuration < guestDuration) {
+                            winnerId = item.get("hostUserId").s();
+                        } else if (guestDuration < hostDuration) {
+                            winnerId = item.get("guestUserId").s();
+                        } else {
+                            winnerId = "TIE";
+                        }
+                    } else {
+                        winnerId = "TIE";
+                    }
+                }
+            }
+
+            item.put("status", AttributeValue.fromS(status));
+            if (winnerId != null) {
+                item.put("winnerId", AttributeValue.fromS(winnerId));
+            }
+            item.put("updatedAt", AttributeValue.fromS(now));
+
+            dynamoDbClient.putItem(PutItemRequest.builder()
+                    .tableName(tableName)
+                    .item(item)
+                    .build());
+
+            return response(200, mapToDuelResponse(item));
+        } catch (Exception e) {
+            log.error("Failed to submit duel score {}: {}", duelId, e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to submit duel score: " + e.getMessage()));
+        }
+    }
+
+    private DuelResponse mapToDuelResponse(Map<String, AttributeValue> item) {
+        String duelId = item.get("duelId").s();
+        String hostUserId = item.containsKey("hostUserId") ? item.get("hostUserId").s() : "";
+        String hostUsername = item.containsKey("hostUsername") ? item.get("hostUsername").s() : "";
+        String guestUserId = item.containsKey("guestUserId") ? item.get("guestUserId").s() : null;
+        String guestUsername = item.containsKey("guestUsername") ? item.get("guestUsername").s() : null;
+
+        String startActorId = item.containsKey("startActorId") ? item.get("startActorId").s() : "";
+        String startActorName = item.containsKey("startActorName") ? item.get("startActorName").s() : "";
+        String startActorImage = item.containsKey("startActorImage") ? item.get("startActorImage").s() : null;
+
+        String targetActorId = item.containsKey("targetActorId") ? item.get("targetActorId").s() : "";
+        String targetActorName = item.containsKey("targetActorName") ? item.get("targetActorName").s() : "";
+        String targetActorImage = item.containsKey("targetActorImage") ? item.get("targetActorImage").s() : null;
+
+        Actor startActor = new Actor(startActorId, startActorName, 0.0, startActorImage);
+        Actor targetActor = new Actor(targetActorId, targetActorName, 0.0, targetActorImage);
+
+        int optimalHops = item.containsKey("optimalHops") ? Integer.parseInt(item.get("optimalHops").n()) : 2;
+
+        Integer hostMoves = item.containsKey("hostMoves") ? Integer.parseInt(item.get("hostMoves").n()) : null;
+        Long hostDuration = item.containsKey("hostDurationSeconds") ? Long.parseLong(item.get("hostDurationSeconds").n()) : null;
+        Integer guestMoves = item.containsKey("guestMoves") ? Integer.parseInt(item.get("guestMoves").n()) : null;
+        Long guestDuration = item.containsKey("guestDurationSeconds") ? Long.parseLong(item.get("guestDurationSeconds").n()) : null;
+
+        String status = item.containsKey("status") ? item.get("status").s() : "WAITING";
+        String winnerId = item.containsKey("winnerId") ? item.get("winnerId").s() : null;
+        String createdAt = item.containsKey("createdAt") ? item.get("createdAt").s() : "";
+        String updatedAt = item.containsKey("updatedAt") ? item.get("updatedAt").s() : "";
+
+        return new DuelResponse(
+                duelId,
+                hostUserId,
+                hostUsername,
+                guestUserId,
+                guestUsername,
+                startActor,
+                targetActor,
+                optimalHops,
+                hostMoves,
+                hostDuration,
+                guestMoves,
+                guestDuration,
+                status,
+                winnerId,
+                createdAt,
+                updatedAt
+        );
     }
 
     private String getHeader(APIGatewayProxyRequestEvent request, String headerName) {

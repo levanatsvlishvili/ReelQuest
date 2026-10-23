@@ -79,6 +79,30 @@ resource "aws_apigatewayv2_route" "movie_cast" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "create_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/create"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /duels/{duelId}"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "join_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/join"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "submit_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/submit"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "billing_checkout" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /billing/checkout"

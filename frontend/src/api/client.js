@@ -317,3 +317,160 @@ export async function fetchLeaderboard(challengeId, scope = 'daily') {
     .filter(item => item.userId && !item.userId.startsWith('guest') && item.username && !item.username.toLowerCase().includes('guest'))
     .map((item, idx) => ({ rank: idx + 1, ...item }));
 }
+
+export async function createDuel({ hostNickname, startActorId, targetActorId } = {}) {
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/duels/create`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ hostNickname, startActorId, targetActorId })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Failed to call remote create duel, falling back to local:', err);
+    }
+  }
+
+  // Fallback / mock duel for offline testing
+  const duelId = Math.random().toString(36).substring(2, 9);
+  const start = CURATED_GRAPH.actors.find(a => a.id === startActorId) || CURATED_GRAPH.actors[0];
+  const target = CURATED_GRAPH.actors.find(a => a.id === targetActorId) || CURATED_GRAPH.actors[1];
+  const duel = {
+    duelId,
+    hostUserId: 'host-local-' + Math.random().toString(36).substring(2, 6),
+    hostUsername: hostNickname || 'Host Cinephile',
+    guestUserId: null,
+    guestUsername: null,
+    startActor: start,
+    targetActor: target,
+    optimalHops: 2,
+    hostMoves: null,
+    hostDurationSeconds: null,
+    guestMoves: null,
+    guestDurationSeconds: null,
+    status: 'WAITING',
+    winnerId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+  localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+  return duel;
+}
+
+export async function fetchDuel(duelId) {
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}`);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Failed to fetch remote duel, falling back to local:', err);
+    }
+  }
+
+  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  if (raw) return JSON.parse(raw);
+  return null;
+}
+
+export async function joinDuel(duelId, { guestUserId, guestUsername } = {}) {
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/join`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ guestUserId, guestUsername })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Failed to join remote duel, falling back to local:', err);
+    }
+  }
+
+  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  if (raw) {
+    const duel = JSON.parse(raw);
+    duel.guestUserId = guestUserId || 'guest-' + Math.random().toString(36).substring(2, 6);
+    duel.guestUsername = guestUsername || 'Opponent Cinephile';
+    duel.status = 'IN_PROGRESS';
+    duel.updatedAt = new Date().toISOString();
+    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+    return duel;
+  }
+  return null;
+}
+
+export async function submitDuelScore(duelId, { playerId, playerName, moves, durationSeconds }) {
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/submit`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ playerId, playerName, moves, durationSeconds })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Failed to submit duel score remotely, falling back to local:', err);
+    }
+  }
+
+  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  if (raw) {
+    const duel = JSON.parse(raw);
+    const isHost = playerId === duel.hostUserId;
+    if (isHost) {
+      duel.hostMoves = moves;
+      duel.hostDurationSeconds = durationSeconds;
+    } else {
+      duel.guestMoves = moves;
+      duel.guestDurationSeconds = durationSeconds;
+      if (!duel.guestUserId && playerId) {
+        duel.guestUserId = playerId;
+        duel.guestUsername = playerName || 'Guest';
+      }
+    }
+
+    if (duel.hostMoves != null && duel.guestMoves != null) {
+      duel.status = 'COMPLETED';
+      if (duel.hostMoves < duel.guestMoves) {
+        duel.winnerId = duel.hostUserId;
+      } else if (duel.guestMoves < duel.hostMoves) {
+        duel.winnerId = duel.guestUserId;
+      } else {
+        if (duel.hostDurationSeconds < duel.guestDurationSeconds) {
+          duel.winnerId = duel.hostUserId;
+        } else if (duel.guestDurationSeconds < duel.hostDurationSeconds) {
+          duel.winnerId = duel.guestUserId;
+        } else {
+          duel.winnerId = 'TIE';
+        }
+      }
+    } else {
+      duel.status = 'IN_PROGRESS';
+    }
+    duel.updatedAt = new Date().toISOString();
+    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+    return duel;
+  }
+  return null;
+}
