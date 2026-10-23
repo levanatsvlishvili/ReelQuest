@@ -28,7 +28,9 @@ import software.amazon.awssdk.services.dynamodb.model.Put;
 import software.amazon.awssdk.services.dynamodb.model.QueryRequest;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItem;
 import software.amazon.awssdk.services.dynamodb.model.TransactWriteItemsRequest;
+import software.amazon.awssdk.services.dynamodb.model.Update;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import io.reelquest.domain.model.Actor;
 import io.reelquest.domain.model.Movie;
 import io.reelquest.domain.model.MovieActorEdge;
@@ -36,7 +38,9 @@ import io.reelquest.domain.model.MovieActorEdge;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -232,10 +236,76 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         return response(200, entries);
     }
 
+    public record AuthenticatedUser(String userId, String username) {}
+
+    private AuthenticatedUser extractAuthenticatedUser(APIGatewayProxyRequestEvent request) {
+        if (request == null) return null;
+
+        // 1. Check API Gateway request context authorizer (Cognito JWT Authorizer)
+        if (request.getRequestContext() != null && request.getRequestContext().getAuthorizer() != null) {
+            Map<String, Object> authorizer = request.getRequestContext().getAuthorizer();
+            Map<String, Object> claims = null;
+            if (authorizer.get("jwt") instanceof Map<?, ?> jwtMap && jwtMap.get("claims") instanceof Map<?, ?> cMap) {
+                //noinspection unchecked
+                claims = (Map<String, Object>) cMap;
+            } else if (authorizer.get("claims") instanceof Map<?, ?> cMap) {
+                //noinspection unchecked
+                claims = (Map<String, Object>) cMap;
+            }
+
+            if (claims != null) {
+                String sub = (String) claims.get("sub");
+                String nickname = (String) claims.get("nickname");
+                if (nickname == null || nickname.isBlank()) {
+                    nickname = (String) claims.get("cognito:username");
+                }
+                if (sub != null && !sub.isBlank() && !sub.startsWith("guest")) {
+                    return new AuthenticatedUser(sub, (nickname != null && !nickname.isBlank()) ? nickname : "Cinephile");
+                }
+            }
+        }
+
+        // 2. Direct Authorization Bearer token header fallback (supports unit tests and direct clients)
+        String authHeader = getHeader(request, "Authorization");
+        if (authHeader != null && authHeader.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            String token = authHeader.substring(7).trim();
+            try {
+                String[] parts = token.split("\\.");
+                if (parts.length >= 2) {
+                    byte[] decoded = Base64.getUrlDecoder().decode(parts[1]);
+                    JsonNode node = objectMapper.readTree(decoded);
+                    if (node.has("sub")) {
+                        String sub = node.get("sub").asText();
+                        String nickname = node.has("nickname") ? node.get("nickname").asText() : null;
+                        if (nickname == null && node.has("cognito:username")) {
+                            nickname = node.get("cognito:username").asText();
+                        }
+                        if (sub != null && !sub.isBlank() && !sub.startsWith("guest")) {
+                            return new AuthenticatedUser(sub, (nickname != null && !nickname.isBlank()) ? nickname : "Cinephile");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse Authorization Bearer token payload: {}", e.getMessage());
+            }
+        }
+
+        return null;
+    }
+
     private APIGatewayProxyResponseEvent handleSubmitGame(APIGatewayProxyRequestEvent request) throws Exception {
         String idempotencyKey = getHeader(request, "Idempotency-Key");
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             return response(400, Map.of("error", "Header 'Idempotency-Key' is required."));
+        }
+
+        // Enforce Authentication for Leaderboard and Server Scoring
+        AuthenticatedUser authUser = extractAuthenticatedUser(request);
+        if (authUser == null) {
+            return response(401, Map.of(
+                    "valid", false,
+                    "error", "Unauthorized: Leaderboard submissions require an authenticated account."
+            ));
         }
 
         boolean lockAcquired = idempotencyService.tryAcquireLock(idempotencyKey, Duration.ofHours(24));
@@ -259,58 +329,84 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             return response(400, result);
         }
 
-        saveGameSessionAndOutboxEvent(submission, result);
+        int updatedStreak = saveGameSessionAndOutboxEvent(submission, result, authUser);
 
-        String successJson = objectMapper.writeValueAsString(result);
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("valid", true);
+        responseData.put("moves", result.moves());
+        responseData.put("score", result.score());
+        responseData.put("message", result.message());
+        responseData.put("streak", updatedStreak);
+
+        String successJson = objectMapper.writeValueAsString(responseData);
         idempotencyService.markCompleted(idempotencyKey, successJson);
 
-        return response(200, result);
+        return response(200, responseData);
     }
 
-    private void saveGameSessionAndOutboxEvent(GameSubmission submission, ValidationResult result) throws Exception {
-        if (dynamoDbClient == null) return;
-        String dateStr = LocalDate.now().toString();
+    private int saveGameSessionAndOutboxEvent(GameSubmission submission, ValidationResult result, AuthenticatedUser authUser) throws Exception {
+        if (dynamoDbClient == null) return 1;
+        LocalDate todayUtc = LocalDate.now(ZoneOffset.UTC);
+        String dateStr = todayUtc.toString();
+        String yesterdayStr = todayUtc.minusDays(1).toString();
         String sessionId = UUID.randomUUID().toString();
         String eventId = UUID.randomUUID().toString();
         String timestamp = Instant.now().toString();
 
-        boolean isRegistered = submission.userId() != null
-                && !submission.userId().isBlank()
-                && !submission.userId().startsWith("guest");
-
-        String username = "Cinephile";
+        String username = authUser.username();
         boolean isPro = false;
+        int currentStreak = 0;
+        int longestStreak = 0;
+        String lastCompletedDate = null;
 
-        if (isRegistered) {
-            try {
-                var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
-                        .tableName(tableName)
-                        .key(Map.of(
-                                "PK", AttributeValue.fromS("USER#" + submission.userId()),
-                                "SK", AttributeValue.fromS("PROFILE")
-                        ))
-                        .build());
-                if (profileRes.hasItem() && profileRes.item() != null) {
-                    Map<String, AttributeValue> item = profileRes.item();
-                    if (item.containsKey("username") && !item.get("username").s().isBlank()) {
-                        username = item.get("username").s();
-                    }
-                    if (item.containsKey("tier")) {
-                        isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
-                    }
+        try {
+            var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("USER#" + authUser.userId()),
+                            "SK", AttributeValue.fromS("PROFILE")
+                    ))
+                    .build());
+            if (profileRes.hasItem() && profileRes.item() != null) {
+                Map<String, AttributeValue> item = profileRes.item();
+                if (item.containsKey("username") && !item.get("username").s().isBlank()) {
+                    username = item.get("username").s();
                 }
-            } catch (Exception e) {
-                log.warn("Failed to lookup profile for userId {}: {}", submission.userId(), e.getMessage());
+                if (item.containsKey("tier")) {
+                    isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
+                }
+                if (item.containsKey("streak")) {
+                    currentStreak = Integer.parseInt(item.get("streak").n());
+                }
+                if (item.containsKey("longestStreak")) {
+                    longestStreak = Integer.parseInt(item.get("longestStreak").n());
+                }
+                if (item.containsKey("lastCompletedDate")) {
+                    lastCompletedDate = item.get("lastCompletedDate").s();
+                }
             }
+        } catch (Exception e) {
+            log.warn("Failed to lookup profile for userId {}: {}", authUser.userId(), e.getMessage());
         }
 
+        // Server-Side Daily Streak Calculation (Tamper-Proof UTC Window)
+        int newStreak;
+        if (dateStr.equals(lastCompletedDate)) {
+            newStreak = Math.max(1, currentStreak);
+        } else if (yesterdayStr.equals(lastCompletedDate)) {
+            newStreak = currentStreak + 1;
+        } else {
+            newStreak = 1;
+        }
+        longestStreak = Math.max(longestStreak, newStreak);
+
         Map<String, AttributeValue> sessionItem = new HashMap<>();
-        sessionItem.put("PK", AttributeValue.fromS("USER#" + submission.userId()));
+        sessionItem.put("PK", AttributeValue.fromS("USER#" + authUser.userId()));
         sessionItem.put("SK", AttributeValue.fromS("SESSION#" + dateStr + "#" + sessionId));
         sessionItem.put("GSI1PK", AttributeValue.fromS("GAME#" + dateStr));
         sessionItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + String.format("%06d", result.score())));
         sessionItem.put("Type", AttributeValue.fromS("SESSION"));
-        sessionItem.put("userId", AttributeValue.fromS(submission.userId()));
+        sessionItem.put("userId", AttributeValue.fromS(authUser.userId()));
         sessionItem.put("score", AttributeValue.fromN(String.valueOf(result.score())));
         sessionItem.put("moves", AttributeValue.fromN(String.valueOf(result.moves())));
         sessionItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(submission.durationSeconds())));
@@ -320,13 +416,14 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
         Map<String, Object> eventPayload = Map.of(
                 "eventId", eventId,
-                "userId", submission.userId(),
+                "userId", authUser.userId(),
                 "username", username,
                 "isPro", isPro,
                 "date", dateStr,
                 "score", result.score(),
                 "moves", result.moves(),
                 "durationSeconds", submission.durationSeconds(),
+                "streak", newStreak,
                 "timestamp", timestamp
         );
         String payloadJson = objectMapper.writeValueAsString(eventPayload);
@@ -339,34 +436,54 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         outboxItem.put("Payload", AttributeValue.fromS(payloadJson));
         outboxItem.put("Status", AttributeValue.fromS("PENDING"));
 
+        String invertedScore = String.format("%08d", Math.max(0, 99_999_999L - result.score()));
+        Map<String, AttributeValue> leaderboardItem = new HashMap<>();
+        leaderboardItem.put("PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
+        leaderboardItem.put("SK", AttributeValue.fromS("USER#" + authUser.userId()));
+        leaderboardItem.put("GSI1PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
+        leaderboardItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedScore));
+        leaderboardItem.put("Type", AttributeValue.fromS("LEADERBOARD_ENTRY"));
+        leaderboardItem.put("userId", AttributeValue.fromS(authUser.userId()));
+        leaderboardItem.put("username", AttributeValue.fromS(username));
+        leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(result.score())));
+        leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(result.moves())));
+        leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(submission.durationSeconds())));
+        leaderboardItem.put("isPro", AttributeValue.fromBool(isPro));
+        leaderboardItem.put("updatedAt", AttributeValue.fromS(timestamp));
+
         List<TransactWriteItem> txItems = new ArrayList<>();
         txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(sessionItem).build()).build());
         txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(outboxItem).build()).build());
+        txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(leaderboardItem).build()).build());
 
-        if (isRegistered) {
-            String invertedScore = String.format("%08d", Math.max(0, 99_999_999L - result.score()));
-            Map<String, AttributeValue> leaderboardItem = new HashMap<>();
-            leaderboardItem.put("PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
-            leaderboardItem.put("SK", AttributeValue.fromS("USER#" + submission.userId()));
-            leaderboardItem.put("GSI1PK", AttributeValue.fromS("LEADERBOARD#" + dateStr));
-            leaderboardItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedScore));
-            leaderboardItem.put("Type", AttributeValue.fromS("LEADERBOARD_ENTRY"));
-            leaderboardItem.put("userId", AttributeValue.fromS(submission.userId()));
-            leaderboardItem.put("username", AttributeValue.fromS(username));
-            leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(result.score())));
-            leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(result.moves())));
-            leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(submission.durationSeconds())));
-            leaderboardItem.put("isPro", AttributeValue.fromBool(isPro));
-            leaderboardItem.put("updatedAt", AttributeValue.fromS(timestamp));
-
-            txItems.add(TransactWriteItem.builder().put(Put.builder().tableName(tableName).item(leaderboardItem).build()).build());
-        }
+        // Atomic User Profile Update with Certified Streak & Aggregates
+        Map<String, AttributeValue> profileKey = Map.of(
+                "PK", AttributeValue.fromS("USER#" + authUser.userId()),
+                "SK", AttributeValue.fromS("PROFILE")
+        );
+        Map<String, AttributeValue> profileValues = Map.of(
+                ":one", AttributeValue.fromN("1"),
+                ":score", AttributeValue.fromN(String.valueOf(result.score())),
+                ":streak", AttributeValue.fromN(String.valueOf(newStreak)),
+                ":longestStreak", AttributeValue.fromN(String.valueOf(longestStreak)),
+                ":lastDate", AttributeValue.fromS(dateStr),
+                ":updatedAt", AttributeValue.fromS(timestamp)
+        );
+        txItems.add(TransactWriteItem.builder()
+                .update(Update.builder()
+                        .tableName(tableName)
+                        .key(profileKey)
+                        .updateExpression("SET streak = :streak, longestStreak = :longestStreak, lastCompletedDate = :lastDate, updatedAt = :updatedAt ADD gamesPlayed :one, gamesWon :one, totalScore :score")
+                        .expressionAttributeValues(profileValues)
+                        .build())
+                .build());
 
         TransactWriteItemsRequest txRequest = TransactWriteItemsRequest.builder()
                 .transactItems(txItems)
                 .build();
 
         dynamoDbClient.transactWriteItems(txRequest);
+        return newStreak;
     }
 
     private String getHeader(APIGatewayProxyRequestEvent request, String headerName) {

@@ -28,6 +28,19 @@ resource "aws_apigatewayv2_integration" "billing_service" {
   payload_format_version = "1.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  count            = var.cognito_user_pool_id != "" ? 1 : 0
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.app_name}-${var.environment}-cognito-authorizer"
+
+  jwt_configuration {
+    audience = [var.cognito_client_id]
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}"
+  }
+}
+
 resource "aws_apigatewayv2_route" "daily" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /daily"
@@ -47,9 +60,11 @@ resource "aws_apigatewayv2_route" "leaderboard" {
 }
 
 resource "aws_apigatewayv2_route" "submit_game" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /games/submit"
-  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /games/submit"
+  target             = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
+  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
 }
 
 resource "aws_apigatewayv2_route" "actor_movies" {
@@ -95,9 +110,11 @@ resource "aws_apigatewayv2_route" "user_profile" {
 }
 
 resource "aws_apigatewayv2_route" "user_sync" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /users/sync"
-  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /users/sync"
+  target             = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
+  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
 }
 
 resource "aws_apigatewayv2_route" "default" {

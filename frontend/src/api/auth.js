@@ -123,12 +123,22 @@ export function getStoredAuth() {
   }
 }
 
+export function getAuthToken() {
+  const auth = getStoredAuth();
+  return auth?.tokens?.IdToken || null;
+}
+
 export async function syncUserProfile(user) {
   if (!API_BASE_URL || !user) return null;
   try {
+    const token = getAuthToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(`${API_BASE_URL}/users/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         userId: user.id || user.userId,
         email: user.email,

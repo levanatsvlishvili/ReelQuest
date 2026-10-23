@@ -34,3 +34,22 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "aws_region" {
+  description = "AWS Region"
+  type        = string
+  default     = "eu-central-1"
+}
+
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID for JWT Authorizer"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  description = "Cognito Client ID for JWT Authorizer"
+  type        = string
+  default     = ""
+}
+

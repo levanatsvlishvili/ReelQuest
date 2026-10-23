@@ -103,15 +103,34 @@ class GameApiHandlerTest {
     }
 
     @Test
+    @DisplayName("POST /api/v1/games/submit without authentication should return 401")
+    void shouldRejectSubmissionWithoutAuthentication() {
+        APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/api/v1/games/submit")
+                .withHeaders(Map.of("Idempotency-Key", "test-key-auth"))
+                .withBody("{}");
+
+        APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);
+
+        assertThat(response.getStatusCode()).isEqualTo(401);
+        assertThat(response.getBody()).contains("Unauthorized");
+    }
+
+    @Test
     @DisplayName("POST /api/v1/games/submit with duplicate key should return cached response")
     void shouldReturnCachedResponseOnDuplicateIdempotencyKey() {
         String key = "test-idem-key-123";
         idempotencyService.store.put(key, new IdempotencyRecord(key, IdempotencyStatus.COMPLETED, "{\"cached\":true}", 12345));
 
+        APIGatewayProxyRequestEvent.ProxyRequestContext requestContext = new APIGatewayProxyRequestEvent.ProxyRequestContext();
+        requestContext.setAuthorizer(Map.of("claims", Map.of("sub", "user-123", "nickname", "TestUser")));
+
         APIGatewayProxyRequestEvent request = new APIGatewayProxyRequestEvent()
                 .withHttpMethod("POST")
                 .withPath("/api/v1/games/submit")
                 .withHeaders(Map.of("Idempotency-Key", key))
+                .withRequestContext(requestContext)
                 .withBody("{}");
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(request, null);

@@ -224,17 +224,19 @@ export function useGameSession() {
       }
 
       if (!isCustom) {
-        submitGameScore({
-          challengeId: challenge.challengeId,
-          userId: user?.id || 'guest-cinephile',
-          username: user?.username || 'You',
-          hops: newMoves,
-          durationSeconds: timerSeconds,
-          startActorId: challenge.startActor.id,
-          targetActorId: challenge.targetActor.id,
-          path: submittedPath,
-          isPro: user?.isPro || false
-        });
+        if (user && !user.id?.startsWith('guest')) {
+          submitGameScore({
+            challengeId: challenge.challengeId,
+            userId: user.id,
+            username: user.username || 'You',
+            hops: newMoves,
+            durationSeconds: timerSeconds,
+            startActorId: challenge.startActor.id,
+            targetActorId: challenge.targetActor.id,
+            path: submittedPath,
+            isPro: user.isPro || false
+          });
+        }
 
         recordGame({
           date: challenge.date,

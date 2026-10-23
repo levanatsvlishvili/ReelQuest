@@ -1,4 +1,5 @@
 import { CURATED_GRAPH } from './mockData';
+import { getAuthToken } from './auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -232,24 +233,28 @@ export function getMovieCast(movieId, excludeActorId) {
 }
 
 export async function submitGameScore(payload) {
-  if (API_BASE_URL) {
+  const token = getAuthToken();
+  if (API_BASE_URL && token) {
     try {
       const idempotencyKey = `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const res = await fetch(`${API_BASE_URL}/games/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey
+          'Idempotency-Key': idempotencyKey,
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          userId: payload.userId || 'guest-user',
+          userId: payload.userId,
           startActorId: payload.startActorId,
           targetActorId: payload.targetActorId,
           path: payload.path || [],
           durationSeconds: payload.durationSeconds
         })
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        return await res.json();
+      }
     } catch {
       // Fallback to local storage persistence
     }

@@ -58,6 +58,9 @@ module "api_gateway" {
   game_service_function_name    = module.lambda.game_service_function_name
   billing_service_lambda_arn    = module.lambda.billing_service_alias_arn
   billing_service_function_name = module.lambda.billing_service_function_name
+  cognito_user_pool_id          = module.cognito.user_pool_id
+  cognito_client_id             = module.cognito.client_id
+  aws_region                    = var.aws_region
 }
 
 # 6. Frontend Static Hosting (S3 + CloudFront CDN + OAC)
