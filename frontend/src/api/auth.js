@@ -231,7 +231,19 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
 }
 
 export function getUserStats(userId) {
-  const key = `${STATS_KEY}_${userId || 'guest'}`;
+  if (!userId || userId === 'guest') {
+    return {
+      streak: 0,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      totalHops: 0,
+      bestHops: 0,
+      dailyWins: [],
+      history: []
+    };
+  }
+
+  const key = `${STATS_KEY}_${userId}`;
   const todayStr = new Date().toISOString().slice(0, 10);
 
   try {

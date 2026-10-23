@@ -43,7 +43,7 @@ jobs:
       - name: "Build Frontend (Prod)"
         if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
         env:
-          VITE_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL || 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com' }}
+          VITE_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL || 'https://yzc360nxa0.execute-api.eu-central-1.amazonaws.com' }}
         run: npm run build
 
       # Deploy to DEV S3 & Invalidate DEV CloudFront
@@ -66,6 +66,4 @@ jobs:
           AWS_REGION: "eu-central-1"
         run: |
           aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180 --delete
-          if [ -n "${{ secrets.PROD_CLOUDFRONT_DIST_ID }}" ]; then
-            aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID }} --paths "/*"
-          fi
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID || 'ESG51MGZ8BMJA' }} --paths "/*"

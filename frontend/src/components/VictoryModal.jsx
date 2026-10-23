@@ -49,17 +49,70 @@ export function VictoryModal({
   const optimalHops = challenge.optimalHops || 2;
   const isOptimal = moves <= optimalHops;
 
-  const handleShare = () => {
-    const squares = Array.from({ length: moves }, (_, i) => (i < optimalHops ? '🟩' : '🟨')).join('');
-    const text = `🎬 ReelQuest Daily #${challenge.date}\n` +
-      `${challenge.startActor.name} ➔ ${challenge.targetActor.name}\n` +
-      `🎯 ${moves} Hops (Optimal: ${optimalHops}) | ⏱️ ${timeFormatted}\n` +
-      `${squares}\n` +
-      `Play now: https://reelquest.io`;
+  const generateShareText = () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://reelquest.io';
+    const formattedDate = challenge.date
+      ? new Date(challenge.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      : 'Daily';
 
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    // Wordle-style hop blocks: optimal hops are green 🟩, extra hops are yellow 🟨
+    const blocks = Array.from({ length: moves }, (_, i) => (i < optimalHops ? '🟩' : '🟨')).join('');
+    const statusLine = isOptimal
+      ? `🏆 Matched Otara's Optimal Route!`
+      : `🎬 Solved in ${moves} hops (Otara: ${optimalHops})`;
+
+    return [
+      `🎬 ReelQuest Daily • ${formattedDate}`,
+      `🎭 ${challenge.startActor?.name || 'Actor'} ➔ ${challenge.targetActor?.name || 'Target'}`,
+      statusLine,
+      `🎯 ${moves} Hops | ⏱️ ${timeFormatted}`,
+      `${blocks} ${isOptimal ? '⭐' : '🎬'}`,
+      '',
+      'Can you beat Otara?',
+      `👉 ${shareUrl}`
+    ].join('\n');
+  };
+
+  const handleShare = async () => {
+    const text = generateShareText();
+    const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://reelquest.io';
+
+    // Native Web Share API (Mobile WhatsApp, Telegram, Messages, etc.)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'ReelQuest Daily Score',
+          text: text,
+          url: shareUrl
+        });
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          return; // User dismissed native share sheet
+        }
+      }
+    }
+
+    // Fallback to clipboard
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      } catch {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
+    }
   };
 
   return (
@@ -125,6 +178,40 @@ export function VictoryModal({
             </div>
           </div>
         </div>
+
+        {/* Wordle-style Visual Run Preview */}
+        {isWon && (
+          <div className="mb-5 rounded-xl border border-cinema-border/70 bg-cinema-black/40 p-3 text-center">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-cinema-muted block mb-2">
+              Share Scorecard
+            </span>
+            <div className="flex items-center justify-center gap-1.5 select-none">
+              {Array.from({ length: moves }).map((_, i) => (
+                <span
+                  key={i}
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-lg text-xs font-black shadow-sm ${
+                    i < optimalHops
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
+                  }`}
+                  title={i < optimalHops ? 'Optimal Hop' : 'Extra Hop'}
+                >
+                  {i < optimalHops ? '🟩' : '🟨'}
+                </span>
+              ))}
+              {isOptimal && (
+                <span className="text-base ml-1 select-none animate-bounce" title="Otara Benchmark Matched!">
+                  ⭐
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-[11px] text-cinema-muted">
+              {isOptimal
+                ? '🏆 Pure perfection! You matched Otara’s shortest possible path.'
+                : `🎬 Connection made with ${moves - optimalHops} extra hop${moves - optimalHops > 1 ? 's' : ''}.`}
+            </p>
+          </div>
+        )}
 
         {/* Shortest Path Reveal */}
         {optimalPath && optimalPath.length > 0 ? (
