@@ -36,7 +36,8 @@ import {
   fetchActorMovies,
   fetchMovieCast,
   fetchPopularActors,
-  fetchOptimalPath
+  fetchOptimalPath,
+  getTmdbImageUrl
 } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { VisualGraph } from './VisualGraph';
@@ -173,7 +174,7 @@ export function DuelGameView({ onBackToMain }) {
     const duelParam = params.get('duel');
     if (duelParam) {
       setJoinCodeInput(duelParam.toUpperCase());
-      handleLoadOrJoinDuel(duelParam.toUpperCase());
+      handleLoadOrJoinDuel(duelParam.toLowerCase());
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -299,7 +300,7 @@ export function DuelGameView({ onBackToMain }) {
     setError('');
     setLoadingAction(true);
     try {
-      const normalized = code.trim().toUpperCase();
+      const normalized = code.trim().toLowerCase();
       const existing = await fetchDuel(normalized);
       if (!existing) {
         setError('Duel lobby not found. Check the room code and try again.');
@@ -1001,11 +1002,19 @@ export function DuelGameView({ onBackToMain }) {
             </span>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 pt-1">
               <div className="flex items-center gap-3">
-                <img
-                  src={duel.startActor?.profilePath}
-                  alt={duel.startActor?.name}
-                  className="h-14 w-14 rounded-2xl object-cover border-2 border-emerald-400/60 shadow-md"
-                />
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-emerald-400/60 bg-cinema-surface shadow-md">
+                  {duel.startActor?.profilePath ? (
+                    <img
+                      src={getTmdbImageUrl(duel.startActor.profilePath)}
+                      alt={duel.startActor?.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 flex items-center justify-center -z-10 text-cinema-muted bg-cinema-border/40">
+                    <User className="h-6 w-6" />
+                  </div>
+                </div>
                 <div className="text-left">
                   <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold block">
                     Start Star
@@ -1021,11 +1030,19 @@ export function DuelGameView({ onBackToMain }) {
               </div>
 
               <div className="flex items-center gap-3">
-                <img
-                  src={duel.targetActor?.profilePath}
-                  alt={duel.targetActor?.name}
-                  className="h-14 w-14 rounded-2xl object-cover border-2 border-gold/60 shadow-md"
-                />
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-gold/60 bg-cinema-surface shadow-md">
+                  {duel.targetActor?.profilePath ? (
+                    <img
+                      src={getTmdbImageUrl(duel.targetActor.profilePath)}
+                      alt={duel.targetActor?.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 flex items-center justify-center -z-10 text-cinema-muted bg-cinema-border/40">
+                    <User className="h-6 w-6" />
+                  </div>
+                </div>
                 <div className="text-left">
                   <span className="text-[10px] uppercase tracking-wider text-gold font-bold block">
                     Target Star

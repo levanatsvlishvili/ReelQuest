@@ -168,27 +168,27 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             }
 
             if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/?$")) {
-                String duelId = path.replaceAll(".*/duels/([^/]+)/?$", "$1");
+                String duelId = path.replaceAll(".*/duels/([^/]+)/?$", "$1").trim().toLowerCase();
                 return handleGetDuel(duelId);
             }
 
             if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/join/?$")) {
-                String duelId = path.replaceAll(".*/duels/([^/]+)/join/?$", "$1");
+                String duelId = path.replaceAll(".*/duels/([^/]+)/join/?$", "$1").trim().toLowerCase();
                 return handleJoinDuel(duelId, request);
             }
 
             if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/progress/?$")) {
-                String duelId = path.replaceAll(".*/duels/([^/]+)/progress/?$", "$1");
+                String duelId = path.replaceAll(".*/duels/([^/]+)/progress/?$", "$1").trim().toLowerCase();
                 return handleUpdateDuelProgress(duelId, request);
             }
 
             if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/submit/?$")) {
-                String duelId = path.replaceAll(".*/duels/([^/]+)/submit/?$", "$1");
+                String duelId = path.replaceAll(".*/duels/([^/]+)/submit/?$", "$1").trim().toLowerCase();
                 return handleSubmitDuel(duelId, request);
             }
 
             if ("POST".equalsIgnoreCase(httpMethod) && path.matches(".*/duels/[^/]+/rematch/?$")) {
-                String duelId = path.replaceAll(".*/duels/([^/]+)/rematch/?$", "$1");
+                String duelId = path.replaceAll(".*/duels/([^/]+)/rematch/?$", "$1").trim().toLowerCase();
                 return handleRematchDuel(duelId, request);
             }
 
@@ -611,10 +611,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
+            String safeDuelId = duelId != null ? duelId.trim().toLowerCase() : "";
             var res = dynamoDbClient.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(
-                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "PK", AttributeValue.fromS("DUEL#" + safeDuelId),
                             "SK", AttributeValue.fromS("METADATA")
                     ))
                     .build());
@@ -637,10 +638,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
+            String safeDuelId = duelId != null ? duelId.trim().toLowerCase() : "";
             var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(
-                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "PK", AttributeValue.fromS("DUEL#" + safeDuelId),
                             "SK", AttributeValue.fromS("METADATA")
                     ))
                     .build());
@@ -700,10 +702,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
+            String safeDuelId = duelId != null ? duelId.trim().toLowerCase() : "";
             var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(
-                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "PK", AttributeValue.fromS("DUEL#" + safeDuelId),
                             "SK", AttributeValue.fromS("METADATA")
                     ))
                     .build());
@@ -772,10 +775,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
+            String safeDuelId = duelId != null ? duelId.trim().toLowerCase() : "";
             var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(
-                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "PK", AttributeValue.fromS("DUEL#" + safeDuelId),
                             "SK", AttributeValue.fromS("METADATA")
                     ))
                     .build());
@@ -903,10 +907,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
+            String safeDuelId = duelId != null ? duelId.trim().toLowerCase() : "";
             var getRes = dynamoDbClient.getItem(GetItemRequest.builder()
                     .tableName(tableName)
                     .key(Map.of(
-                            "PK", AttributeValue.fromS("DUEL#" + duelId),
+                            "PK", AttributeValue.fromS("DUEL#" + safeDuelId),
                             "SK", AttributeValue.fromS("METADATA")
                     ))
                     .build());

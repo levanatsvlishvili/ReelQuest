@@ -442,9 +442,10 @@ export async function createDuel({
 }
 
 export async function fetchDuel(duelId) {
+  const safeId = (duelId || '').toLowerCase().trim();
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}`);
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}`);
       if (res.ok) {
         return await res.json();
       }
@@ -453,19 +454,20 @@ export async function fetchDuel(duelId) {
     }
   }
 
-  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  const raw = localStorage.getItem(`reelquest_duel_${safeId}`);
   if (raw) return JSON.parse(raw);
   return null;
 }
 
 export async function joinDuel(duelId, { guestUserId, guestUsername } = {}) {
+  const safeId = (duelId || '').toLowerCase().trim();
   const token = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/join`, {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}/join`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ guestUserId, guestUsername })
@@ -478,7 +480,7 @@ export async function joinDuel(duelId, { guestUserId, guestUsername } = {}) {
     }
   }
 
-  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  const raw = localStorage.getItem(`reelquest_duel_${safeId}`);
   if (raw) {
     const duel = JSON.parse(raw);
     duel.guestUserId = guestUserId || ('guest-' + Math.random().toString(36).substring(2, 6));
@@ -492,20 +494,21 @@ export async function joinDuel(duelId, { guestUserId, guestUsername } = {}) {
       duel.countdownStartedAt = Date.now();
     }
     duel.updatedAt = new Date().toISOString();
-    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+    localStorage.setItem(`reelquest_duel_${safeId}`, JSON.stringify(duel));
     return duel;
   }
   return null;
 }
 
 export async function updateDuelProgress(duelId, { playerId, role, currentMoves, currentActorName, lastAction, emote }) {
+  const safeId = (duelId || '').toLowerCase().trim();
   const token = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/progress`, {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}/progress`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ playerId, role, currentMoves, currentActorName, lastAction, emote })
@@ -518,7 +521,7 @@ export async function updateDuelProgress(duelId, { playerId, role, currentMoves,
     }
   }
 
-  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  const raw = localStorage.getItem(`reelquest_duel_${safeId}`);
   if (raw) {
     const duel = JSON.parse(raw);
     const isHost = role === 'HOST' || (!role && playerId === duel.hostUserId);
@@ -534,20 +537,21 @@ export async function updateDuelProgress(duelId, { playerId, role, currentMoves,
       if (emote !== undefined) duel.guestEmote = emote;
     }
     duel.updatedAt = new Date().toISOString();
-    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+    localStorage.setItem(`reelquest_duel_${safeId}`, JSON.stringify(duel));
     return duel;
   }
   return null;
 }
 
 export async function submitDuelScore(duelId, { playerId, playerName, role, moves, durationSeconds, forfeited = false, pathSummary = null }) {
+  const safeId = (duelId || '').toLowerCase().trim();
   const token = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/submit`, {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}/submit`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ playerId, playerName, role, moves, durationSeconds, forfeited, pathSummary })
@@ -560,7 +564,7 @@ export async function submitDuelScore(duelId, { playerId, playerName, role, move
     }
   }
 
-  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  const raw = localStorage.getItem(`reelquest_duel_${safeId}`);
   if (raw) {
     const duel = JSON.parse(raw);
     const isHost = role === 'HOST' || (!role && playerId === duel.hostUserId);
@@ -611,20 +615,21 @@ export async function submitDuelScore(duelId, { playerId, playerName, role, move
       duel.status = 'IN_PROGRESS';
     }
     duel.updatedAt = new Date().toISOString();
-    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(duel));
+    localStorage.setItem(`reelquest_duel_${safeId}`, JSON.stringify(duel));
     return duel;
   }
   return null;
 }
 
 export async function rematchDuel(duelId, customPayload = {}) {
+  const safeId = (duelId || '').toLowerCase().trim();
   const token = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   if (API_BASE_URL) {
     try {
-      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(duelId)}/rematch`, {
+      const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}/rematch`, {
         method: 'POST',
         headers,
         body: JSON.stringify(customPayload)
@@ -637,7 +642,7 @@ export async function rematchDuel(duelId, customPayload = {}) {
     }
   }
 
-  const raw = localStorage.getItem(`reelquest_duel_${duelId}`);
+  const raw = localStorage.getItem(`reelquest_duel_${safeId}`);
   if (raw) {
     const oldDuel = JSON.parse(raw);
     if (oldDuel.nextDuelId) {
