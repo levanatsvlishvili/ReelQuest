@@ -1,3 +1,5 @@
+import { saveDetailedMatch } from './matchHistory';
+
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
 const COGNITO_ENDPOINT = `https://cognito-idp.${REGION}.amazonaws.com/`;
@@ -328,5 +330,15 @@ export function recordGameResult(userId, gameResult) {
 
   const key = `${STATS_KEY}_${userId || 'guest'}`;
   localStorage.setItem(key, JSON.stringify(stats));
+
+  // Save full structured match to historical timeline
+  try {
+    saveDetailedMatch(userId, gameResult);
+  } catch (err) {
+    console.warn('Failed to record match history in auth.js:', err);
+  }
+
   return stats;
 }
+
+export { saveDetailedMatch };

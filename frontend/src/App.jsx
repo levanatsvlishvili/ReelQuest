@@ -54,6 +54,7 @@ export default function App() {
     goToPrevDay,
     goToNextDay,
     startGame,
+    markHintUsed,
     openVictoryModal
   } = useGameSession();
 
@@ -317,7 +318,10 @@ export default function App() {
         onClose={() => setIsHintOpen(false)}
         currentActor={currentActor}
         targetActor={challenge?.targetActor}
-        onSelectHintMovie={(hintMovie) => selectMovie(hintMovie)}
+        onSelectHintMovie={(hintMovie) => {
+          markHintUsed?.();
+          selectMovie(hintMovie);
+        }}
         onOpenPro={() => setIsProModalOpen(true)}
       />
     </div>

@@ -28,6 +28,8 @@ export function useGameSession() {
   const [availableCast, setAvailableCast] = useState([]);
   const [moviesLoading, setMoviesLoading] = useState(false);
   const [castLoading, setCastLoading] = useState(false);
+  const [undosCount, setUndosCount] = useState(0);
+  const [usedHint, setUsedHint] = useState(false);
 
   // Helper to save session
   const saveSession = useCallback((cId, stateObj) => {
@@ -238,15 +240,29 @@ export function useGameSession() {
           });
         }
 
+        const isToday = challenge.date === todayStr;
+        const subMode = isCustom ? 'custom' : (isToday ? 'daily' : 'archive');
+        const optimalHops = challenge.optimalHops || 2;
+        const matchedOtara = newMoves <= optimalHops;
+
         recordGame({
           date: challenge.date,
           won: true,
           hops: newMoves,
-          durationSeconds: timerSeconds
+          optimalHops,
+          matchedOtara,
+          durationSeconds: timerSeconds,
+          gameMode: 'six-degrees',
+          subMode,
+          startActor: challenge.startActor,
+          targetActor: challenge.targetActor,
+          undos: undosCount,
+          usedHint,
+          chain: newChain
         });
       }
     }
-  }, [selectedMovie, currentActor, challenge, chain, moves, timerSeconds, user, recordGame, isCustom, saveSession]);
+  }, [selectedMovie, currentActor, challenge, chain, moves, timerSeconds, user, recordGame, isCustom, saveSession, undosCount, usedHint, todayStr]);
 
   const canUndo = (chain.length > 1 || selectedMovie !== null) && gameStatus !== 'GAVE_UP';
 
@@ -256,6 +272,7 @@ export function useGameSession() {
     // 1. If a movie is currently selected, stepping back unselects the movie first!
     if (selectedMovie) {
       setSelectedMovie(null);
+      setUndosCount(c => c + 1);
       return;
     }
 
@@ -271,6 +288,7 @@ export function useGameSession() {
       setMoves(newMoves);
       setGameStatus('PLAYING');
       setShowVictory(false);
+      setUndosCount(c => c + 1);
 
       saveSession(challenge.challengeId, {
         chain: newChain,
@@ -295,6 +313,7 @@ export function useGameSession() {
     setMoves(newMoves);
     setGameStatus('PLAYING');
     setShowVictory(false);
+    setUndosCount(c => c + 1);
 
     saveSession(challenge.challengeId, {
       chain: newChain,
@@ -365,14 +384,26 @@ export function useGameSession() {
     });
 
     if (!isCustom) {
+      const isToday = challenge.date === todayStr;
+      const subMode = isToday ? 'daily' : 'archive';
+      const optimalHops = challenge.optimalHops || 2;
       recordGame({
         date: challenge.date,
         won: false,
         hops: moves,
-        durationSeconds: timerSeconds
+        optimalHops,
+        matchedOtara: false,
+        durationSeconds: timerSeconds,
+        gameMode: 'six-degrees',
+        subMode,
+        startActor: challenge.startActor,
+        targetActor: challenge.targetActor,
+        undos: undosCount,
+        usedHint,
+        chain
       });
     }
-  }, [challenge, moves, timerSeconds, recordGame, isCustom, saveSession, chain, currentActor]);
+  }, [challenge, moves, timerSeconds, recordGame, isCustom, saveSession, chain, currentActor, undosCount, usedHint, todayStr]);
 
   function shiftDateStr(dateStr, days) {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -427,6 +458,7 @@ export function useGameSession() {
     goToPrevDay,
     goToNextDay,
     startGame,
+    markHintUsed: () => setUsedHint(true),
     openVictoryModal: () => setShowVictory(true)
   };
 }

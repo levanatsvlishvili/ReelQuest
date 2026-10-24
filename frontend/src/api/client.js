@@ -744,3 +744,25 @@ export async function fetchOtaraHint(currentActorId, targetActorId) {
   return null;
 }
 
+export async function fetchUserBackendHistory(userId) {
+  if (!API_BASE_URL || !userId || userId.startsWith('guest')) {
+    return [];
+  }
+
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/users/${encodeURIComponent(userId)}/history`, {
+      headers
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('Failed to fetch user history from backend:', err);
+  }
+  return [];
+}
+

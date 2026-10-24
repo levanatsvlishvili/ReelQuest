@@ -39,6 +39,7 @@ import {
   fetchOptimalPath,
   getTmdbImageUrl
 } from '../api/client';
+import { saveDetailedMatch } from '../api/matchHistory';
 import { useAuth } from '../context/AuthContext';
 import { VisualGraph } from './VisualGraph';
 import { ChainBuilder } from './ChainBuilder';
@@ -483,6 +484,27 @@ export function DuelGameView({ onBackToMain }) {
           pathSummary
         });
         setDuel(updated);
+
+        try {
+          saveDetailedMatch(user?.id, {
+            id: `duel_${duel.duelId}_${myPlayerId}`,
+            gameMode: 'duels',
+            subMode: 'duel',
+            date: new Date().toISOString().slice(0, 10),
+            timestamp: new Date().toISOString(),
+            won: updated?.winner === role || (updated?.winner === null),
+            forfeited: false,
+            hops: newMoves,
+            optimalHops: duel.optimalHops || null,
+            matchedOtara: duel.optimalHops ? newMoves <= duel.optimalHops : false,
+            durationSeconds: timerSeconds,
+            startActor: duel.startActor,
+            targetActor: duel.targetActor,
+            opponentName: role === 'HOST' ? (duel.guestUsername || 'Opponent') : duel.hostUsername,
+            roomCode: duel.duelId,
+            duelOutcome: updated?.winner === role ? 'VICTORY' : 'COMPLETED'
+          });
+        } catch (err) {}
       } catch (e) {
         // Fallback already handled in client.js
       }
@@ -547,6 +569,26 @@ export function DuelGameView({ onBackToMain }) {
         pathSummary: 'Forfeited match 🏳️'
       });
       setDuel(updated);
+      try {
+        saveDetailedMatch(user?.id, {
+          id: `duel_${duel.duelId}_${myPlayerId}`,
+          gameMode: 'duels',
+          subMode: 'duel',
+          date: new Date().toISOString().slice(0, 10),
+          timestamp: new Date().toISOString(),
+          won: false,
+          forfeited: true,
+          hops: 99,
+          optimalHops: duel.optimalHops || null,
+          matchedOtara: false,
+          durationSeconds: timerSeconds,
+          startActor: duel.startActor,
+          targetActor: duel.targetActor,
+          opponentName: role === 'HOST' ? (duel.guestUsername || 'Opponent') : duel.hostUsername,
+          roomCode: duel.duelId,
+          duelOutcome: 'FORFEITED'
+        });
+      } catch (err) {}
     } catch (e) {}
     setPhase('RESULTS');
   };

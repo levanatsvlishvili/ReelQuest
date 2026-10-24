@@ -151,6 +151,12 @@ resource "aws_apigatewayv2_route" "user_profile" {
   target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "user_history" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /users/{userId}/history"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "user_sync" {
   api_id             = aws_apigatewayv2_api.main.id
   route_key          = "POST /users/sync"

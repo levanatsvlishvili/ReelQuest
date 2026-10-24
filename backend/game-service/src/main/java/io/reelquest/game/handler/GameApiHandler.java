@@ -197,6 +197,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 return handleRematchDuel(duelId, request);
             }
 
+            if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/users/[^/]+/history/?$")) {
+                String userId = path.replaceAll(".*/users/([^/]+)/history/?$", "$1");
+                return handleGetUserHistory(userId);
+            }
+
             return response(404, Map.of("error", "Resource not found", "path", path));
         } catch (Exception e) {
             log.error("Unhandled exception processing request: {}", e.getMessage(), e);
@@ -314,6 +319,47 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         );
 
         return response(200, hint);
+    }
+
+    private APIGatewayProxyResponseEvent handleGetUserHistory(String userId) {
+        if (dynamoDbClient == null || userId == null || userId.isBlank()) {
+            return response(200, List.of());
+        }
+
+        try {
+            QueryRequest query = QueryRequest.builder()
+                    .tableName(tableName)
+                    .keyConditionExpression("PK = :pk and begins_with(SK, :skPrefix)")
+                    .expressionAttributeValues(Map.of(
+                            ":pk", AttributeValue.fromS("USER#" + userId),
+                            ":skPrefix", AttributeValue.fromS("SESSION#")
+                    ))
+                    .scanIndexForward(false)
+                    .limit(50)
+                    .build();
+
+            var res = dynamoDbClient.query(query);
+            List<Map<String, Object>> sessions = res.items().stream()
+                    .map(item -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("sessionId", item.containsKey("SK") ? item.get("SK").s() : "");
+                        map.put("date", item.containsKey("SK") ? item.get("SK").s().replaceAll("SESSION#([^#]+)#.*", "$1") : "");
+                        map.put("score", item.containsKey("score") ? Long.parseLong(item.get("score").n()) : 0L);
+                        map.put("moves", item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0);
+                        map.put("durationSeconds", item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L);
+                        map.put("startActorId", item.containsKey("startActorId") ? item.get("startActorId").s() : "");
+                        map.put("targetActorId", item.containsKey("targetActorId") ? item.get("targetActorId").s() : "");
+                        map.put("createdAt", item.containsKey("createdAt") ? item.get("createdAt").s() : "");
+                        map.put("gameMode", "six-degrees");
+                        return map;
+                    })
+                    .toList();
+
+            return response(200, sessions);
+        } catch (Exception e) {
+            log.error("Failed to fetch user history for {}: {}", userId, e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to fetch user history: " + e.getMessage()));
+        }
     }
 
     private APIGatewayProxyResponseEvent handleGetActorMovies(String actorId) {
