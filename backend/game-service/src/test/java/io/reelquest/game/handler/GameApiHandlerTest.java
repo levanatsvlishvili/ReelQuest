@@ -375,6 +375,63 @@ class GameApiHandlerTest {
         assertThat(guestSubmitRes.getBody()).contains("\"winnerId\":\"speedy-guest\"");
     }
 
+    @Test
+    @DisplayName("POST /duels/{duelId}/progress should update live opponent telemetry and emotes")
+    void shouldUpdateLiveDuelProgress() throws Exception {
+        APIGatewayProxyRequestEvent createReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/duels/create")
+                .withBody("{\"hostNickname\":\"HostGuy\",\"startActorId\":\"31\",\"targetActorId\":\"6193\"}");
+        APIGatewayProxyResponseEvent createRes = handler.handleRequest(createReq, null);
+        Map<?, ?> createdBody = objectMapper.readValue(createRes.getBody(), Map.class);
+        String duelId = (String) createdBody.get("duelId");
+
+        APIGatewayProxyRequestEvent progressReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/duels/" + duelId + "/progress")
+                .withPathParameters(Map.of("duelId", duelId))
+                .withBody("{\"role\":\"HOST\",\"currentMoves\":1,\"currentActorName\":\"Leonardo DiCaprio\",\"lastAction\":\"Linked via Catch Me If You Can\",\"emote\":\"🔥\"}");
+
+        APIGatewayProxyResponseEvent progressRes = handler.handleRequest(progressReq, null);
+        assertThat(progressRes.getStatusCode()).isEqualTo(200);
+        assertThat(progressRes.getBody()).contains("\"hostLiveMoves\":1");
+        assertThat(progressRes.getBody()).contains("\"hostCurrentActor\":\"Leonardo DiCaprio\"");
+        assertThat(progressRes.getBody()).contains("\"hostLastAction\":\"Linked via Catch Me If You Can\"");
+        assertThat(progressRes.getBody()).contains("\"hostEmote\":\"🔥\"");
+    }
+
+    @Test
+    @DisplayName("POST /duels/{duelId}/rematch should create linked rematch duel with both players ready")
+    void shouldCreateRematchDuel() throws Exception {
+        APIGatewayProxyRequestEvent createReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/duels/create")
+                .withBody("{\"hostNickname\":\"HostGuy\",\"startActorId\":\"31\",\"targetActorId\":\"6193\"}");
+        APIGatewayProxyResponseEvent createRes = handler.handleRequest(createReq, null);
+        Map<?, ?> createdBody = objectMapper.readValue(createRes.getBody(), Map.class);
+        String duelId = (String) createdBody.get("duelId");
+
+        // Guest joins
+        APIGatewayProxyRequestEvent joinReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/duels/" + duelId + "/join")
+                .withPathParameters(Map.of("duelId", duelId))
+                .withBody("{\"guestUserId\":\"guest-100\",\"guestUsername\":\"RivalStar\"}");
+        handler.handleRequest(joinReq, null);
+
+        // Request rematch
+        APIGatewayProxyRequestEvent rematchReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("POST")
+                .withPath("/duels/" + duelId + "/rematch")
+                .withPathParameters(Map.of("duelId", duelId))
+                .withBody("{}");
+        APIGatewayProxyResponseEvent rematchRes = handler.handleRequest(rematchReq, null);
+        assertThat(rematchRes.getStatusCode()).isEqualTo(201);
+        assertThat(rematchRes.getBody()).contains("\"status\":\"IN_PROGRESS\"");
+        assertThat(rematchRes.getBody()).contains("\"hostUsername\":\"HostGuy\"");
+        assertThat(rematchRes.getBody()).contains("\"guestUsername\":\"RivalStar\"");
+    }
+
     private static class TestIdempotencyService implements IdempotencyService {
         final Map<String, IdempotencyRecord> store = new HashMap<>();
 

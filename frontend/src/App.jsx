@@ -58,11 +58,13 @@ export default function App() {
 
   const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
   const [activeMode, setActiveMode] = useState('six-degrees');
+  const [isDuelMode, setIsDuelMode] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('duel')) {
-      setActiveMode('1v1-duel');
+      setActiveMode('six-degrees');
+      setIsDuelMode(true);
     }
   }, []);
 
@@ -102,7 +104,10 @@ export default function App() {
             {/* Game Mode Navigation Tabs */}
             <GameModeSelector
               activeMode={activeMode}
-              onSelectMode={setActiveMode}
+              onSelectMode={(mode) => {
+                setActiveMode(mode);
+                setIsDuelMode(false);
+              }}
             />
 
             {activeMode === 'custom-path' ? (
@@ -111,18 +116,19 @@ export default function App() {
                 onPlayCustomChallenge={(customData) => {
                   loadCustomChallenge(customData);
                   setActiveMode('six-degrees');
+                  setIsDuelMode(false);
                 }}
-              />
-            ) : activeMode === '1v1-duel' ? (
-              <DuelGameView
-                onBackToMain={() => setActiveMode('six-degrees')}
-                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : activeMode !== 'six-degrees' ? (
               <UpcomingGamePreview
                 modeId={activeMode}
                 onBackToMain={() => setActiveMode('six-degrees')}
                 onOpenPro={() => setIsProModalOpen(true)}
+              />
+            ) : isDuelMode ? (
+              <DuelGameView
+                onBackToMain={() => setIsDuelMode(false)}
+                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : loading ? (
               <div className="flex flex-col items-center justify-center py-24 space-y-4">
@@ -140,6 +146,7 @@ export default function App() {
                     onNextDay={goToNextDay}
                     onOpenArchive={() => setIsArchiveOpen(true)}
                     onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                    onOpenDuel={() => setIsDuelMode(true)}
                   />
                 )}
 
@@ -164,6 +171,7 @@ export default function App() {
                       moves={moves}
                       timerSeconds={timerSeconds}
                       onStart={startGame}
+                      onOpenDuel={() => setIsDuelMode(true)}
                     />
 
                     {/* Locked Filmography Teaser */}
@@ -209,6 +217,7 @@ export default function App() {
                       timerSeconds={timerSeconds}
                       onStart={startGame}
                       onOpenSummary={openVictoryModal}
+                      onOpenDuel={() => setIsDuelMode(true)}
                     />
 
                     <VisualGraph

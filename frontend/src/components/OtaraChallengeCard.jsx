@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle, Swords } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 import OtaraObservingMascot from './OtaraObservingMascot';
 
@@ -9,7 +9,8 @@ export function OtaraChallengeCard({
   moves = 0,
   timerSeconds = 0,
   onStart,
-  onOpenSummary
+  onOpenSummary,
+  onOpenDuel
 }) {
   if (!challenge) return null;
 
@@ -87,17 +88,29 @@ export function OtaraChallengeCard({
               </div>
             </div>
 
-            {/* Big Start Button */}
+            {/* Big Start Button + 1v1 Online Duel Button */}
             <div className="pt-2">
-              <button
-                onClick={onStart}
-                className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-8 py-3.5 text-sm sm:text-base font-extrabold text-cinema-black shadow-gold-glow transition-all duration-300 hover:scale-105 active:scale-95"
-              >
-                <Play className="h-5 w-5 fill-cinema-black transition-transform group-hover:scale-110" />
-                <span>Start Challenge</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+                <button
+                  onClick={onStart}
+                  className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-8 py-3.5 text-sm sm:text-base font-extrabold text-cinema-black shadow-gold-glow transition-all duration-300 hover:scale-105 active:scale-95"
+                >
+                  <Play className="h-5 w-5 fill-cinema-black transition-transform group-hover:scale-110" />
+                  <span>Start Challenge</span>
+                </button>
+
+                {onOpenDuel && (
+                  <button
+                    onClick={onOpenDuel}
+                    className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl border-2 border-gold/60 bg-cinema-black/80 px-6 py-3.5 text-sm sm:text-base font-extrabold text-gold shadow-lg transition-all duration-300 hover:bg-gold/15 hover:border-gold hover:scale-105 active:scale-95"
+                  >
+                    <Swords className="h-5 w-5 text-gold transition-transform group-hover:rotate-12" />
+                    <span>1v1 Online Duel</span>
+                  </button>
+                )}
+              </div>
               <p className="mt-2 text-[11px] text-cinema-muted">
-                Timer and filmography will unlock immediately upon start.
+                Play today's solo challenge or challenge a friend live in a 1v1 online duel!
               </p>
             </div>
           </div>
@@ -143,15 +156,26 @@ export function OtaraChallengeCard({
             </p>
           </div>
 
-          {onOpenSummary && (
-            <button
-              onClick={onOpenSummary}
-              className="shrink-0 flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95 shadow-sm"
-            >
-              <Trophy className="h-4 w-4" />
-              <span>View Results</span>
-            </button>
-          )}
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {onOpenDuel && (
+              <button
+                onClick={onOpenDuel}
+                className="flex items-center gap-1.5 rounded-xl border border-gold/40 bg-cinema-black/60 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold/15 transition active:scale-95"
+              >
+                <Swords className="h-4 w-4" />
+                <span>1v1 Duel</span>
+              </button>
+            )}
+            {onOpenSummary && (
+              <button
+                onClick={onOpenSummary}
+                className="flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95 shadow-sm"
+              >
+                <Trophy className="h-4 w-4" />
+                <span>View Results</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

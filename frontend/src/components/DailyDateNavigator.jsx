@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Archive, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Archive, RotateCcw, Sparkles, Swords } from 'lucide-react';
 
 export function DailyDateNavigator({
   currentDate,
@@ -8,6 +8,7 @@ export function DailyDateNavigator({
   onNextDay,
   onOpenArchive,
   onResetToToday,
+  onOpenDuel,
   compact = false
 }) {
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -177,8 +178,19 @@ export function DailyDateNavigator({
         </button>
       </div>
 
-      {/* Right controls: "Back to Today" & "Archive" */}
+      {/* Right controls: "1v1 Duel", "Back to Today" & "Archive" */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {!compact && onOpenDuel && (
+          <button
+            onClick={onOpenDuel}
+            className="flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gradient-to-r from-gold/20 via-amber-500/15 to-gold/20 px-2.5 sm:px-3.5 py-1.5 text-xs font-extrabold text-gold shadow-gold-glow/20 transition hover:bg-gold hover:text-cinema-black active:scale-95"
+            title="Play 1v1 Online Duel against a friend"
+          >
+            <Swords className="h-3.5 w-3.5" />
+            <span>1v1 Duel</span>
+          </button>
+        )}
+
         {!isToday && onResetToToday && (
           <button
             onClick={onResetToToday}

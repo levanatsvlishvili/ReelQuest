@@ -97,9 +97,21 @@ resource "aws_apigatewayv2_route" "join_duel" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "progress_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/progress"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "submit_duel" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "POST /duels/{duelId}/submit"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "rematch_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/rematch"
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
