@@ -53,6 +53,12 @@ resource "aws_apigatewayv2_route" "shortest_path" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "game_hint" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /games/hint"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "leaderboard" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /leaderboard"

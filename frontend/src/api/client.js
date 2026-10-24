@@ -690,9 +690,57 @@ export async function rematchDuel(duelId, customPayload = {}) {
     };
 
     oldDuel.nextDuelId = newDuelId;
-    localStorage.setItem(`reelquest_duel_${duelId}`, JSON.stringify(oldDuel));
+    localStorage.setItem(`reelquest_duel_${safeId}`, JSON.stringify(oldDuel));
     localStorage.setItem(`reelquest_duel_${newDuelId}`, JSON.stringify(newDuel));
     return newDuel;
   }
   return null;
 }
+
+export async function fetchOtaraHint(currentActorId, targetActorId) {
+  if (!currentActorId || !targetActorId) return null;
+
+  const token = getAuthToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  if (API_BASE_URL) {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/games/hint?current=${encodeURIComponent(currentActorId)}&target=${encodeURIComponent(targetActorId)}`,
+        { headers }
+      );
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Failed to fetch remote Otara hint, falling back to local graph:', err);
+    }
+  }
+
+  // Local fallback using curated graph
+  const localSteps = findLocalShortestPath(currentActorId, targetActorId);
+  if (localSteps && localSteps.length > 0) {
+    const step = localSteps[0];
+    return {
+      currentActorId,
+      currentActorName: step.actor?.name || 'Current Actor',
+      targetActorId,
+      targetActorName: localSteps[localSteps.length - 1].nextActor?.name || 'Target Star',
+      remainingHops: localSteps.length,
+      riddleClue: `Otara's Oracle Whisper: Look into a celebrated production where ${step.actor?.name} and ${step.nextActor?.name} joined cinematic forces!`,
+      recommendedMovieId: step.movie?.id,
+      recommendedMovieTitle: step.movie?.title,
+      recommendedMovieYear: step.movie?.year || 2015,
+      recommendedMoviePoster: step.movie?.posterPath,
+      nextActorId: step.nextActor?.id,
+      nextActorName: step.nextActor?.name,
+      nextActorImage: step.nextActor?.profilePath,
+      isPro: false,
+      freeHintsRemaining: 1
+    };
+  }
+
+  return null;
+}
+

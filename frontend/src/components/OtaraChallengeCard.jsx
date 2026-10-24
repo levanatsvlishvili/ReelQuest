@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle, Swords } from 'lucide-react';
+import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle, Swords, Lightbulb } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 import OtaraObservingMascot from './OtaraObservingMascot';
 
@@ -10,7 +10,8 @@ export function OtaraChallengeCard({
   timerSeconds = 0,
   onStart,
   onOpenSummary,
-  onOpenDuel
+  onOpenDuel,
+  onOpenHint
 }) {
   if (!challenge) return null;
 
@@ -222,14 +223,27 @@ export function OtaraChallengeCard({
                   : `„You took a scenic detour, but the connection is still alive. Reach the target!“`}
           </p>
 
-          <div className="pt-1 flex items-center gap-3 text-[11px] text-cinema-muted">
-            <span>
-              Your Hops: <strong className="text-white">{moves}</strong>
-            </span>
-            <span>•</span>
-            <span>
-              Otara's Par: <strong className="text-gold font-bold">{optimalHops} Hops</strong>
-            </span>
+          <div className="pt-1 flex items-center justify-between gap-3 text-[11px] text-cinema-muted">
+            <div className="flex items-center gap-3">
+              <span>
+                Your Hops: <strong className="text-white">{moves}</strong>
+              </span>
+              <span>•</span>
+              <span>
+                Otara&apos;s Par: <strong className="text-gold font-bold">{optimalHops} Hops</strong>
+              </span>
+            </div>
+
+            {onOpenHint && (
+              <button
+                onClick={onOpenHint}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3 py-1 text-xs font-black text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow transition active:scale-95"
+                title="Ask Otara for a Cinephile Hint"
+              >
+                <Lightbulb className="h-3.5 w-3.5 fill-gold hover:fill-current" />
+                <span>Ask Otara for a Hint</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

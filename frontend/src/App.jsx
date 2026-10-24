@@ -18,6 +18,7 @@ import { CustomPathFinder } from './components/CustomPathFinder';
 import { LeaderboardView } from './components/LeaderboardView';
 import { OtaraChallengeCard } from './components/OtaraChallengeCard';
 import { DuelGameView } from './components/DuelGameView';
+import { OtaraHintModal } from './components/OtaraHintModal';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -74,6 +75,7 @@ export default function App() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isHintOpen, setIsHintOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
@@ -207,6 +209,7 @@ export default function App() {
                       canUndo={canUndo}
                       gameStatus={gameStatus}
                       onViewSummary={openVictoryModal}
+                      onOpenHint={() => setIsHintOpen(true)}
                     />
 
                     {/* Otara's Live Coaching / Post-game Reaction */}
@@ -218,6 +221,7 @@ export default function App() {
                       onStart={startGame}
                       onOpenSummary={openVictoryModal}
                       onOpenDuel={() => setIsDuelMode(true)}
+                      onOpenHint={() => setIsHintOpen(true)}
                     />
 
                     <VisualGraph
@@ -306,6 +310,15 @@ export default function App() {
         onClose={() => setIsArchiveOpen(false)}
         currentDate={activeDate}
         onSelectDate={(targetDate) => loadDateChallenge(targetDate)}
+      />
+
+      <OtaraHintModal
+        isOpen={isHintOpen}
+        onClose={() => setIsHintOpen(false)}
+        currentActor={currentActor}
+        targetActor={challenge?.targetActor}
+        onSelectHintMovie={(hintMovie) => selectMovie(hintMovie)}
+        onOpenPro={() => setIsProModalOpen(true)}
       />
     </div>
   );

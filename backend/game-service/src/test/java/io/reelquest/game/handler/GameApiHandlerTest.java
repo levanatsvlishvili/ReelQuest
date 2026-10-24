@@ -432,6 +432,23 @@ class GameApiHandlerTest {
         assertThat(rematchRes.getBody()).contains("\"guestUsername\":\"RivalStar\"");
     }
 
+    @Test
+    @DisplayName("GET /games/hint should return Otara cinematic hint with recommended intermediate step")
+    void shouldReturnOtaraHintSuccessfully() {
+        APIGatewayProxyRequestEvent hintReq = new APIGatewayProxyRequestEvent()
+                .withHttpMethod("GET")
+                .withPath("/games/hint")
+                .withQueryStringParameters(Map.of("current", "31", "target", "6193"));
+
+        APIGatewayProxyResponseEvent res = handler.handleRequest(hintReq, null);
+        assertThat(res.getStatusCode()).isEqualTo(200);
+        assertThat(res.getBody()).contains("riddleClue");
+        assertThat(res.getBody()).contains("recommendedMovieTitle");
+        assertThat(res.getBody()).contains("nextActorName");
+        assertThat(res.getBody()).contains("\"currentActorId\":\"31\"");
+        assertThat(res.getBody()).contains("\"targetActorId\":\"6193\"");
+    }
+
     private static class TestIdempotencyService implements IdempotencyService {
         final Map<String, IdempotencyRecord> store = new HashMap<>();
 

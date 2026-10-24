@@ -1,4 +1,4 @@
-import { Clock, Footprints, RotateCcw, Flag, User } from 'lucide-react';
+import { Clock, Footprints, RotateCcw, Flag, User, Lightbulb } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 
 export function ChallengeHeader({
@@ -9,7 +9,8 @@ export function ChallengeHeader({
   onGiveUp,
   canUndo,
   gameStatus,
-  onViewSummary
+  onViewSummary,
+  onOpenHint
 }) {
   if (!challenge) return null;
 
@@ -101,6 +102,17 @@ export function ChallengeHeader({
               <RotateCcw className="h-3 w-3" />
               <span>Step Back</span>
             </button>
+
+            {gameStatus === 'PLAYING' && onOpenHint && (
+              <button
+                onClick={onOpenHint}
+                className="flex items-center gap-1.5 rounded-lg border border-gold/60 bg-gold/15 px-3 py-1 text-xs font-extrabold text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow transition active:scale-95"
+                title="Ask Otara for a Cinephile Hint"
+              >
+                <Lightbulb className="h-3.5 w-3.5 fill-gold hover:fill-current" />
+                <span>Otara&apos;s Hint</span>
+              </button>
+            )}
 
             {gameStatus === 'PLAYING' && (
               <button

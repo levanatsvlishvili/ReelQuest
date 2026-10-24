@@ -19,6 +19,7 @@ import io.reelquest.domain.idempotency.IdempotencyStatus;
 import io.reelquest.game.dto.CreateDuelRequest;
 import io.reelquest.game.dto.DailyChallengeResponse;
 import io.reelquest.game.dto.DuelResponse;
+import io.reelquest.game.dto.HintResponse;
 import io.reelquest.game.dto.LeaderboardEntry;
 import io.reelquest.game.dto.SubmitDuelScoreRequest;
 import io.reelquest.game.dto.UpdateDuelProgressRequest;
@@ -139,6 +140,10 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 return response(200, result);
             }
 
+            if ("GET".equalsIgnoreCase(httpMethod) && (path.endsWith("/games/hint") || path.endsWith("/hint"))) {
+                return handleGetHint(request);
+            }
+
             if ("GET".equalsIgnoreCase(httpMethod) && path.endsWith("/leaderboard")) {
                 Map<String, String> queryParams = request.getQueryStringParameters();
                 String date = queryParams != null && queryParams.containsKey("date")
@@ -197,6 +202,118 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             log.error("Unhandled exception processing request: {}", e.getMessage(), e);
             return response(500, Map.of("error", "Internal server error: " + e.getMessage()));
         }
+    }
+
+    private boolean isUserPro(AuthenticatedUser authUser) {
+        if (authUser == null || dynamoDbClient == null) return false;
+        try {
+            var res = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of(
+                            "PK", AttributeValue.fromS("USER#" + authUser.userId()),
+                            "SK", AttributeValue.fromS("PROFILE")
+                    ))
+                    .build());
+            if (res.hasItem() && res.item() != null) {
+                Map<String, AttributeValue> item = res.item();
+                return item.containsKey("tier") && "PRO".equalsIgnoreCase(item.get("tier").s());
+            }
+        } catch (Exception e) {
+            log.warn("Error checking pro status for user {}: {}", authUser.userId(), e.getMessage());
+        }
+        return false;
+    }
+
+    private APIGatewayProxyResponseEvent handleGetHint(APIGatewayProxyRequestEvent request) {
+        Map<String, String> queryParams = request.getQueryStringParameters();
+        String current = queryParams != null ? queryParams.get("current") : null;
+        String target = queryParams != null ? queryParams.get("target") : null;
+
+        if (current == null || target == null || current.isBlank() || target.isBlank()) {
+            return response(400, Map.of("error", "Both 'current' and 'target' query parameters are required."));
+        }
+
+        AuthenticatedUser authUser = extractAuthenticatedUser(request);
+        boolean isPro = isUserPro(authUser);
+
+        Actor currentActor = dataProvider.findActorById(current)
+                .orElse(new Actor(current, "Current Actor", 0.0, null));
+        Actor targetActor = dataProvider.findActorById(target)
+                .orElse(new Actor(target, "Target Actor", 0.0, null));
+
+        if (current.equals(target)) {
+            return response(200, new HintResponse(
+                    current,
+                    currentActor.name(),
+                    target,
+                    targetActor.name(),
+                    0,
+                    "You have already reached the target actor!",
+                    null,
+                    null,
+                    0,
+                    null,
+                    target,
+                    targetActor.name(),
+                    targetActor.profilePath(),
+                    isPro,
+                    isPro ? -1 : 1
+            ));
+        }
+
+        ShortestPathResult result = bfsFinder.findShortestPath(current, target);
+        if (result == null || !result.found() || result.path().isEmpty()) {
+            return response(404, Map.of("error", "No connection path found from current actor to target."));
+        }
+
+        io.reelquest.domain.graph.PathConnection step = result.path().get(0);
+        Movie movie = dataProvider.findMovieById(step.movieId()).orElse(null);
+        Actor nextActor = dataProvider.findActorById(step.toActorId())
+                .orElse(new Actor(step.toActorId(), step.toActorName(), 0.0, null));
+
+        int year = movie != null ? movie.year() : 0;
+        String poster = movie != null ? movie.posterPath() : null;
+        String director = movie != null ? movie.director() : null;
+        List<String> genres = movie != null ? movie.genres() : List.of();
+        String genreStr = (genres != null && !genres.isEmpty()) ? genres.get(0).toLowerCase() : null;
+
+        // Dynamic in-character riddle clue from Otara
+        String riddleClue;
+        if (director != null && !director.isBlank()) {
+            riddleClue = "Look into a " + (year > 0 ? year + " " : "") + (genreStr != null ? genreStr + " " : "")
+                    + "film directed by " + director + ", where " + step.fromActorName() + " and " + step.toActorName() + " shared the screen!";
+        } else if (genreStr != null && year > 0) {
+            riddleClue = "In " + year + ", " + step.fromActorName() + " starred in an acclaimed " + genreStr
+                    + " feature connecting directly toward " + step.toActorName() + ".";
+        } else if (year > 0) {
+            riddleClue = "Think back to the year " + year + " in cinema history. " + step.fromActorName()
+                    + " starred in a key production alongside " + step.toActorName() + "!";
+        } else {
+            riddleClue = "Search through " + step.fromActorName() + "'s filmography for a title featuring "
+                    + step.toActorName() + "!";
+        }
+
+        int freeHintsRemaining = isPro ? -1 : 1;
+
+        HintResponse hint = new HintResponse(
+                current,
+                step.fromActorName(),
+                target,
+                targetActor.name(),
+                result.degrees(),
+                riddleClue,
+                step.movieId(),
+                step.movieTitle(),
+                year,
+                poster,
+                step.toActorId(),
+                step.toActorName(),
+                nextActor.profilePath(),
+                isPro,
+                freeHintsRemaining
+        );
+
+        return response(200, hint);
     }
 
     private APIGatewayProxyResponseEvent handleGetActorMovies(String actorId) {
