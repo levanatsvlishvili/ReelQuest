@@ -63,8 +63,15 @@ export default function App() {
   const [isDuelMode, setIsDuelMode] = useState(false);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('duel')) {
+    // Seamless routing to dedicated Admin Portal if /admin or ?admin is accessed
+    const path = window.location.pathname.toLowerCase();
+    const search = new URLSearchParams(window.location.search);
+    if (path === '/admin' || path === '/admin/' || search.has('admin')) {
+      window.location.replace('/admin/index.html');
+      return;
+    }
+
+    if (search.get('duel')) {
       setActiveMode('six-degrees');
       setIsDuelMode(true);
     }

@@ -80,3 +80,4 @@ module "admin_hosting" {
   environment = var.environment
   bucket_name = "${var.app_name}-${var.environment}-admin-${data.aws_caller_identity.current.account_id}"
 }
+
