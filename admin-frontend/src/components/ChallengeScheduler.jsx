@@ -171,6 +171,61 @@ export function ChallengeScheduler() {
         </button>
       </div>
 
+      {/* Today's Active Spotlight Card */}
+      {(() => {
+        const todayChallenge = challenges.find(c => c.status === 'ACTIVE_TODAY');
+        if (!todayChallenge) return null;
+        return (
+          <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cinema-card via-[#151926] to-cinema-card p-5 sm:p-6 shadow-2xl relative overflow-hidden">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                {/* Start Star */}
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getTmdbImageUrl(todayChallenge.startActor?.profilePath)}
+                    alt={todayChallenge.startActor?.name}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-gold shadow-gold-glow"
+                  />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Starting Star</span>
+                    <h4 className="text-base font-extrabold text-white">{todayChallenge.startActor?.name}</h4>
+                    <span className="text-[10px] text-slate-500 font-mono">TMDB ID: {todayChallenge.startActor?.id}</span>
+                  </div>
+                </div>
+
+                {/* Hop Bridge */}
+                <div className="flex flex-col items-center px-4 py-2 rounded-xl bg-gold/10 border border-gold/30">
+                  <span className="text-[10px] uppercase font-bold text-gold tracking-wider">Otara's Target</span>
+                  <span className="text-lg font-extrabold text-gold font-mono">{todayChallenge.optimalHops} Hops</span>
+                  <span className="text-[9px] text-slate-400">Shortest Verified Route</span>
+                </div>
+
+                {/* Target Star */}
+                <div className="flex items-center gap-3">
+                  <img
+                    src={getTmdbImageUrl(todayChallenge.targetActor?.profilePath)}
+                    alt={todayChallenge.targetActor?.name}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-gold shadow-gold-glow"
+                  />
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Target Star</span>
+                    <h4 className="text-base font-extrabold text-white">{todayChallenge.targetActor?.name}</h4>
+                    <span className="text-[10px] text-slate-500 font-mono">TMDB ID: {todayChallenge.targetActor?.id}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-extrabold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>ACTIVE LIVE SERVER PUZZLE</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Challenges Table */}
       <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card overflow-hidden shadow-xl">
         <div className="overflow-x-auto">

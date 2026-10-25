@@ -9,7 +9,8 @@ import {
   Check,
   Zap,
   Globe,
-  Radio
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 
 export function SystemInfo() {
@@ -17,15 +18,28 @@ export function SystemInfo() {
   const [pingStatus, setPingStatus] = useState(null);
   const [pinging, setPinging] = useState(false);
 
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isDev = hostname.includes('dev') || hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com';
+  const cognitoPoolId = import.meta.env.VITE_COGNITO_USER_POOL_ID || 'eu-central-1_9SzgEn1WX';
+  const cognitoClientId = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
+  const region = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
+
+  const tableName = isDev ? 'reelquest-dev-data' : 'reelquest-prod-data';
+  const gameUrl = isLocal ? 'http://localhost:5173' : (isDev ? 'https://dev.reelquest.io' : 'https://reelquest.io');
+  const adminUrl = isLocal ? 'http://localhost:5174' : (isDev ? 'https://dev-admin.reelquest.io' : 'https://admin.reelquest.io');
+
   const envVars = [
-    { label: 'AWS Primary Region', value: 'eu-central-1 (Frankfurt)', key: 'region' },
-    { label: 'API Gateway Base URL', value: 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com', key: 'api' },
-    { label: 'Cognito User Pool ID', value: 'eu-central-1_9SzgEn1WX', key: 'pool' },
-    { label: 'Cognito Web Client ID', value: 'v7qlvblobmt33mqkfasdinp9s', key: 'client' },
-    { label: 'DynamoDB Production Table', value: 'reelquest-prod-data (PITR Enabled)', key: 'ddb' },
-    { label: 'Java 21 Lambda Execution', value: 'SnapStart Enabled (arm64, 1024 MB)', key: 'lambda' },
-    { label: 'Player Web Application Port', value: 'http://localhost:5173', key: 'player' },
-    { label: 'Admin Dedicated Portal Port', value: 'http://localhost:5174', key: 'admin' }
+    { label: 'AWS Primary Region', value: `${region} (Frankfurt)`, key: 'region' },
+    { label: 'API Gateway Endpoint', value: apiBaseUrl, key: 'api' },
+    { label: 'Cognito User Pool ID', value: cognitoPoolId, key: 'pool' },
+    { label: 'Cognito SPA Client ID', value: cognitoClientId, key: 'client' },
+    { label: 'DynamoDB Table Name', value: tableName, key: 'ddb' },
+    { label: 'Java 21 Lambda Engine', value: 'SnapStart Enabled (x86_64, 512 MB)', key: 'lambda' },
+    { label: 'Player Game Application', value: gameUrl, key: 'player' },
+    { label: 'Admin Dedicated Portal', value: adminUrl, key: 'admin' }
   ];
 
   const handleCopy = (key, val) => {
@@ -37,12 +51,14 @@ export function SystemInfo() {
   const handlePingBackend = async () => {
     setPinging(true);
     setPingStatus(null);
+    const start = performance.now();
     try {
-      const res = await fetch('https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com/games/daily');
+      const res = await fetch(`${apiBaseUrl}/challenges/daily`);
+      const latency = Math.round(performance.now() - start);
       if (res.ok) {
-        setPingStatus({ ok: true, msg: 'API Gateway & Java 21 Lambda Responding (HTTP 200 OK)' });
+        setPingStatus({ ok: true, msg: `API Gateway & Java 21 Lambda responding healthy: HTTP 200 OK (${latency}ms)` });
       } else {
-        setPingStatus({ ok: false, msg: `API Responded with status HTTP ${res.status}` });
+        setPingStatus({ ok: false, msg: `API responded with status HTTP ${res.status} (${latency}ms)` });
       }
     } catch (e) {
       setPingStatus({ ok: false, msg: 'Failed to reach API endpoint: ' + e.message });
@@ -59,7 +75,7 @@ export function SystemInfo() {
             AWS Serverless Infrastructure & System Diagnostics
           </h2>
           <p className="text-xs text-slate-400">
-            Real-time topology configuration, Cognito identifiers, and live backend ping tests.
+            Real environment configuration, Cognito user pool identifiers, and live backend connectivity checks.
           </p>
         </div>
 
@@ -105,9 +121,9 @@ export function SystemInfo() {
                 )}
               </button>
             </div>
-            <div className="font-mono text-xs font-bold text-white break-all bg-cinema-surface/80 p-2.5 rounded-xl border border-cinema-border/60">
+            <p className="text-xs font-mono font-bold text-white break-all">
               {item.value}
-            </div>
+            </p>
           </div>
         ))}
       </div>

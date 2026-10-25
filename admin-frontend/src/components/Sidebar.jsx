@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Calendar,
   Users,
+  History,
   ShieldAlert,
   Film,
   Server,
@@ -15,6 +16,18 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 
 export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) {
   const { adminUser, logout } = useAdminAuth();
+
+  const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+  const isDev = hostname.includes('dev') || hostname.includes('localhost') || hostname.includes('127.0.0.1');
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  const envLabel = isLocal ? 'LOCAL' : (isDev ? 'DEV' : 'PROD');
+  const envBadgeColor = isDev
+    ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+    : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400';
+
+  const playerAppUrl = isLocal
+    ? 'http://localhost:5173'
+    : (isDev ? 'https://dev.reelquest.io' : 'https://reelquest.io');
 
   const navItems = [
     {
@@ -30,6 +43,12 @@ export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) 
       badge: null
     },
     {
+      id: 'history',
+      label: 'Game Match History',
+      icon: History,
+      badge: 'Audit'
+    },
+    {
       id: 'users',
       label: 'User CRM & Pro Tier',
       icon: Users,
@@ -39,7 +58,7 @@ export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) 
       id: 'moderation',
       label: 'Leaderboard & Anti-Cheat',
       icon: ShieldAlert,
-      badge: '2 Flags'
+      badge: null
     },
     {
       id: 'graph',
@@ -85,8 +104,8 @@ export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) 
               </h2>
             </div>
           </div>
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
-            PROD
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold border ${envBadgeColor}`}>
+            {envLabel}
           </span>
         </div>
 
@@ -143,14 +162,14 @@ export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) 
         <div className="p-4 border-t border-cinema-border/70 space-y-3 bg-[#06080d]">
           {/* Quick link to live game player frontend */}
           <a
-            href="http://localhost:5173"
+            href={playerAppUrl}
             target="_blank"
             rel="noreferrer"
             className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl border border-cinema-border/80 bg-cinema-surface/60 text-[11px] font-semibold text-slate-300 hover:text-white hover:border-gold/40 transition"
           >
             <span className="flex items-center gap-2">
               <Film className="h-3.5 w-3.5 text-gold" />
-              <span>Open Player App (5173)</span>
+              <span>Open ReelQuest Game</span>
             </span>
             <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
           </a>

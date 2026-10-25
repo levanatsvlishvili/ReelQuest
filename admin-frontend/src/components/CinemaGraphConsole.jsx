@@ -10,19 +10,22 @@ import {
   AlertCircle,
   Play,
   Server,
-  Share2
+  Share2,
+  Clock,
+  Compass
 } from 'lucide-react';
-import { fetchCinemaGraphStats } from '../api/adminClient';
+import { fetchCinemaGraphStats, computeShortestPath } from '../api/adminClient';
 
 export function CinemaGraphConsole() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [terminalLogs, setTerminalLogs] = useState([
-    '[SYSTEM] ReelQuest Knowledge Graph Engine initialized.',
-    '[BFS-ORACLE] Loaded 5,420 actor nodes and 12,180 film edges in memory.',
-    '[CRON] Last automated weekly sync completed at 2026-10-21 04:00 UTC.'
-  ]);
+
+  // Real BFS Path Tester State
+  const [startActorId, setStartActorId] = useState('6384'); // Keanu Reeves
+  const [targetActorId, setTargetActorId] = useState('1892'); // Matt Damon
+  const [testingPath, setTestingPath] = useState(false);
+  const [pathResult, setPathResult] = useState(null);
+  const [pathError, setPathError] = useState(null);
 
   useEffect(() => {
     loadStats();
@@ -35,31 +38,22 @@ export function CinemaGraphConsole() {
     setLoading(false);
   };
 
-  const handleTriggerSync = () => {
-    if (syncing) return;
-    setSyncing(true);
-    addLog(`[PIPELINE] Manual TMDB Ingestion triggered by administrator...`);
+  const handleTestBfs = async (e) => {
+    e?.preventDefault();
+    if (!startActorId.trim() || !targetActorId.trim()) return;
 
-    setTimeout(() => {
-      addLog(`[TMDB-API] Querying /trending/movie/week (language=en-US, page=1..5)...`);
-    }, 800);
+    setTestingPath(true);
+    setPathResult(null);
+    setPathError(null);
 
-    setTimeout(() => {
-      addLog(`[DDB-BATCH] Found 48 new cast connection credits. Writing batch to DynamoDB...`);
-    }, 1800);
-
-    setTimeout(() => {
-      addLog(`[BFS-CACHE] Rebuilding in-memory adjacency list for shortest path calculation.`);
-    }, 2800);
-
-    setTimeout(() => {
-      addLog(`[SUCCESS] TMDB Cinema Graph sync completed! 0 orphans detected. Graph density: 9.3.`);
-      setSyncing(false);
-    }, 3800);
-  };
-
-  const addLog = (msg) => {
-    setTerminalLogs((prev) => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`]);
+    try {
+      const result = await computeShortestPath(startActorId.trim(), targetActorId.trim());
+      setPathResult(result);
+    } catch (err) {
+      setPathError(err.message || 'BFS search failed to compute path.');
+    } finally {
+      setTestingPath(false);
+    }
   };
 
   if (loading || !stats) {
@@ -72,92 +66,164 @@ export function CinemaGraphConsole() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-white tracking-tight">
-            Cinema Knowledge Graph & Ingestion Console
+            Cinema Knowledge Graph & BFS Oracle Console
           </h2>
           <p className="text-xs text-slate-400">
-            Inspect the underlying Hollywood actor-movie network topology, monitor TMDB sync jobs, and run manual batch updates.
+            Real bidirectional Breadth-First Search (BFS) engine executed on Java 21 AWS Lambda directly querying DynamoDB graph edges.
           </p>
         </div>
 
         <button
-          onClick={handleTriggerSync}
-          disabled={syncing}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-600 text-xs font-extrabold text-white shadow-lg shadow-sky-500/20 hover:opacity-95 transition disabled:opacity-50"
+          onClick={loadStats}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-cinema-border/80 bg-cinema-card text-xs font-extrabold text-slate-300 hover:text-white hover:border-gold/40 transition"
         >
-          <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
-          <span>{syncing ? 'Syncing TMDB Graph...' : 'Run TMDB Sync Now'}</span>
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-gold' : ''}`} />
+          <span>Refresh Graph Status</span>
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Real Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-5 space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Total Actors Indexed
+            DynamoDB Graph Items
           </span>
           <span className="text-2xl font-extrabold font-mono text-white block">
-            {stats.totalActors.toLocaleString()} Stars
+            {stats.totalEntities}
           </span>
-          <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>100% Curated Headshots</span>
+          <span className="text-[10px] text-slate-500 block">
+            Actors, movies, and cast credit edges
           </span>
         </div>
 
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-5 space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Total Feature Films
+            Graph Traversal Engine
           </span>
-          <span className="text-2xl font-extrabold font-mono text-white block">
-            {stats.totalMovies.toLocaleString()} Movies
+          <span className="text-sm font-extrabold text-gold block">
+            {stats.engine}
           </span>
-          <span className="text-xs text-sky-400 flex items-center gap-1 font-medium">
-            <Film className="h-3.5 w-3.5" />
-            <span>Posters & Release Years</span>
+          <span className="text-[10px] text-emerald-400 block flex items-center gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            <span>Optimal shortest hops guaranteed</span>
           </span>
         </div>
 
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-5 space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-            Cast Connection Edges
+            AWS Hosting Region
           </span>
-          <span className="text-2xl font-extrabold font-mono text-gold block">
-            {stats.totalCastEdges.toLocaleString()} Edges
+          <span className="text-base font-extrabold text-white block">
+            {stats.region}
           </span>
-          <span className="text-xs text-slate-400 block">
-            {stats.graphDensity}
+          <span className="text-[10px] text-slate-500 block">
+            {stats.storage}
           </span>
         </div>
       </div>
 
-      {/* Terminal Output Log Container */}
-      <div className="rounded-2xl border border-cinema-border bg-[#05070b] overflow-hidden shadow-2xl">
-        <div className="bg-[#0b0e17] px-4 py-2.5 border-b border-cinema-border/80 flex items-center justify-between">
+      {/* Live BFS Path Tester */}
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-6 space-y-5 shadow-xl">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Terminal className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs font-mono font-bold text-slate-300">
-              TMDB Ingestion Pipeline Output (/var/log/reelquest-ingestion.log)
-            </span>
+            <Compass className="h-5 w-5 text-gold" />
+            <div>
+              <h3 className="text-sm font-extrabold text-white">Live Graph Shortest-Path Tracer</h3>
+              <p className="text-xs text-slate-400">Test live bidirectional BFS path calculation between any two TMDB actor IDs</p>
+            </div>
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80 inline-block animate-pulse" />
-            <span className="text-[10px] font-mono text-slate-400">PIPE_READY</span>
-          </div>
+          <span className="text-[10px] font-mono text-slate-500">
+            Real Backend Query (/shortest-path)
+          </span>
         </div>
 
-        <div className="p-4 font-mono text-xs text-emerald-400/90 space-y-1.5 max-h-72 overflow-y-auto bg-black/60">
-          {terminalLogs.map((log, idx) => (
-            <div key={idx} className="leading-relaxed">
-              {log}
+        <form onSubmit={handleTestBfs} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Start Actor TMDB ID
+            </label>
+            <input
+              type="text"
+              value={startActorId}
+              onChange={(e) => setStartActorId(e.target.value)}
+              placeholder="e.g. 6384 (Keanu Reeves)"
+              className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs text-white font-mono focus:border-gold focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+              Target Actor TMDB ID
+            </label>
+            <input
+              type="text"
+              value={targetActorId}
+              onChange={(e) => setTargetActorId(e.target.value)}
+              placeholder="e.g. 1892 (Matt Damon)"
+              className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs text-white font-mono focus:border-gold focus:outline-none"
+            />
+          </div>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={testingPath}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber-500 py-2.5 text-xs font-extrabold text-cinema-black shadow-gold-glow hover:opacity-95 transition disabled:opacity-50"
+            >
+              <Play className={`h-3.5 w-3.5 fill-cinema-black ${testingPath ? 'animate-spin' : ''}`} />
+              <span>{testingPath ? 'Calculating BFS...' : 'Trace Shortest Path'}</span>
+            </button>
+          </div>
+        </form>
+
+        {pathError && (
+          <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-xs text-rose-300 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{pathError}</span>
+          </div>
+        )}
+
+        {pathResult && (
+          <div className="rounded-xl border border-cinema-border/70 bg-[#07090e] p-5 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cinema-border/50 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Calculated Shortest Degrees:</span>
+                <strong className="text-gold font-mono text-sm">{pathResult.degrees} Hops</strong>
+              </div>
+              <div className="flex items-center gap-4 text-slate-400 font-mono text-[11px]">
+                <span>Explored Nodes: <strong className="text-white">{pathResult.exploredNodesCount}</strong></span>
+                <span>Latency: <strong className="text-emerald-400">{pathResult.executionTimeMs} ms</strong></span>
+              </div>
             </div>
-          ))}
-          {syncing && (
-            <div className="text-sky-400 animate-pulse">
-              [PIPELINE] Ingesting credits chunk in parallel via AWS Lambda SnapStart...
-            </div>
-          )}
-        </div>
+
+            {/* Path Steps */}
+            {pathResult.path && pathResult.path.length > 0 ? (
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                  Topological Path Hops:
+                </span>
+                <div className="space-y-2">
+                  {pathResult.path.map((step, idx) => (
+                    <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 rounded-lg bg-cinema-surface/60 border border-cinema-border/40 text-xs">
+                      <span className="font-extrabold text-gold">{step.fromActorName}</span>
+                      <span className="text-slate-500 text-[10px]">starred in</span>
+                      <span className="px-2 py-0.5 rounded bg-sky-500/15 border border-sky-500/30 text-sky-300 font-bold">
+                        {step.movieTitle}
+                      </span>
+                      <span className="text-slate-500 text-[10px]">with</span>
+                      <span className="font-extrabold text-gold">{step.toActorName}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-xs text-slate-400">
+                Direct connection or 0 intermediate degrees.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

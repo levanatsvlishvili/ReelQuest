@@ -5,6 +5,7 @@ import { Sidebar } from './components/Sidebar';
 import { Header } from './components/Header';
 import { DashboardOverview } from './components/DashboardOverview';
 import { ChallengeScheduler } from './components/ChallengeScheduler';
+import { GameHistory } from './components/GameHistory';
 import { UserManagement } from './components/UserManagement';
 import { LeaderboardModeration } from './components/LeaderboardModeration';
 import { CinemaGraphConsole } from './components/CinemaGraphConsole';
@@ -14,6 +15,7 @@ import { Activity } from 'lucide-react';
 function AdminDashboardInner() {
   const { adminUser, loading } = useAdminAuth();
   const [currentTab, setCurrentTab] = useState('overview');
+  const [historyUserFilter, setHistoryUserFilter] = useState('ALL');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -34,14 +36,28 @@ function AdminDashboardInner() {
     return <LoginView />;
   }
 
+  const handleSelectTab = (tabId) => {
+    if (tabId === 'history') {
+      setHistoryUserFilter('ALL');
+    }
+    setCurrentTab(tabId);
+  };
+
+  const handleInspectUserHistory = (userId) => {
+    setHistoryUserFilter(userId);
+    setCurrentTab('history');
+  };
+
   const renderActiveTab = () => {
     switch (currentTab) {
       case 'overview':
-        return <DashboardOverview key={refreshKey} onNavigateTab={setCurrentTab} />;
+        return <DashboardOverview key={refreshKey} onNavigateTab={handleSelectTab} />;
       case 'scheduler':
         return <ChallengeScheduler key={refreshKey} />;
+      case 'history':
+        return <GameHistory key={`${refreshKey}-${historyUserFilter}`} initialUserId={historyUserFilter} />;
       case 'users':
-        return <UserManagement key={refreshKey} />;
+        return <UserManagement key={refreshKey} onInspectUserHistory={handleInspectUserHistory} />;
       case 'moderation':
         return <LeaderboardModeration key={refreshKey} />;
       case 'graph':
@@ -49,7 +65,7 @@ function AdminDashboardInner() {
       case 'system':
         return <SystemInfo key={refreshKey} />;
       default:
-        return <DashboardOverview key={refreshKey} onNavigateTab={setCurrentTab} />;
+        return <DashboardOverview key={refreshKey} onNavigateTab={handleSelectTab} />;
     }
   };
 
@@ -58,7 +74,7 @@ function AdminDashboardInner() {
       {/* Sidebar Navigation */}
       <Sidebar
         currentTab={currentTab}
-        onSelectTab={setCurrentTab}
+        onSelectTab={handleSelectTab}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
       />

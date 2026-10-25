@@ -9,71 +9,99 @@ import {
   User,
   Calendar,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Trophy,
+  Filter,
+  RefreshCw
 } from 'lucide-react';
-import { fetchFlaggedLeaderboard, deleteFlaggedScore } from '../api/adminClient';
+import { fetchFlaggedLeaderboard, fetchRealLeaderboard, deleteFlaggedScore } from '../api/adminClient';
 
 export function LeaderboardModeration() {
   const [flags, setFlags] = useState([]);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [scope, setScope] = useState('all-time'); // 'all-time' | 'today'
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadFlags();
-  }, []);
+    loadAll();
+  }, [scope]);
 
-  const loadFlags = async () => {
+  const loadAll = async () => {
     setLoading(true);
-    const data = await fetchFlaggedLeaderboard();
-    setFlags(data);
+    const [flagData, lbData] = await Promise.all([
+      fetchFlaggedLeaderboard(),
+      fetchRealLeaderboard(scope)
+    ]);
+    setFlags(flagData);
+    setLeaderboard(lbData);
     setLoading(false);
   };
 
   const handleDelete = async (id, username) => {
-    if (!window.confirm(`Permanently remove high score record for ${username} from the public leaderboard?`)) return;
+    if (!window.confirm(`Permanently remove score record for ${username}?`)) return;
     await deleteFlaggedScore(id);
-    loadFlags();
+    loadAll();
   };
 
   const handleApprove = async (id) => {
     await deleteFlaggedScore(id);
-    loadFlags();
+    loadAll();
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-500/15 border border-rose-500/30 text-rose-400 uppercase tracking-wider mb-1">
-            <AlertTriangle className="h-3 w-3" />
-            <span>Anti-Cheat Heuristics Engine</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 uppercase tracking-wider mb-1">
+            <ShieldCheck className="h-3 w-3" />
+            <span>Real-Time Leaderboard & Anti-Cheat Audit</span>
           </div>
           <h2 className="text-xl font-extrabold text-white tracking-tight">
             Leaderboard Audit & Fair Play Moderation
           </h2>
           <p className="text-xs text-slate-400">
-            Automatically surfaces suspicious runs with impossible speed (&lt; 2s) or path anomalies for administrative verification.
+            Real player scores from DynamoDB. Runs with anomalous speed (&lt; 2s) or invalid hop counts are automatically flagged for administrative review.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">
-            Pending Review: <strong className="text-rose-400 font-mono">{flags.length}</strong>
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex rounded-xl border border-cinema-border/80 bg-cinema-card p-1">
+            <button
+              onClick={() => setScope('all-time')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                scope === 'all-time' ? 'bg-gold/20 text-gold border border-gold/40' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All-Time
+            </button>
+            <button
+              onClick={() => setScope('today')}
+              className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                scope === 'today' ? 'bg-gold/20 text-gold border border-gold/40' : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Today
+            </button>
+          </div>
+
+          <button
+            onClick={loadAll}
+            disabled={loading}
+            className="p-2 rounded-xl border border-cinema-border/80 bg-cinema-card text-slate-400 hover:text-white hover:border-gold/40 transition"
+            title="Refresh Leaderboard"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin text-gold' : ''}`} />
+          </button>
         </div>
       </div>
 
-      {flags.length === 0 ? (
-        <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-12 text-center space-y-3">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-            <ShieldCheck className="h-6 w-6" />
-          </div>
-          <h3 className="text-base font-extrabold text-white">All Leaderboards Verified Clean</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            No suspicious completion speeds or graph anomalies detected across today&apos;s submissions.
-          </p>
-        </div>
-      ) : (
+      {/* Flagged Runs Section */}
+      {flags.length > 0 && (
         <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-rose-400" />
+            <h3 className="text-sm font-extrabold text-rose-400">Suspicious Runs Requiring Attention ({flags.length})</h3>
+          </div>
           {flags.map((item) => (
             <div
               key={item.id}
@@ -121,7 +149,7 @@ export function LeaderboardModeration() {
                   <span className="text-[10px] text-slate-400 block">Submitted Hops</span>
                   <span className="text-sm font-bold font-mono text-white flex items-center gap-1 mt-0.5">
                     <Footprints className="h-3.5 w-3.5 text-gold" />
-                    <span>{item.hops} hops</span>
+                    <span>{item.moves} moves</span>
                   </span>
                 </div>
 
@@ -143,8 +171,8 @@ export function LeaderboardModeration() {
 
                 <div className="rounded-xl bg-cinema-black/60 p-3">
                   <span className="text-[10px] text-slate-400 block">Status</span>
-                  <span className="text-xs font-bold text-amber-400 block mt-0.5">
-                    Action Required
+                  <span className="text-xs font-bold text-rose-400 block mt-0.5">
+                    Flagged by Heuristics
                   </span>
                 </div>
               </div>
@@ -152,6 +180,99 @@ export function LeaderboardModeration() {
           ))}
         </div>
       )}
+
+      {/* Clean Audit Banner */}
+      {flags.length === 0 && (
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-white">All Submissions Verified Clean</h3>
+              <p className="text-xs text-slate-400">
+                0 suspicious runs detected. All recorded completions satisfy speed and graph topological constraints.
+              </p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            Audit Clean
+          </span>
+        </div>
+      )}
+
+      {/* Real Leaderboard Table */}
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card overflow-hidden shadow-xl">
+        <div className="p-4 border-b border-cinema-border/70 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4 text-gold" />
+            <h3 className="text-sm font-extrabold text-white">
+              Live Verified Submissions ({scope === 'all-time' ? 'All-Time High Scores' : "Today's Puzzles"})
+            </h3>
+          </div>
+          <span className="text-xs text-slate-500 font-mono">
+            Total Records: {leaderboard.length}
+          </span>
+        </div>
+
+        {leaderboard.length === 0 ? (
+          <div className="p-12 text-center text-xs text-slate-500">
+            No submissions recorded yet for this view in this environment.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-[#0b0e17] text-[10px] font-extrabold uppercase tracking-wider text-slate-400 border-b border-cinema-border/50">
+                <tr>
+                  <th className="px-4 py-3">Rank</th>
+                  <th className="px-4 py-3">Player / User ID</th>
+                  <th className="px-4 py-3">Score</th>
+                  <th className="px-4 py-3">Hops / Moves</th>
+                  <th className="px-4 py-3">Duration</th>
+                  <th className="px-4 py-3">Tier</th>
+                  <th className="px-4 py-3">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-cinema-border/40">
+                {leaderboard.map((entry, index) => (
+                  <tr key={`${entry.userId}-${index}`} className="hover:bg-cinema-surface/50 transition">
+                    <td className="px-4 py-3 font-mono font-extrabold text-gold">
+                      #{index + 1}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-white">{entry.username || 'Anonymous'}</span>
+                        <span className="text-[10px] font-mono text-slate-500 truncate max-w-[200px]">{entry.userId}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono font-bold text-emerald-400">
+                      {entry.score?.toLocaleString() || 0} pts
+                    </td>
+                    <td className="px-4 py-3 font-mono text-slate-300">
+                      {entry.moves || '-'} moves
+                    </td>
+                    <td className="px-4 py-3 font-mono text-slate-300">
+                      {entry.durationSeconds ? `${entry.durationSeconds}s` : '-'}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                        entry.isPro
+                          ? 'bg-gold/20 text-gold border border-gold/40'
+                          : 'bg-slate-700/40 text-slate-400'
+                      }`}>
+                        {entry.isPro ? 'PRO' : 'FREE'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-slate-500 text-[10px]">
+                      {entry.updatedAt ? new Date(entry.updatedAt).toLocaleString() : 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
