@@ -1,4 +1,5 @@
-import { GitFork, HelpCircle, DollarSign, History, Sparkles } from 'lucide-react';
+import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export const GAME_MODES = [
   {
@@ -7,7 +8,8 @@ export const GAME_MODES = [
     subtitle: 'Cinema Oracle Duel',
     icon: GitFork,
     status: 'ACTIVE',
-    badge: 'LIVE'
+    badge: 'LIVE',
+    hasStreak: true
   },
   {
     id: 'custom-path',
@@ -15,7 +17,8 @@ export const GAME_MODES = [
     subtitle: 'Custom Stars',
     icon: Sparkles,
     status: 'ACTIVE',
-    badge: 'PRO'
+    badge: 'PRO',
+    hasStreak: false // Custom Path Finder is a sandbox tool, not a game — no streak
   },
   {
     id: 'plot-guesser',
@@ -24,6 +27,7 @@ export const GAME_MODES = [
     icon: HelpCircle,
     status: 'COMING_SOON',
     badge: 'COMING SOON',
+    hasStreak: true,
     description: 'Guess iconic films from mysterious synopsis clues with minimal hints.'
   },
   {
@@ -33,6 +37,7 @@ export const GAME_MODES = [
     icon: DollarSign,
     status: 'COMING_SOON',
     badge: 'COMING SOON',
+    hasStreak: true,
     description: 'Higher or Lower: Pit blockbusters against each other based on worldwide box office earnings.'
   },
   {
@@ -42,11 +47,15 @@ export const GAME_MODES = [
     icon: History,
     status: 'COMING_SOON',
     badge: 'COMING SOON',
+    hasStreak: true,
     description: 'Place cinematic masterpieces in their exact historical release order without breaking the streak.'
   }
 ];
 
 export function GameModeSelector({ activeMode, onSelectMode }) {
+  const { isAuthenticated, stats } = useAuth();
+  const currentStreak = stats?.streak ?? 0;
+
   return (
     <div className="w-full overflow-x-auto pb-1 scrollbar-none">
       <div className="flex items-center gap-2 border-b border-cinema-border/50 pb-3 min-w-max">
@@ -72,12 +81,31 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
               <span>{mode.title}</span>
 
               {mode.status === 'ACTIVE' ? (
-                <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
+                <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${
+                  mode.id === 'custom-path'
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                }`}>
                   {mode.badge}
                 </span>
               ) : (
                 <span className="rounded-full bg-cinema-border/80 px-1.5 py-0.2 text-[9px] font-medium text-cinema-muted">
                   Soon
+                </span>
+              )}
+
+              {/* Game Streak Badge (Only for authenticated users and actual games — never Path Finder) */}
+              {isAuthenticated && mode.hasStreak && mode.status === 'ACTIVE' && (
+                <span
+                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border transition ${
+                    currentStreak > 0
+                      ? 'border-orange-500/40 bg-orange-500/15 text-orange-400 shadow-sm'
+                      : 'border-cinema-border/70 bg-cinema-black/40 text-cinema-muted'
+                  }`}
+                  title={`${currentStreak} Day Streak in ${mode.title}`}
+                >
+                  <Flame className={`h-3 w-3 ${currentStreak > 0 ? 'fill-orange-400 text-orange-400 animate-pulse' : 'text-cinema-muted'}`} />
+                  <span>{currentStreak}d</span>
                 </span>
               )}
             </button>

@@ -28,6 +28,19 @@ resource "aws_apigatewayv2_integration" "billing_service" {
   payload_format_version = "1.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  count            = var.cognito_user_pool_id != "" ? 1 : 0
+  api_id           = aws_apigatewayv2_api.main.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "${var.app_name}-${var.environment}-cognito-authorizer"
+
+  jwt_configuration {
+    audience = [var.cognito_client_id]
+    issuer   = "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}"
+  }
+}
+
 resource "aws_apigatewayv2_route" "daily" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /daily"
@@ -40,6 +53,12 @@ resource "aws_apigatewayv2_route" "shortest_path" {
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
+resource "aws_apigatewayv2_route" "game_hint" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /games/hint"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
 resource "aws_apigatewayv2_route" "leaderboard" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /leaderboard"
@@ -47,9 +66,11 @@ resource "aws_apigatewayv2_route" "leaderboard" {
 }
 
 resource "aws_apigatewayv2_route" "submit_game" {
-  api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /games/submit"
-  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /games/submit"
+  target             = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
+  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
 }
 
 resource "aws_apigatewayv2_route" "actor_movies" {
@@ -61,6 +82,42 @@ resource "aws_apigatewayv2_route" "actor_movies" {
 resource "aws_apigatewayv2_route" "movie_cast" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /movies/{movieId}/cast"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "create_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/create"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "get_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "GET /duels/{duelId}"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "join_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/join"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "progress_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/progress"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "submit_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/submit"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "rematch_duel" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /duels/{duelId}/rematch"
   target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
@@ -94,10 +151,18 @@ resource "aws_apigatewayv2_route" "user_profile" {
   target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
 }
 
-resource "aws_apigatewayv2_route" "user_sync" {
+resource "aws_apigatewayv2_route" "user_history" {
   api_id    = aws_apigatewayv2_api.main.id
-  route_key = "POST /users/sync"
-  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+  route_key = "GET /users/{userId}/history"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_sync" {
+  api_id             = aws_apigatewayv2_api.main.id
+  route_key          = "POST /users/sync"
+  target             = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
+  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
 }
 
 resource "aws_apigatewayv2_route" "default" {

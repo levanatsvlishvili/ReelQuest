@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Archive, RotateCcw, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Archive, RotateCcw, Sparkles, Swords } from 'lucide-react';
 
 export function DailyDateNavigator({
   currentDate,
@@ -8,6 +8,7 @@ export function DailyDateNavigator({
   onNextDay,
   onOpenArchive,
   onResetToToday,
+  onOpenDuel,
   compact = false
 }) {
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -66,12 +67,11 @@ export function DailyDateNavigator({
   }
 
   // Dynamic slot generation:
-  // Dynamically fills the navigator to eliminate empty space across all breakpoints.
-  // When on Today, shows up to 10 past days.
-  // When in the past, shows subsequent days up to todayStr, and earlier days to the left.
+  // Shows a comfortable, balanced window of up to 7 dates (6 past + Today)
+  // Perfectly fits all screen widths without pushing or clipping controls on the right.
   const daysFromToday = getDiffDaysFromToday(currentDate);
-  const maxRight = Math.min(Math.max(0, daysFromToday), 4);
-  const leftCount = Math.max(2, 10 - maxRight);
+  const maxRight = Math.min(Math.max(0, daysFromToday), 3);
+  const leftCount = Math.max(2, 6 - maxRight);
 
   const leftSlots = [];
   for (let i = leftCount; i >= 1; i--) {
@@ -93,9 +93,7 @@ export function DailyDateNavigator({
     if (dist <= 1) return 'flex';
     if (dist <= 2) return 'hidden sm:flex';
     if (dist <= 4) return 'hidden md:flex';
-    if (dist <= 6) return 'hidden lg:flex';
-    if (dist <= 8) return 'hidden xl:flex';
-    return 'hidden 2xl:flex';
+    return 'hidden lg:flex';
   }
 
   const handleDateClick = (dateStr) => {
@@ -105,9 +103,9 @@ export function DailyDateNavigator({
   };
 
   return (
-    <div className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-2.5 sm:p-3 shadow-lg backdrop-blur-md ${compact ? 'w-full' : ''}`}>
+    <div className={`flex items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-2 sm:p-2.5 shadow-lg backdrop-blur-md ${compact ? 'w-full' : ''}`}>
       {/* Left controls & Carousel */}
-      <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0 justify-center sm:justify-start overflow-x-auto py-0.5 scrollbar-none">
+      <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
         {/* Step backward */}
         <button
           onClick={onPrevDay}
@@ -118,7 +116,7 @@ export function DailyDateNavigator({
         </button>
 
         {/* Carousel Ribbon: [ Left Days ] [ ★ CENTER ACTIVE ★ ] [ Right Days ] */}
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-1 sm:flex-initial overflow-x-auto scrollbar-none py-0.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none py-1 px-1">
           {leftSlots.map((slot) => (
             <button
               key={slot.dateStr}
@@ -137,7 +135,7 @@ export function DailyDateNavigator({
 
           {/* ★ CENTER ACTIVE DAY (BOLD & GLOWING) ★ */}
           <div
-            className="flex shrink-0 flex-col items-center justify-center rounded-xl border-2 border-gold bg-gradient-to-r from-gold/25 via-amber-400/20 to-gold/25 px-3 sm:px-4 py-1.5 text-white shadow-gold-glow ring-2 ring-gold/30 transition-transform scale-105 select-none"
+            className="flex shrink-0 flex-col items-center justify-center rounded-xl border-2 border-gold bg-gradient-to-r from-gold/25 via-amber-400/20 to-gold/25 px-3 sm:px-3.5 py-1 text-white shadow-gold-glow ring-2 ring-gold/30 transition-transform scale-105 select-none my-0.5"
           >
             <span className="flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider text-gold">
               <Sparkles className="h-2.5 w-2.5 fill-gold animate-pulse" />
@@ -180,12 +178,23 @@ export function DailyDateNavigator({
         </button>
       </div>
 
-      {/* Right controls: "Back to Today" & "Archive" */}
-      <div className="flex items-center gap-2 self-center sm:self-auto shrink-0">
+      {/* Right controls: "1v1 Duel", "Back to Today" & "Archive" */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        {!compact && onOpenDuel && (
+          <button
+            onClick={onOpenDuel}
+            className="flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gradient-to-r from-gold/20 via-amber-500/15 to-gold/20 px-2.5 sm:px-3.5 py-1.5 text-xs font-extrabold text-gold shadow-gold-glow/20 transition hover:bg-gold hover:text-cinema-black active:scale-95"
+            title="Play 1v1 Online Duel against a friend"
+          >
+            <Swords className="h-3.5 w-3.5" />
+            <span>1v1 Duel</span>
+          </button>
+        )}
+
         {!isToday && onResetToToday && (
           <button
             onClick={onResetToToday}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 shadow-sm transition hover:bg-amber-500/20 active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-amber-300 shadow-sm transition hover:bg-amber-500/20 active:scale-95"
             title="Return to today's active challenge"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -196,7 +205,7 @@ export function DailyDateNavigator({
         {!compact && onOpenArchive && (
           <button
             onClick={onOpenArchive}
-            className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-gold/50 hover:text-gold active:scale-95"
+            className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-gold/50 hover:text-gold active:scale-95"
             title="Browse All Past Challenges in Archive"
           >
             <Archive className="h-3.5 w-3.5 text-gold" />

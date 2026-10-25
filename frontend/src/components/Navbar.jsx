@@ -34,10 +34,12 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
-            <Flame className="h-4 w-4 fill-orange-400/20" />
-            <span>{currentStreak} Day Streak</span>
-          </div>
+          {isAuthenticated && (
+            <div className="flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
+              <Flame className="h-4 w-4 fill-orange-400/20" />
+              <span>{currentStreak} Day Streak</span>
+            </div>
+          )}
 
           <button
             onClick={onOpenLeaderboard}

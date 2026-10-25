@@ -60,7 +60,8 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const loggedUser = await signIn(email, password);
     setUser(loggedUser);
-    setStats(getUserStats(loggedUser.id));
+    const initialStats = getUserStats(loggedUser.id);
+    setStats(initialStats);
 
     fetchUserProfile(loggedUser.id)
       .then(profile => {
@@ -68,17 +69,14 @@ export function AuthProvider({ children }) {
           if (profile.tier === 'PRO') {
             setProStatus(true);
           }
-          setStats(prev => {
-            const localStreak = prev?.streak ?? 0;
-            const profileStreak = profile.streak ?? 0;
-            return {
-              ...prev,
-              streak: Math.max(localStreak, profileStreak),
-              gamesPlayed: profile.gamesPlayed ?? 0,
-              gamesWon: profile.gamesWon ?? 0,
-              bestHops: profile.bestHops ?? 0,
-              totalScore: profile.totalScore ?? 0
-            };
+          setStats({
+            streak: Math.max(initialStats.streak || 0, profile.streak || 0),
+            gamesPlayed: typeof profile.gamesPlayed === 'number' ? profile.gamesPlayed : (initialStats.gamesPlayed || 0),
+            gamesWon: typeof profile.gamesWon === 'number' ? profile.gamesWon : (initialStats.gamesWon || 0),
+            bestHops: typeof profile.bestHops === 'number' ? profile.bestHops : (initialStats.bestHops || 0),
+            totalScore: typeof profile.totalScore === 'number' ? profile.totalScore : (initialStats.totalScore || 0),
+            dailyWins: initialStats.dailyWins || [],
+            history: initialStats.history || []
           });
         }
       })

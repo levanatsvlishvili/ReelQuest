@@ -1,3 +1,5 @@
+import { saveDetailedMatch } from './matchHistory';
+
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
 const COGNITO_ENDPOINT = `https://cognito-idp.${REGION}.amazonaws.com/`;
@@ -123,12 +125,22 @@ export function getStoredAuth() {
   }
 }
 
+export function getAuthToken() {
+  const auth = getStoredAuth();
+  return auth?.tokens?.IdToken || null;
+}
+
 export async function syncUserProfile(user) {
   if (!API_BASE_URL || !user) return null;
   try {
+    const token = getAuthToken();
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(`${API_BASE_URL}/users/sync`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         userId: user.id || user.userId,
         email: user.email,
@@ -231,7 +243,19 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
 }
 
 export function getUserStats(userId) {
-  const key = `${STATS_KEY}_${userId || 'guest'}`;
+  if (!userId || userId === 'guest') {
+    return {
+      streak: 0,
+      gamesPlayed: 0,
+      gamesWon: 0,
+      totalHops: 0,
+      bestHops: 0,
+      dailyWins: [],
+      history: []
+    };
+  }
+
+  const key = `${STATS_KEY}_${userId}`;
   const todayStr = new Date().toISOString().slice(0, 10);
 
   try {
@@ -306,5 +330,15 @@ export function recordGameResult(userId, gameResult) {
 
   const key = `${STATS_KEY}_${userId || 'guest'}`;
   localStorage.setItem(key, JSON.stringify(stats));
+
+  // Save full structured match to historical timeline
+  try {
+    saveDetailedMatch(userId, gameResult);
+  } catch (err) {
+    console.warn('Failed to record match history in auth.js:', err);
+  }
+
   return stats;
 }
+
+export { saveDetailedMatch };

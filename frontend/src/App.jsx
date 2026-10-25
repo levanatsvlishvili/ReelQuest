@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameSession } from './hooks/useGameSession';
 import { Navbar } from './components/Navbar';
 import { ChallengeHeader } from './components/ChallengeHeader';
@@ -17,6 +17,8 @@ import { DailyArchiveModal } from './components/DailyArchiveModal';
 import { CustomPathFinder } from './components/CustomPathFinder';
 import { LeaderboardView } from './components/LeaderboardView';
 import { OtaraChallengeCard } from './components/OtaraChallengeCard';
+import { DuelGameView } from './components/DuelGameView';
+import { OtaraHintModal } from './components/OtaraHintModal';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -52,17 +54,29 @@ export default function App() {
     goToPrevDay,
     goToNextDay,
     startGame,
+    markHintUsed,
     openVictoryModal
   } = useGameSession();
 
   const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
   const [activeMode, setActiveMode] = useState('six-degrees');
+  const [isDuelMode, setIsDuelMode] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('duel')) {
+      setActiveMode('six-degrees');
+      setIsDuelMode(true);
+    }
+  }, []);
+
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isHintOpen, setIsHintOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
@@ -93,7 +107,10 @@ export default function App() {
             {/* Game Mode Navigation Tabs */}
             <GameModeSelector
               activeMode={activeMode}
-              onSelectMode={setActiveMode}
+              onSelectMode={(mode) => {
+                setActiveMode(mode);
+                setIsDuelMode(false);
+              }}
             />
 
             {activeMode === 'custom-path' ? (
@@ -102,6 +119,7 @@ export default function App() {
                 onPlayCustomChallenge={(customData) => {
                   loadCustomChallenge(customData);
                   setActiveMode('six-degrees');
+                  setIsDuelMode(false);
                 }}
               />
             ) : activeMode !== 'six-degrees' ? (
@@ -109,6 +127,11 @@ export default function App() {
                 modeId={activeMode}
                 onBackToMain={() => setActiveMode('six-degrees')}
                 onOpenPro={() => setIsProModalOpen(true)}
+              />
+            ) : isDuelMode ? (
+              <DuelGameView
+                onBackToMain={() => setIsDuelMode(false)}
+                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : loading ? (
               <div className="flex flex-col items-center justify-center py-24 space-y-4">
@@ -126,6 +149,7 @@ export default function App() {
                     onNextDay={goToNextDay}
                     onOpenArchive={() => setIsArchiveOpen(true)}
                     onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                    onOpenDuel={() => setIsDuelMode(true)}
                   />
                 )}
 
@@ -150,6 +174,7 @@ export default function App() {
                       moves={moves}
                       timerSeconds={timerSeconds}
                       onStart={startGame}
+                      onOpenDuel={() => setIsDuelMode(true)}
                     />
 
                     {/* Locked Filmography Teaser */}
@@ -185,6 +210,7 @@ export default function App() {
                       canUndo={canUndo}
                       gameStatus={gameStatus}
                       onViewSummary={openVictoryModal}
+                      onOpenHint={() => setIsHintOpen(true)}
                     />
 
                     {/* Otara's Live Coaching / Post-game Reaction */}
@@ -195,6 +221,8 @@ export default function App() {
                       timerSeconds={timerSeconds}
                       onStart={startGame}
                       onOpenSummary={openVictoryModal}
+                      onOpenDuel={() => setIsDuelMode(true)}
+                      onOpenHint={() => setIsHintOpen(true)}
                     />
 
                     <VisualGraph
@@ -283,6 +311,18 @@ export default function App() {
         onClose={() => setIsArchiveOpen(false)}
         currentDate={activeDate}
         onSelectDate={(targetDate) => loadDateChallenge(targetDate)}
+      />
+
+      <OtaraHintModal
+        isOpen={isHintOpen}
+        onClose={() => setIsHintOpen(false)}
+        currentActor={currentActor}
+        targetActor={challenge?.targetActor}
+        onSelectHintMovie={(hintMovie) => {
+          markHintUsed?.();
+          selectMovie(hintMovie);
+        }}
+        onOpenPro={() => setIsProModalOpen(true)}
       />
     </div>
   );
