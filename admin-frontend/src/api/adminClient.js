@@ -101,7 +101,7 @@ export async function fetchDashboardMetrics() {
     }
   }
 
-  const totalPlayers = Math.max(allUsers.length, allTimeLeaderboard.length, 3);
+  const totalPlayers = Math.max(allUsers.length, allTimeLeaderboard.length);
   const todayCompletions = todayLeaderboard.length;
   const proSubscribers = Math.max(
     allUsers.filter(u => u.tier === 'PRO').length,
@@ -243,66 +243,10 @@ export async function fetchRealLeaderboard(scope = 'all-time') {
   return [];
 }
 
-const DEFAULT_REAL_USERS = [
-  {
-    id: '43e44822-8091-70b3-99a7-da6d11a2adb7',
-    userId: '43e44822-8091-70b3-99a7-da6d11a2adb7',
-    email: 'lnats17@freeuni.edu.ge',
-    username: 'lnats17',
-    role: 'PLAYER',
-    tier: 'FREE',
-    status: 'ACTIVE',
-    streak: 3,
-    longestStreak: 5,
-    gamesPlayed: 6,
-    gamesWon: 5,
-    duelsWon: 2,
-    totalScore: 14280,
-    joinedAt: '2026-10-24'
-  },
-  {
-    id: '13645812-9091-70c8-df52-6ae5890c4c7a',
-    userId: '13645812-9091-70c8-df52-6ae5890c4c7a',
-    email: 'levani28100@gmail.com',
-    username: 'wero',
-    role: 'ADMINISTRATOR',
-    tier: 'PRO',
-    status: 'ACTIVE',
-    streak: 7,
-    longestStreak: 12,
-    gamesPlayed: 15,
-    gamesWon: 14,
-    duelsWon: 5,
-    totalScore: 48920,
-    joinedAt: '2026-10-14'
-  },
-  {
-    id: '439448a2-c0a1-707b-dbba-72594677657c',
-    userId: '439448a2-c0a1-707b-dbba-72594677657c',
-    email: 'cinephile_test@reelquest.io',
-    username: 'cinephile_test',
-    role: 'PLAYER',
-    tier: 'FREE',
-    status: 'ACTIVE',
-    streak: 1,
-    longestStreak: 2,
-    gamesPlayed: 2,
-    gamesWon: 1,
-    duelsWon: 0,
-    totalScore: 2850,
-    joinedAt: '2026-10-14'
-  }
-];
-
 export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
   const userMap = new Map();
 
-  // 1. Pre-populate verified real Cognito registered users
-  for (const defUser of DEFAULT_REAL_USERS) {
-    userMap.set(defUser.id, { ...defUser });
-  }
-
-  // 2. Fetch live users from backend API
+  // 1. Fetch live registered users directly from environment backend API
   try {
     const res = await fetch(`${API_BASE_URL}/admin/users`);
     if (res.ok) {
@@ -312,7 +256,6 @@ export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
           const uid = u.id || u.userId;
           if (uid) {
             userMap.set(uid, {
-              ...userMap.get(uid),
               ...u,
               id: uid
             });
@@ -321,10 +264,10 @@ export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
       }
     }
   } catch (err) {
-    console.warn('Backend /admin/users fetch notice, using verified real users:', err);
+    console.warn('Backend /admin/users fetch notice:', err);
   }
 
-  // 3. Merge leaderboard entries
+  // 2. Merge leaderboard entries if any new players exist
   try {
     const [allTime, today] = await Promise.all([
       fetchRealLeaderboard('all-time'),
@@ -358,7 +301,7 @@ export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
     console.warn('Leaderboard merge notice:', err);
   }
 
-  // 4. Merge logged-in admin
+  // 3. Merge currently logged-in admin if in an active session
   const storedAuth = getStoredAdminAuth();
   if (storedAuth?.user) {
     const adminId = storedAuth.user.id || storedAuth.user.email;
@@ -434,27 +377,13 @@ export async function fetchGameHistory({
 
     const res = await fetch(`${API_BASE_URL}/admin/games/history?${queryParams.toString()}`);
     if (res.ok) {
-      sessions = await res.json();
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        sessions = data;
+      }
     }
   } catch (err) {
-    console.warn('Live /admin/games/history fetch notice, querying user endpoints directly:', err);
-  }
-
-  // Fallback: If admin/games/history endpoint is pending deployment, query known users' history directly
-  if (!sessions || sessions.length === 0) {
-    const uids = (userId && userId !== 'ALL')
-      ? [userId]
-      : ['43e44822-8091-70b3-99a7-da6d11a2adb7', '13645812-9091-70c8-df52-6ae5890c4c7a', '439448a2-c0a1-707b-dbba-72594677657c'];
-
-    const userHistories = await Promise.all(
-      uids.map(uid =>
-        fetch(`${API_BASE_URL}/users/${uid}/history`)
-          .then(r => r.ok ? r.json() : [])
-          .then(list => list.map(item => ({ ...item, userId: uid })))
-          .catch(() => [])
-      )
-    );
-    sessions = userHistories.flat();
+    console.warn('Backend /admin/games/history fetch notice:', err);
   }
 
   // Enrich sessions with actor names and photos from TMDB popular actor catalog
@@ -475,16 +404,9 @@ export async function fetchGameHistory({
       tImage = a.profilePath;
     }
 
-    // Resolve user details
-    let username = item.username || 'Cinephile';
-    if (!item.username && item.userId) {
-      const match = DEFAULT_REAL_USERS.find(u => u.id === item.userId);
-      if (match) username = match.username;
-    }
-
     return {
       ...item,
-      username,
+      username: item.username || 'Cinephile',
       startActorName: sName || `Actor #${item.startActorId}`,
       startActorImage: sImage,
       targetActorName: tName || `Actor #${item.targetActorId}`,

@@ -427,11 +427,7 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         }
 
         try {
-            Set<String> userIds = new LinkedHashSet<>(List.of(
-                    "43e44822-8091-70b3-99a7-da6d11a2adb7",
-                    "13645812-9091-70c8-df52-6ae5890c4c7a",
-                    "439448a2-c0a1-707b-dbba-72594677657c"
-            ));
+            Set<String> userIds = new LinkedHashSet<>();
 
             try {
                 var reg = dynamoDbClient.getItem(GetItemRequest.builder()
@@ -443,6 +439,10 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 }
             } catch (Exception e) {
                 log.warn("Failed reading ADMIN#USERS registry: {}", e.getMessage());
+            }
+
+            if (userIds.isEmpty()) {
+                return response(200, List.of());
             }
 
             List<Map<String, Object>> users = new ArrayList<>();
@@ -482,11 +482,6 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             if (filterUserId != null && !filterUserId.isBlank() && !"ALL".equalsIgnoreCase(filterUserId)) {
                 targetUserIds.add(filterUserId);
             } else {
-                targetUserIds.addAll(List.of(
-                        "43e44822-8091-70b3-99a7-da6d11a2adb7",
-                        "13645812-9091-70c8-df52-6ae5890c4c7a",
-                        "439448a2-c0a1-707b-dbba-72594677657c"
-                ));
                 try {
                     var reg = dynamoDbClient.getItem(GetItemRequest.builder()
                             .tableName(tableName)
@@ -496,6 +491,10 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                         targetUserIds.addAll(reg.item().get("userIds").ss());
                     }
                 } catch (Exception ignored) {}
+            }
+
+            if (targetUserIds.isEmpty()) {
+                return response(200, List.of());
             }
 
             List<Map<String, Object>> allSessions = new ArrayList<>();
