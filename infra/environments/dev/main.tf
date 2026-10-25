@@ -63,21 +63,29 @@ module "api_gateway" {
   aws_region                    = var.aws_region
 }
 
+locals {
+  certificate_arn = "arn:aws:acm:us-east-1:007400345180:certificate/93bde42d-6322-4957-a049-a0ffa422bac3"
+}
+
 # 6. Frontend Static Hosting (S3 + CloudFront CDN + OAC)
 module "static_hosting" {
   source = "../../modules/static_hosting"
 
-  app_name    = var.app_name
-  environment = var.environment
-  bucket_name = "${var.app_name}-${var.environment}-frontend-${data.aws_caller_identity.current.account_id}"
+  app_name            = var.app_name
+  environment         = var.environment
+  bucket_name         = "${var.app_name}-${var.environment}-frontend-${data.aws_caller_identity.current.account_id}"
+  aliases             = ["dev.reelquest.io"]
+  acm_certificate_arn = local.certificate_arn
 }
 
 # 7. Admin Portal Dedicated Static Hosting (S3 + CloudFront CDN + OAC)
 module "admin_hosting" {
   source = "../../modules/static_hosting"
 
-  app_name    = "${var.app_name}-admin"
-  environment = var.environment
-  bucket_name = "${var.app_name}-${var.environment}-admin-${data.aws_caller_identity.current.account_id}"
+  app_name            = "${var.app_name}-admin"
+  environment         = var.environment
+  bucket_name         = "${var.app_name}-${var.environment}-admin-${data.aws_caller_identity.current.account_id}"
+  aliases             = ["dev-admin.reelquest.io"]
+  acm_certificate_arn = local.certificate_arn
 }
 
