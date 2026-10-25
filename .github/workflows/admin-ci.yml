@@ -64,6 +64,7 @@ jobs:
           if aws s3api head-bucket --bucket reelquest-dev-admin-007400345180 2>/dev/null; then
             aws s3 sync dist/ s3://reelquest-dev-admin-007400345180 --delete
             DEV_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-dev-admin')].Id" --output text 2>/dev/null || echo "")
+            DEV_ADMIN_DIST=${DEV_ADMIN_DIST:-E2WLDOEF3PUIF9}
             if [ -n "$DEV_ADMIN_DIST" ] && [ "$DEV_ADMIN_DIST" != "None" ]; then
               aws cloudfront create-invalidation --distribution-id "$DEV_ADMIN_DIST" --paths "/*"
             fi
@@ -85,6 +86,7 @@ jobs:
           if aws s3api head-bucket --bucket reelquest-prod-admin-007400345180 2>/dev/null; then
             aws s3 sync dist/ s3://reelquest-prod-admin-007400345180 --delete
             PROD_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-prod-admin')].Id" --output text 2>/dev/null || echo "")
+            PROD_ADMIN_DIST=${PROD_ADMIN_DIST:-E1FYUY0HI17H9R}
             if [ -n "$PROD_ADMIN_DIST" ] && [ "$PROD_ADMIN_DIST" != "None" ]; then
               aws cloudfront create-invalidation --distribution-id "$PROD_ADMIN_DIST" --paths "/*"
             fi
