@@ -60,20 +60,16 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-central-1"
         run: |
-          # 1. Ensure dedicated dev admin bucket exists
-          aws s3api head-bucket --bucket reelquest-dev-admin-007400345180 2>/dev/null || \
-            aws s3 mb s3://reelquest-dev-admin-007400345180 --region eu-central-1
-
-          # 2. Sync to dedicated admin S3 bucket
-          aws s3 sync dist/ s3://reelquest-dev-admin-007400345180 --delete
-
-          # 3. Invalidate dedicated admin CloudFront if it exists
-          DEV_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-dev-admin')].Id" --output text 2>/dev/null || echo "")
-          if [ -n "$DEV_ADMIN_DIST" ] && [ "$DEV_ADMIN_DIST" != "None" ]; then
-            aws cloudfront create-invalidation --distribution-id "$DEV_ADMIN_DIST" --paths "/*"
+          # 1. Sync to dedicated admin S3 bucket if created by Terraform
+          if aws s3api head-bucket --bucket reelquest-dev-admin-007400345180 2>/dev/null; then
+            aws s3 sync dist/ s3://reelquest-dev-admin-007400345180 --delete
+            DEV_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-dev-admin')].Id" --output text 2>/dev/null || echo "")
+            if [ -n "$DEV_ADMIN_DIST" ] && [ "$DEV_ADMIN_DIST" != "None" ]; then
+              aws cloudfront create-invalidation --distribution-id "$DEV_ADMIN_DIST" --paths "/*"
+            fi
           fi
 
-          # 4. Also dual-sync to primary dev frontend /admin/ for immediate access
+          # 2. Dual-sync to primary dev frontend /admin/ for immediate access
           aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180/admin/ --delete
           aws cloudfront create-invalidation --distribution-id E2ROZR17BH3MH9 --paths "/admin/*"
 
@@ -85,19 +81,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-central-1"
         run: |
-          # 1. Ensure dedicated prod admin bucket exists
-          aws s3api head-bucket --bucket reelquest-prod-admin-007400345180 2>/dev/null || \
-            aws s3 mb s3://reelquest-prod-admin-007400345180 --region eu-central-1
-
-          # 2. Sync to dedicated prod admin S3 bucket
-          aws s3 sync dist/ s3://reelquest-prod-admin-007400345180 --delete
-
-          # 3. Invalidate dedicated prod admin CloudFront if it exists
-          PROD_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-prod-admin')].Id" --output text 2>/dev/null || echo "")
-          if [ -n "$PROD_ADMIN_DIST" ] && [ "$PROD_ADMIN_DIST" != "None" ]; then
-            aws cloudfront create-invalidation --distribution-id "$PROD_ADMIN_DIST" --paths "/*"
+          # 1. Sync to dedicated admin S3 bucket if created by Terraform
+          if aws s3api head-bucket --bucket reelquest-prod-admin-007400345180 2>/dev/null; then
+            aws s3 sync dist/ s3://reelquest-prod-admin-007400345180 --delete
+            PROD_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-prod-admin')].Id" --output text 2>/dev/null || echo "")
+            if [ -n "$PROD_ADMIN_DIST" ] && [ "$PROD_ADMIN_DIST" != "None" ]; then
+              aws cloudfront create-invalidation --distribution-id "$PROD_ADMIN_DIST" --paths "/*"
+            fi
           fi
 
-          # 4. Also dual-sync to primary prod frontend /admin/ for immediate access
+          # 2. Dual-sync to primary prod frontend /admin/ for immediate access
           aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180/admin/ --delete
           aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID || 'ESG51MGZ8BMJA' }} --paths "/admin/*"
