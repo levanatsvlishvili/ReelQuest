@@ -50,10 +50,12 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
@@ -197,9 +199,26 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 return handleRematchDuel(duelId, request);
             }
 
+            if ("GET".equalsIgnoreCase(httpMethod) && (path.endsWith("/admin/users") || path.endsWith("/users"))) {
+                return handleGetAdminUsers();
+            }
+
+            if ("GET".equalsIgnoreCase(httpMethod) && (path.endsWith("/admin/games/history") || path.endsWith("/games/history"))) {
+                return handleGetAdminGamesHistory(request);
+            }
+
+            if ("POST".equalsIgnoreCase(httpMethod) && path.endsWith("/users/sync")) {
+                return handleSyncUserProfile(request);
+            }
+
             if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/users/[^/]+/history/?$")) {
                 String userId = path.replaceAll(".*/users/([^/]+)/history/?$", "$1");
                 return handleGetUserHistory(userId);
+            }
+
+            if ("GET".equalsIgnoreCase(httpMethod) && path.matches(".*/users/[^/]+/?$")) {
+                String userId = path.replaceAll(".*/users/([^/]+)/?$", "$1");
+                return handleGetUserProfile(userId);
             }
 
             return response(404, Map.of("error", "Resource not found", "path", path));
@@ -321,6 +340,58 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         return response(200, hint);
     }
 
+    private Map<String, Object> mapSessionItem(Map<String, AttributeValue> item) {
+        Map<String, Object> map = new HashMap<>();
+        String sk = item.containsKey("SK") ? item.get("SK").s() : "";
+        map.put("sessionId", sk);
+        map.put("date", sk.replaceAll("SESSION#([^#]+)#.*", "$1"));
+        map.put("userId", item.containsKey("userId") ? item.get("userId").s() : "");
+        map.put("username", item.containsKey("username") ? item.get("username").s() : "Cinephile");
+        map.put("gameMode", item.containsKey("gameMode") ? item.get("gameMode").s() : "six-degrees");
+        map.put("score", item.containsKey("score") ? Long.parseLong(item.get("score").n()) : 0L);
+        map.put("moves", item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0);
+        map.put("durationSeconds", item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L);
+        map.put("startActorId", item.containsKey("startActorId") ? item.get("startActorId").s() : "");
+        map.put("startActorName", item.containsKey("startActorName") ? item.get("startActorName").s() : "");
+        map.put("targetActorId", item.containsKey("targetActorId") ? item.get("targetActorId").s() : "");
+        map.put("targetActorName", item.containsKey("targetActorName") ? item.get("targetActorName").s() : "");
+        if (item.containsKey("opponentUsername")) {
+            map.put("opponentUsername", item.get("opponentUsername").s());
+        }
+        if (item.containsKey("opponentScore")) {
+            map.put("opponentScore", Long.parseLong(item.get("opponentScore").n()));
+        }
+        if (item.containsKey("duelResult")) {
+            map.put("duelResult", item.get("duelResult").s());
+        }
+        map.put("createdAt", item.containsKey("createdAt") ? item.get("createdAt").s() : "");
+        return map;
+    }
+
+    private Map<String, Object> mapUserProfile(Map<String, AttributeValue> item, String fallbackUserId) {
+        Map<String, Object> map = new HashMap<>();
+        String userId = item.containsKey("userId") ? item.get("userId").s() :
+                (item.containsKey("PK") ? item.get("PK").s().replace("USER#", "") : fallbackUserId);
+        map.put("id", userId);
+        map.put("userId", userId);
+        map.put("email", item.containsKey("email") ? item.get("email").s() : userId + "@reelquest.user");
+        map.put("username", item.containsKey("username") ? item.get("username").s() : "Cinephile");
+        map.put("role", item.containsKey("role") ? item.get("role").s() : "PLAYER");
+        map.put("tier", item.containsKey("tier") ? item.get("tier").s() : "FREE");
+        map.put("status", item.containsKey("status") ? item.get("status").s() : "ACTIVE");
+        map.put("streak", item.containsKey("streak") ? Integer.parseInt(item.get("streak").n()) : 0);
+        map.put("longestStreak", item.containsKey("longestStreak") ? Integer.parseInt(item.get("longestStreak").n()) : 0);
+        map.put("gamesPlayed", item.containsKey("gamesPlayed") ? Integer.parseInt(item.get("gamesPlayed").n()) : 0);
+        map.put("gamesWon", item.containsKey("gamesWon") ? Integer.parseInt(item.get("gamesWon").n()) : 0);
+        map.put("duelsWon", item.containsKey("duelsWon") ? Integer.parseInt(item.get("duelsWon").n()) : 0);
+        map.put("totalScore", item.containsKey("totalScore") ? Long.parseLong(item.get("totalScore").n()) : 0L);
+        String createdAt = item.containsKey("createdAt") ? item.get("createdAt").s() : "2026-10-25";
+        map.put("joinedAt", createdAt.length() >= 10 ? createdAt.substring(0, 10) : createdAt);
+        map.put("createdAt", createdAt);
+        map.put("updatedAt", item.containsKey("updatedAt") ? item.get("updatedAt").s() : "");
+        return map;
+    }
+
     private APIGatewayProxyResponseEvent handleGetUserHistory(String userId) {
         if (dynamoDbClient == null || userId == null || userId.isBlank()) {
             return response(200, List.of());
@@ -340,25 +411,225 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
 
             var res = dynamoDbClient.query(query);
             List<Map<String, Object>> sessions = res.items().stream()
-                    .map(item -> {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("sessionId", item.containsKey("SK") ? item.get("SK").s() : "");
-                        map.put("date", item.containsKey("SK") ? item.get("SK").s().replaceAll("SESSION#([^#]+)#.*", "$1") : "");
-                        map.put("score", item.containsKey("score") ? Long.parseLong(item.get("score").n()) : 0L);
-                        map.put("moves", item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0);
-                        map.put("durationSeconds", item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L);
-                        map.put("startActorId", item.containsKey("startActorId") ? item.get("startActorId").s() : "");
-                        map.put("targetActorId", item.containsKey("targetActorId") ? item.get("targetActorId").s() : "");
-                        map.put("createdAt", item.containsKey("createdAt") ? item.get("createdAt").s() : "");
-                        map.put("gameMode", "six-degrees");
-                        return map;
-                    })
+                    .map(this::mapSessionItem)
                     .toList();
 
             return response(200, sessions);
         } catch (Exception e) {
             log.error("Failed to fetch user history for {}: {}", userId, e.getMessage(), e);
             return response(500, Map.of("error", "Failed to fetch user history: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetAdminUsers() {
+        if (dynamoDbClient == null) {
+            return response(200, List.of());
+        }
+
+        try {
+            Set<String> userIds = new LinkedHashSet<>();
+
+            try {
+                var reg = dynamoDbClient.getItem(GetItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of("PK", AttributeValue.fromS("ADMIN#USERS"), "SK", AttributeValue.fromS("REGISTRY")))
+                        .build());
+                if (reg.hasItem() && reg.item().containsKey("userIds")) {
+                    userIds.addAll(reg.item().get("userIds").ss());
+                }
+            } catch (Exception e) {
+                log.warn("Failed reading ADMIN#USERS registry: {}", e.getMessage());
+            }
+
+            if (userIds.isEmpty()) {
+                return response(200, List.of());
+            }
+
+            List<Map<String, Object>> users = new ArrayList<>();
+            for (String uid : userIds) {
+                try {
+                    var res = dynamoDbClient.getItem(GetItemRequest.builder()
+                            .tableName(tableName)
+                            .key(Map.of("PK", AttributeValue.fromS("USER#" + uid), "SK", AttributeValue.fromS("PROFILE")))
+                            .build());
+                    if (res.hasItem() && res.item() != null) {
+                        users.add(mapUserProfile(res.item(), uid));
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed fetching profile for {}: {}", uid, e.getMessage());
+                }
+            }
+
+            users.sort((a, b) -> ((Long) b.getOrDefault("totalScore", 0L)).compareTo((Long) a.getOrDefault("totalScore", 0L)));
+            return response(200, users);
+        } catch (Exception e) {
+            log.error("Failed to fetch admin users: {}", e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to fetch users: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetAdminGamesHistory(APIGatewayProxyRequestEvent request) {
+        if (dynamoDbClient == null) {
+            return response(200, List.of());
+        }
+
+        try {
+            Map<String, String> qp = request.getQueryStringParameters();
+            String filterUserId = qp != null ? qp.get("userId") : null;
+            String filterGameMode = qp != null ? qp.get("gameMode") : null;
+
+            Set<String> targetUserIds = new LinkedHashSet<>();
+            if (filterUserId != null && !filterUserId.isBlank() && !"ALL".equalsIgnoreCase(filterUserId)) {
+                targetUserIds.add(filterUserId);
+            } else {
+                try {
+                    var reg = dynamoDbClient.getItem(GetItemRequest.builder()
+                            .tableName(tableName)
+                            .key(Map.of("PK", AttributeValue.fromS("ADMIN#USERS"), "SK", AttributeValue.fromS("REGISTRY")))
+                            .build());
+                    if (reg.hasItem() && reg.item().containsKey("userIds")) {
+                        targetUserIds.addAll(reg.item().get("userIds").ss());
+                    }
+                } catch (Exception ignored) {}
+            }
+
+            if (targetUserIds.isEmpty()) {
+                return response(200, List.of());
+            }
+
+            List<Map<String, Object>> allSessions = new ArrayList<>();
+            for (String uid : targetUserIds) {
+                try {
+                    QueryRequest query = QueryRequest.builder()
+                            .tableName(tableName)
+                            .keyConditionExpression("PK = :pk and begins_with(SK, :skPrefix)")
+                            .expressionAttributeValues(Map.of(
+                                    ":pk", AttributeValue.fromS("USER#" + uid),
+                                    ":skPrefix", AttributeValue.fromS("SESSION#")
+                            ))
+                            .scanIndexForward(false)
+                            .limit(50)
+                            .build();
+
+                    var res = dynamoDbClient.query(query);
+                    for (var item : res.items()) {
+                        Map<String, Object> session = mapSessionItem(item);
+                        if (filterGameMode == null || "ALL".equalsIgnoreCase(filterGameMode)
+                                || filterGameMode.equalsIgnoreCase((String) session.get("gameMode"))) {
+                            allSessions.add(session);
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed querying sessions for {}: {}", uid, e.getMessage());
+                }
+            }
+
+            allSessions.sort((a, b) -> {
+                String ca = (String) a.getOrDefault("createdAt", "");
+                String cb = (String) b.getOrDefault("createdAt", "");
+                return cb.compareTo(ca);
+            });
+
+            return response(200, allSessions);
+        } catch (Exception e) {
+            log.error("Failed to fetch admin game history: {}", e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to fetch match history: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleSyncUserProfile(APIGatewayProxyRequestEvent request) {
+        if (dynamoDbClient == null) {
+            return response(500, Map.of("error", "Database not configured"));
+        }
+
+        try {
+            if (request.getBody() == null || request.getBody().isBlank()) {
+                return response(400, Map.of("error", "Missing body"));
+            }
+
+            JsonNode json = objectMapper.readTree(request.getBody());
+            String userId = json.has("userId") ? json.get("userId").asText() : null;
+            if (userId == null || userId.isBlank()) {
+                return response(400, Map.of("error", "Missing userId"));
+            }
+            String email = json.has("email") ? json.get("email").asText() : "";
+            String username = json.has("username") ? json.get("username").asText() : (email.contains("@") ? email.split("@")[0] : "Cinephile");
+            boolean isPro = json.has("isPro") && json.get("isPro").asBoolean();
+
+            String now = Instant.now().toString();
+            Map<String, AttributeValue> item = new HashMap<>();
+            item.put("PK", AttributeValue.fromS("USER#" + userId));
+            item.put("SK", AttributeValue.fromS("PROFILE"));
+            item.put("Type", AttributeValue.fromS("USER_PROFILE"));
+            item.put("userId", AttributeValue.fromS(userId));
+            item.put("email", AttributeValue.fromS(email));
+            item.put("username", AttributeValue.fromS(username));
+            item.put("role", AttributeValue.fromS("PLAYER"));
+            item.put("tier", AttributeValue.fromS(isPro ? "PRO" : "FREE"));
+            item.put("status", AttributeValue.fromS("ACTIVE"));
+            item.put("updatedAt", AttributeValue.fromS(now));
+
+            try {
+                var existing = dynamoDbClient.getItem(GetItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of("PK", AttributeValue.fromS("USER#" + userId), "SK", AttributeValue.fromS("PROFILE")))
+                        .build());
+                if (existing.hasItem() && existing.item() != null) {
+                    var ex = existing.item();
+                    if (ex.containsKey("createdAt")) item.put("createdAt", ex.get("createdAt"));
+                    if (ex.containsKey("streak")) item.put("streak", ex.get("streak"));
+                    if (ex.containsKey("longestStreak")) item.put("longestStreak", ex.get("longestStreak"));
+                    if (ex.containsKey("gamesPlayed")) item.put("gamesPlayed", ex.get("gamesPlayed"));
+                    if (ex.containsKey("gamesWon")) item.put("gamesWon", ex.get("gamesWon"));
+                    if (ex.containsKey("duelsWon")) item.put("duelsWon", ex.get("duelsWon"));
+                    if (ex.containsKey("totalScore")) item.put("totalScore", ex.get("totalScore"));
+                    if (ex.containsKey("role")) item.put("role", ex.get("role"));
+                } else {
+                    item.put("createdAt", AttributeValue.fromS(now));
+                    item.put("streak", AttributeValue.fromN("0"));
+                    item.put("longestStreak", AttributeValue.fromN("0"));
+                    item.put("gamesPlayed", AttributeValue.fromN("0"));
+                    item.put("gamesWon", AttributeValue.fromN("0"));
+                    item.put("duelsWon", AttributeValue.fromN("0"));
+                    item.put("totalScore", AttributeValue.fromN("0"));
+                }
+            } catch (Exception ignored) {}
+
+            dynamoDbClient.putItem(PutItemRequest.builder().tableName(tableName).item(item).build());
+
+            try {
+                dynamoDbClient.updateItem(UpdateItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of("PK", AttributeValue.fromS("ADMIN#USERS"), "SK", AttributeValue.fromS("REGISTRY")))
+                        .updateExpression("ADD userIds :uidSet")
+                        .expressionAttributeValues(Map.of(":uidSet", AttributeValue.builder().ss(userId).build()))
+                        .build());
+            } catch (Exception ignored) {}
+
+            return response(200, mapUserProfile(item, userId));
+        } catch (Exception e) {
+            log.error("Failed to sync profile: {}", e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to sync profile: " + e.getMessage()));
+        }
+    }
+
+    private APIGatewayProxyResponseEvent handleGetUserProfile(String userId) {
+        if (dynamoDbClient == null || userId == null || userId.isBlank()) {
+            return response(400, Map.of("error", "Missing userId"));
+        }
+
+        try {
+            var res = dynamoDbClient.getItem(GetItemRequest.builder()
+                    .tableName(tableName)
+                    .key(Map.of("PK", AttributeValue.fromS("USER#" + userId), "SK", AttributeValue.fromS("PROFILE")))
+                    .build());
+            if (!res.hasItem() || res.item() == null) {
+                return response(404, Map.of("error", "User profile not found"));
+            }
+            return response(200, mapUserProfile(res.item(), userId));
+        } catch (Exception e) {
+            log.error("Failed to get user profile for {}: {}", userId, e.getMessage(), e);
+            return response(500, Map.of("error", "Failed to get profile: " + e.getMessage()));
         }
     }
 

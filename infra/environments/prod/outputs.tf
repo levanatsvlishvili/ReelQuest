@@ -47,3 +47,18 @@ output "cloudfront_domain_name" {
   description = "CloudFront Distribution Domain URL"
   value       = module.static_hosting.cloudfront_domain_name
 }
+
+output "admin_s3_bucket" {
+  description = "Admin Portal S3 Bucket Name"
+  value       = module.admin_hosting.bucket_name
+}
+
+output "admin_cloudfront_distribution_id" {
+  description = "Admin Portal CloudFront Distribution ID"
+  value       = module.admin_hosting.cloudfront_distribution_id
+}
+
+output "admin_cloudfront_domain_name" {
+  description = "Admin Portal CloudFront Domain URL"
+  value       = module.admin_hosting.cloudfront_domain_name
+}
