@@ -71,3 +71,12 @@ module "static_hosting" {
   environment = var.environment
   bucket_name = "${var.app_name}-${var.environment}-frontend-${data.aws_caller_identity.current.account_id}"
 }
+
+# 7. Admin Portal Dedicated Static Hosting (S3 + CloudFront CDN + OAC)
+module "admin_hosting" {
+  source = "../../modules/static_hosting"
+
+  app_name    = "${var.app_name}-admin"
+  environment = var.environment
+  bucket_name = "${var.app_name}-${var.environment}-admin-${data.aws_caller_identity.current.account_id}"
+}

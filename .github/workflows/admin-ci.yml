@@ -1,0 +1,103 @@
+name: "Admin Portal CI/CD (React)"
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+    paths:
+      - "admin-frontend/**"
+      - ".github/workflows/admin-ci.yml"
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - "admin-frontend/**"
+      - ".github/workflows/admin-ci.yml"
+
+jobs:
+  build-and-deploy-admin:
+    name: "Build & Deploy Admin Portal"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: admin-frontend
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v4
+
+      - name: "Set up Node.js 22"
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: "Install Dependencies"
+        run: npm ci
+
+      # Build for Dev (develop branch)
+      - name: "Build Admin Portal (Dev)"
+        if: github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.base_ref == 'develop')
+        env:
+          VITE_API_BASE_URL: "https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com"
+          VITE_COGNITO_USER_POOL_ID: "eu-central-1_9SzgEn1WX"
+          VITE_COGNITO_CLIENT_ID: "v7qlvblobmt33mqkfasdinp9s"
+          VITE_AWS_REGION: "eu-central-1"
+        run: npm run build
+
+      # Build for Prod (main branch)
+      - name: "Build Admin Portal (Prod)"
+        if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
+        env:
+          VITE_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL || 'https://yzc360nxa0.execute-api.eu-central-1.amazonaws.com' }}
+          VITE_COGNITO_USER_POOL_ID: ${{ secrets.PROD_COGNITO_USER_POOL_ID || 'eu-central-1_9SzgEn1WX' }}
+          VITE_COGNITO_CLIENT_ID: ${{ secrets.PROD_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s' }}
+          VITE_AWS_REGION: "eu-central-1"
+        run: npm run build
+
+      # Deploy to DEV S3 & Invalidate CloudFront
+      - name: "Deploy to DEV Admin S3 & Invalidate CloudFront"
+        if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "eu-central-1"
+        run: |
+          # 1. Ensure dedicated dev admin bucket exists
+          aws s3api head-bucket --bucket reelquest-dev-admin-007400345180 2>/dev/null || \
+            aws s3 mb s3://reelquest-dev-admin-007400345180 --region eu-central-1
+
+          # 2. Sync to dedicated admin S3 bucket
+          aws s3 sync dist/ s3://reelquest-dev-admin-007400345180 --delete
+
+          # 3. Invalidate dedicated admin CloudFront if it exists
+          DEV_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-dev-admin')].Id" --output text 2>/dev/null || echo "")
+          if [ -n "$DEV_ADMIN_DIST" ] && [ "$DEV_ADMIN_DIST" != "None" ]; then
+            aws cloudfront create-invalidation --distribution-id "$DEV_ADMIN_DIST" --paths "/*"
+          fi
+
+          # 4. Also dual-sync to primary dev frontend /admin/ for immediate access
+          aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180/admin/ --delete
+          aws cloudfront create-invalidation --distribution-id E2ROZR17BH3MH9 --paths "/admin/*"
+
+      # Deploy to PROD S3 & Invalidate CloudFront
+      - name: "Deploy to PROD Admin S3 & Invalidate CloudFront"
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "eu-central-1"
+        run: |
+          # 1. Ensure dedicated prod admin bucket exists
+          aws s3api head-bucket --bucket reelquest-prod-admin-007400345180 2>/dev/null || \
+            aws s3 mb s3://reelquest-prod-admin-007400345180 --region eu-central-1
+
+          # 2. Sync to dedicated prod admin S3 bucket
+          aws s3 sync dist/ s3://reelquest-prod-admin-007400345180 --delete
+
+          # 3. Invalidate dedicated prod admin CloudFront if it exists
+          PROD_ADMIN_DIST=$(aws cloudfront list-distributions --query "DistributionList.Items[?contains(Origins.Items[0].DomainName, 'reelquest-prod-admin')].Id" --output text 2>/dev/null || echo "")
+          if [ -n "$PROD_ADMIN_DIST" ] && [ "$PROD_ADMIN_DIST" != "None" ]; then
+            aws cloudfront create-invalidation --distribution-id "$PROD_ADMIN_DIST" --paths "/*"
+          fi
+
+          # 4. Also dual-sync to primary prod frontend /admin/ for immediate access
+          aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180/admin/ --delete
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID || 'ESG51MGZ8BMJA' }} --paths "/admin/*"

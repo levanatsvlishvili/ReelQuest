@@ -83,3 +83,11 @@ resource "aws_cognito_user_group" "pro_users" {
   description  = "Premium tier users with unlimited games and analytics"
   precedence   = 1
 }
+
+# Admins User Group (Full access to ReelQuest Admin Portal)
+resource "aws_cognito_user_group" "admins" {
+  name         = "Admins"
+  user_pool_id = aws_cognito_user_pool.main.id
+  description  = "Administrator group with full access to ReelQuest Admin Portal"
+  precedence   = 0
+}
