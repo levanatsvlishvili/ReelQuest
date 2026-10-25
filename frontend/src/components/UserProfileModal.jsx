@@ -51,7 +51,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'trophies' | 'history'
   const [trophyFilter, setTrophyFilter] = useState('all');
   const [historyFilter, setHistoryFilter] = useState('all');
-  const [matchHistory, setMatchHistory] = useState([]);
+  const [matchHistory, setMatchHistory] = useState(() => getDetailedMatchHistory(user?.id));
   const [historyLoading, setHistoryLoading] = useState(false);
 
   // Load match history and merge with server history
@@ -71,7 +71,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
         })
         .finally(() => setHistoryLoading(false));
     }
-  }, [isOpen, user]);
+  }, [isOpen, user?.id]);
 
   // Evaluate achievements dynamically
   const trophyData = useMemo(() => {

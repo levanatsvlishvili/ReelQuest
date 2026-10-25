@@ -543,18 +543,19 @@ export async function updateDuelProgress(duelId, { playerId, role, currentMoves,
   return null;
 }
 
-export async function submitDuelScore(duelId, { playerId, playerName, role, moves, durationSeconds, forfeited = false, pathSummary = null }) {
+export async function submitDuelScore(duelId, { playerId, playerName, role, moves, durationSeconds, timeSeconds, forfeited = false, pathSummary = null }) {
   const safeId = (duelId || '').toLowerCase().trim();
   const token = getAuthToken();
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
+  const finalDuration = Number(durationSeconds ?? timeSeconds ?? 0);
 
   if (API_BASE_URL) {
     try {
       const res = await fetch(`${API_BASE_URL}/duels/${encodeURIComponent(safeId)}/submit`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ playerId, playerName, role, moves, durationSeconds, forfeited, pathSummary })
+        body: JSON.stringify({ playerId, playerName, role, moves, durationSeconds: finalDuration, forfeited, pathSummary })
       });
       if (res.ok) {
         return await res.json();
@@ -571,18 +572,20 @@ export async function submitDuelScore(duelId, { playerId, playerName, role, move
     if (isHost) {
       duel.hostMoves = moves;
       duel.hostLiveMoves = moves;
-      duel.hostDurationSeconds = durationSeconds;
+      duel.hostDurationSeconds = finalDuration;
+      duel.hostTimeSeconds = finalDuration;
       duel.hostForfeited = !!forfeited;
       duel.hostCurrentActor = forfeited ? 'Forfeited' : duel.targetActor?.name;
-      duel.hostLastAction = forfeited ? '🏳️ Gave Up' : `🏁 Finished in ${moves} hops (${durationSeconds}s)!`;
+      duel.hostLastAction = forfeited ? '🏳️ Gave Up' : `🏁 Finished in ${moves} hops (${finalDuration}s)!`;
       if (pathSummary) duel.hostPathSummary = pathSummary;
     } else {
       duel.guestMoves = moves;
       duel.guestLiveMoves = moves;
-      duel.guestDurationSeconds = durationSeconds;
+      duel.guestDurationSeconds = finalDuration;
+      duel.guestTimeSeconds = finalDuration;
       duel.guestForfeited = !!forfeited;
       duel.guestCurrentActor = forfeited ? 'Forfeited' : duel.targetActor?.name;
-      duel.guestLastAction = forfeited ? '🏳️ Gave Up' : `🏁 Finished in ${moves} hops (${durationSeconds}s)!`;
+      duel.guestLastAction = forfeited ? '🏳️ Gave Up' : `🏁 Finished in ${moves} hops (${finalDuration}s)!`;
       if (pathSummary) duel.guestPathSummary = pathSummary;
       if (!duel.guestUserId && playerId) {
         duel.guestUserId = playerId;

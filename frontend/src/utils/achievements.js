@@ -64,7 +64,7 @@ export const ACHIEVEMENTS = [
     maxProgress: 1,
     checkProgress: (stats, history) => {
       const won = history.filter(m => m.gameMode === 'six-degrees' && m.won).length;
-      return won >= 1 ? 1 : (stats.gamesWon > 0 ? 1 : 0);
+      return (won >= 1 || (stats?.gamesWon || 0) > 0) ? 1 : 0;
     }
   },
   {
@@ -77,7 +77,11 @@ export const ACHIEVEMENTS = [
     maxProgress: 1,
     checkProgress: (stats, history) => {
       const match = history.find(m => m.gameMode === 'six-degrees' && m.won && m.matchedOtara);
-      return match ? 1 : (stats.bestHops && stats.bestHops <= 2 ? 1 : 0);
+      if (match) return 1;
+      if ((stats?.gamesWon || 0) > 0 && stats.bestHops && stats.bestHops <= 2 && stats.bestHops > 0) {
+        return 1;
+      }
+      return 0;
     }
   },
   {
@@ -90,7 +94,11 @@ export const ACHIEVEMENTS = [
     maxProgress: 5,
     checkProgress: (stats, history) => {
       const matches = history.filter(m => m.gameMode === 'six-degrees' && m.won && m.matchedOtara);
-      return Math.min(5, Math.max(matches.length, (stats.gamesWon >= 5 && stats.bestHops <= 2) ? 5 : 0));
+      if (matches.length > 0) return Math.min(5, matches.length);
+      if ((stats?.gamesWon || 0) >= 5 && stats.bestHops && stats.bestHops <= 2 && stats.bestHops > 0) {
+        return 5;
+      }
+      return 0;
     }
   },
   {
@@ -115,7 +123,7 @@ export const ACHIEVEMENTS = [
     icon: 'Film',
     maxProgress: 1,
     checkProgress: (stats, history) => {
-      const match = history.find(m => m.gameMode === 'six-degrees' && m.won && m.undos === 0);
+      const match = history.find(m => m.gameMode === 'six-degrees' && m.won && m.undos === 0 && m.hops > 0);
       return match ? 1 : 0;
     }
   },
@@ -334,9 +342,31 @@ export function getStoredUnlockedAchievements(userId) {
  * Persists any newly unlocked achievements with an unlock timestamp.
  */
 export function evaluateAchievements(userId, user, stats = {}, matchHistory = []) {
-  const storedUnlocked = getStoredUnlockedAchievements(userId);
+  const effectiveUserId = userId || 'guest';
+  const storedUnlocked = getStoredUnlockedAchievements(effectiveUserId);
   const updatedUnlocked = { ...storedUnlocked };
   const newlyUnlocked = [];
+
+  const totalGamesCount = Math.max(stats?.gamesPlayed || 0, matchHistory.length);
+  const totalWinsCount = Math.max(stats?.gamesWon || 0, matchHistory.filter(m => m.won).length);
+
+  // If a user has NEVER played any games, prune any erroneously saved game achievements
+  if (totalGamesCount === 0) {
+    let pruned = false;
+    for (const key of Object.keys(updatedUnlocked)) {
+      if (key.startsWith('otara_') || key.startsWith('duel_') || key.startsWith('meta_streak') || key.startsWith('meta_veteran')) {
+        delete updatedUnlocked[key];
+        delete storedUnlocked[key];
+        pruned = true;
+      }
+    }
+    if (pruned) {
+      try {
+        const storageKey = `${UNLOCKED_STORAGE_PREFIX}${effectiveUserId}`;
+        localStorage.setItem(storageKey, JSON.stringify(updatedUnlocked));
+      } catch (e) {}
+    }
+  }
 
   const evaluated = ACHIEVEMENTS.map(ach => {
     const isAlreadyUnlocked = Boolean(storedUnlocked[ach.id]);
@@ -352,7 +382,19 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
       }
     }
 
-    const isNowUnlocked = isAlreadyUnlocked || (progress >= ach.maxProgress && !ach.isComingSoon);
+    // A game achievement can ONLY be unlocked if the user has actually played games!
+    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.id.includes('streak') || ach.id.includes('veteran');
+    let isNowUnlocked = false;
+
+    if (ach.isComingSoon) {
+      isNowUnlocked = false;
+      progress = 0;
+    } else if (requiresGames && totalGamesCount === 0) {
+      isNowUnlocked = false;
+      progress = 0;
+    } else {
+      isNowUnlocked = isAlreadyUnlocked || (progress >= ach.maxProgress);
+    }
 
     let unlockedAt = storedUnlocked[ach.id]?.unlockedAt || null;
 
@@ -372,7 +414,6 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
 
   // Save updated unlock states if new unlocks occurred
   if (newlyUnlocked.length > 0) {
-    const effectiveUserId = userId || 'guest';
     const storageKey = `${UNLOCKED_STORAGE_PREFIX}${effectiveUserId}`;
     try {
       localStorage.setItem(storageKey, JSON.stringify(updatedUnlocked));

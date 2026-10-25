@@ -1016,7 +1016,10 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             String status = "IN_PROGRESS";
             String winnerId = null;
 
-            if (hostMoves != null && guestMoves != null) {
+            boolean bothFinished = (hostMoves != null && guestMoves != null);
+            boolean eitherForfeited = (hostForfeit || guestForfeit);
+
+            if (bothFinished || eitherForfeited) {
                 status = "COMPLETED";
                 String effectiveHostId = item.get("hostUserId").s();
                 String effectiveGuestId = item.containsKey("guestUserId") ? item.get("guestUserId").s() : "guest";
@@ -1027,21 +1030,23 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                     winnerId = effectiveGuestId;
                 } else if (guestForfeit) {
                     winnerId = effectiveHostId;
-                } else if (hostMoves < guestMoves) {
-                    winnerId = effectiveHostId;
-                } else if (guestMoves < hostMoves) {
-                    winnerId = effectiveGuestId;
-                } else {
-                    if (hostDuration != null && guestDuration != null) {
-                        if (hostDuration < guestDuration) {
-                            winnerId = effectiveHostId;
-                        } else if (guestDuration < hostDuration) {
-                            winnerId = effectiveGuestId;
+                } else if (hostMoves != null && guestMoves != null) {
+                    if (hostMoves < guestMoves) {
+                        winnerId = effectiveHostId;
+                    } else if (guestMoves < hostMoves) {
+                        winnerId = effectiveGuestId;
+                    } else {
+                        if (hostDuration != null && guestDuration != null) {
+                            if (hostDuration < guestDuration) {
+                                winnerId = effectiveHostId;
+                            } else if (guestDuration < hostDuration) {
+                                winnerId = effectiveGuestId;
+                            } else {
+                                winnerId = "TIE";
+                            }
                         } else {
                             winnerId = "TIE";
                         }
-                    } else {
-                        winnerId = "TIE";
                     }
                 }
             }

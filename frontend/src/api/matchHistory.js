@@ -57,7 +57,21 @@ export function getStoredMatchHistory(userId) {
   const storageKey = `${MATCH_STORAGE_PREFIX}${effectiveUserId}`;
   try {
     const raw = localStorage.getItem(storageKey);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    if (!Array.isArray(list)) return [];
+    // Sanitize: remove any stale/incomplete placeholder matches
+    const sanitized = list.filter(m => {
+      const sName = m.startActor?.name;
+      const tName = m.targetActor?.name;
+      if (sName && sName.startsWith('Actor #')) return false;
+      if (tName && tName.startsWith('Actor #')) return false;
+      return true;
+    });
+    if (sanitized.length !== list.length) {
+      localStorage.setItem(storageKey, JSON.stringify(sanitized));
+    }
+    return sanitized;
   } catch {
     return [];
   }
@@ -67,6 +81,7 @@ export const getDetailedMatchHistory = getStoredMatchHistory;
 
 /**
  * Fetches server history from DynamoDB and merges with local rich match history.
+ * Only merges meaningful sessions that have valid actor details.
  */
 export async function fetchAndMergeUserHistory(userId) {
   const localHistory = getStoredMatchHistory(userId);
@@ -84,7 +99,9 @@ export async function fetchAndMergeUserHistory(userId) {
     const existingDates = new Set(localHistory.map(m => m.date));
 
     for (const session of serverSessions) {
-      if (session.date && !existingDates.has(session.date)) {
+      // Only include server sessions if real actor names exist (avoid synthetic "Actor #1234" placeholders)
+      const hasRealNames = session.startActorName && session.targetActorName;
+      if (hasRealNames && session.date && !existingDates.has(session.date)) {
         merged.push({
           id: session.sessionId || `session_${session.date}`,
           gameMode: session.gameMode || 'six-degrees',
@@ -97,8 +114,8 @@ export async function fetchAndMergeUserHistory(userId) {
           optimalHops: 2,
           matchedOtara: (session.moves || 0) <= 2,
           durationSeconds: session.durationSeconds || 0,
-          startActor: session.startActorId ? { id: session.startActorId, name: `Actor #${session.startActorId}` } : null,
-          targetActor: session.targetActorId ? { id: session.targetActorId, name: `Actor #${session.targetActorId}` } : null,
+          startActor: { id: session.startActorId, name: session.startActorName },
+          targetActor: { id: session.targetActorId, name: session.targetActorName },
           undos: 0,
           usedHint: false
         });

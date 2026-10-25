@@ -66,6 +66,141 @@ function setStoredRole(duelId, role) {
   sessionStorage.setItem(`reelquest_duel_role_${duelId}`, role);
 }
 
+export function computeDuelWinner(duel) {
+  if (!duel) {
+    return {
+      isCompleted: false,
+      winnerRole: null,
+      winnerName: null,
+      title: 'Duel In Progress',
+      subtitle: 'Waiting for match to finish...',
+      isTie: false
+    };
+  }
+
+  const hostForfeited = Boolean(duel.hostForfeited);
+  const guestForfeited = Boolean(duel.guestForfeited);
+  const hostFinished = duel.hostMoves !== null && duel.hostMoves !== undefined;
+  const guestFinished = duel.guestMoves !== null && duel.guestMoves !== undefined;
+
+  const hostName = duel.hostUsername || 'Host';
+  const guestName = duel.guestUsername || 'Challenger';
+
+  const isCompleted =
+    duel.status === 'COMPLETED' ||
+    hostForfeited ||
+    guestForfeited ||
+    (hostFinished && guestFinished);
+
+  if (!isCompleted) {
+    return {
+      isCompleted: false,
+      winnerRole: null,
+      winnerName: null,
+      title: 'Your Run is Locked In! Watching Opponent Live...',
+      subtitle: 'Match in progress',
+      isTie: false
+    };
+  }
+
+  // 1. Both forfeited -> Tie
+  if (hostForfeited && guestForfeited) {
+    return {
+      isCompleted: true,
+      winnerRole: 'TIE',
+      winnerName: null,
+      title: "Both Players Forfeited — It's a Tie!",
+      subtitle: 'No winner declared as both cinephiles gave up',
+      isTie: true
+    };
+  }
+
+  // 2. One player forfeited
+  if (hostForfeited) {
+    return {
+      isCompleted: true,
+      winnerRole: 'GUEST',
+      winnerName: guestName,
+      title: `🏆 ${guestName} Wins the Duel!`,
+      subtitle: `${hostName} forfeited the match`,
+      isTie: false
+    };
+  }
+
+  if (guestForfeited) {
+    return {
+      isCompleted: true,
+      winnerRole: 'HOST',
+      winnerName: hostName,
+      title: `🏆 ${hostName} Wins the Duel!`,
+      subtitle: `${guestName} forfeited the match`,
+      isTie: false
+    };
+  }
+
+  // 3. Both finished: compare moves (hops) first
+  const hMoves = Number(duel.hostMoves || 0);
+  const gMoves = Number(duel.guestMoves || 0);
+
+  if (hMoves < gMoves) {
+    return {
+      isCompleted: true,
+      winnerRole: 'HOST',
+      winnerName: hostName,
+      title: `🏆 ${hostName} Wins the Duel!`,
+      subtitle: `Shorter Hollywood path (${hMoves} vs ${gMoves} hops)`,
+      isTie: false
+    };
+  }
+
+  if (gMoves < hMoves) {
+    return {
+      isCompleted: true,
+      winnerRole: 'GUEST',
+      winnerName: guestName,
+      title: `🏆 ${guestName} Wins the Duel!`,
+      subtitle: `Shorter Hollywood path (${gMoves} vs ${hMoves} hops)`,
+      isTie: false
+    };
+  }
+
+  // 4. Equal hops: compare duration (time in seconds)
+  const hDuration = Number(duel.hostDurationSeconds ?? duel.hostTimeSeconds ?? 0);
+  const gDuration = Number(duel.guestDurationSeconds ?? duel.guestTimeSeconds ?? 0);
+
+  if (hDuration < gDuration) {
+    return {
+      isCompleted: true,
+      winnerRole: 'HOST',
+      winnerName: hostName,
+      title: `🏆 ${hostName} Wins the Duel!`,
+      subtitle: `Equal hops (${hMoves}), but faster execution (${hDuration}s vs ${gDuration}s)`,
+      isTie: false
+    };
+  }
+
+  if (gDuration < hDuration) {
+    return {
+      isCompleted: true,
+      winnerRole: 'GUEST',
+      winnerName: guestName,
+      title: `🏆 ${guestName} Wins the Duel!`,
+      subtitle: `Equal hops (${gMoves}), but faster execution (${gDuration}s vs ${hDuration}s)`,
+      isTie: false
+    };
+  }
+
+  // 5. Exact dead-heat tie on both hops and duration
+  return {
+    isCompleted: true,
+    winnerRole: 'TIE',
+    winnerName: null,
+    title: "It's an Exact Dead-Heat Tie!",
+    subtitle: `Both cinephiles finished in exactly ${hMoves} hops and ${hDuration}s!`,
+    isTie: true
+  };
+}
+
 export function DuelGameView({ onBackToMain }) {
   const { user } = useAuth();
   const myPlayerId = getTabPlayerId(user);
@@ -251,7 +386,40 @@ export function DuelGameView({ onBackToMain }) {
           triggerSynchronizedCountdown(updated, role);
         }
 
-        // 2. If in RESULTS and either player clicked Instant Rematch (`nextDuelId` created) -> auto-join the rematch!
+        // 2. If in RESULTS, keep match history updated with final outcome once opponent finishes
+        if (phase === 'RESULTS' && updated) {
+          const comp = computeDuelWinner(updated);
+          if (comp.isCompleted) {
+            const isWinner = comp.winnerRole === role;
+            const isForfeit = Boolean(role === 'HOST' ? updated.hostForfeited : updated.guestForfeited);
+            const myHops = role === 'HOST' ? updated.hostMoves : updated.guestMoves;
+            const myDuration = role === 'HOST'
+              ? (updated.hostDurationSeconds ?? updated.hostTimeSeconds)
+              : (updated.guestDurationSeconds ?? updated.guestTimeSeconds);
+            try {
+              saveDetailedMatch(user?.id, {
+                id: `duel_${updated.duelId}_${myPlayerId}`,
+                gameMode: 'duels',
+                subMode: 'duel',
+                date: new Date().toISOString().slice(0, 10),
+                timestamp: new Date().toISOString(),
+                won: isWinner,
+                forfeited: isForfeit,
+                hops: typeof myHops === 'number' ? myHops : 0,
+                optimalHops: updated.optimalHops || null,
+                matchedOtara: updated.optimalHops ? myHops <= updated.optimalHops : false,
+                durationSeconds: myDuration || 0,
+                startActor: updated.startActor,
+                targetActor: updated.targetActor,
+                opponentName: role === 'HOST' ? updated.guestUsername : updated.hostUsername,
+                roomCode: updated.duelId,
+                duelOutcome: isWinner ? 'VICTORY' : (isForfeit ? 'FORFEITED' : (comp.isTie ? 'TIE' : 'DEFEAT'))
+              });
+            } catch (err) {}
+          }
+        }
+
+        // 3. If in RESULTS and either player clicked Instant Rematch (`nextDuelId` created) -> auto-join the rematch!
         if (phase === 'RESULTS' && updated.nextDuelId && updated.nextDuelId !== duel.duelId) {
           const nextDuel = await fetchDuel(updated.nextDuelId);
           if (nextDuel) {
@@ -479,6 +647,7 @@ export function DuelGameView({ onBackToMain }) {
           role,
           nickname: customNickname || defaultUsername,
           moves: newMoves,
+          durationSeconds: timerSeconds,
           timeSeconds: timerSeconds,
           forfeited: false,
           pathSummary
@@ -564,6 +733,7 @@ export function DuelGameView({ onBackToMain }) {
         role,
         nickname: customNickname || defaultUsername,
         moves: 99,
+        durationSeconds: timerSeconds,
         timeSeconds: timerSeconds,
         forfeited: true,
         pathSummary: 'Forfeited match 🏳️'
@@ -1357,39 +1527,36 @@ export function DuelGameView({ onBackToMain }) {
       {/* ===================================================================== */}
       {/* PHASE 5: POST-MATCH RESULTS + OTARA'S OPTIMAL ROUTE + REMATCH         */}
       {/* ===================================================================== */}
-      {phase === 'RESULTS' && duel && (
-        <div className="rounded-2xl border border-gold/40 bg-cinema-card p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
-          <div className="text-center space-y-2">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 border border-gold/40 text-gold shadow-gold-glow">
-              <Trophy className="h-7 w-7" />
-            </div>
-            <span className="text-[11px] font-bold uppercase tracking-widest text-gold block">
-              {duel.status === 'COMPLETED' ? '1v1 Match Completed' : 'Waiting for Opponent to Finish...'}
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
-              {duel.status === 'COMPLETED' ? (
-                duel.winner === 'TIE' ? (
-                  "It's an Exact Dead-Heat Tie!"
-                ) : duel.winner === 'HOST' ? (
-                  `🏆 ${duel.hostUsername} Wins the Duel!`
-                ) : (
-                  `🏆 ${duel.guestUsername || 'Challenger'} Wins the Duel!`
-                )
-              ) : (
-                'Your Run is Locked In! Watching Opponent Live...'
+      {phase === 'RESULTS' && duel && (() => {
+        const duelResult = computeDuelWinner(duel);
+        return (
+          <div className="rounded-2xl border border-gold/40 bg-cinema-card p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
+            <div className="text-center space-y-2">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 border border-gold/40 text-gold shadow-gold-glow">
+                <Trophy className="h-7 w-7" />
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-gold block">
+                {duelResult.isCompleted ? '1v1 Match Completed' : 'Waiting for Opponent to Finish...'}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+                {duelResult.title}
+              </h2>
+              {duelResult.subtitle && (
+                <p className="text-xs text-cinema-muted">
+                  {duelResult.subtitle}
+                </p>
               )}
-            </h2>
-            <p className="text-xs text-cinema-muted">
-              {duel.startActor?.name} → {duel.targetActor?.name}
-            </p>
-          </div>
+              <p className="text-xs text-cinema-muted">
+                {duel.startActor?.name} → {duel.targetActor?.name}
+              </p>
+            </div>
 
           {/* Head-to-Head Scoreboard Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Host Card */}
             <div
               className={`rounded-2xl border p-5 space-y-3 ${
-                duel.status === 'COMPLETED' && duel.winner === 'HOST'
+                duelResult.isCompleted && duelResult.winnerRole === 'HOST'
                   ? 'border-gold bg-gold/10 shadow-gold-glow'
                   : 'border-cinema-border bg-cinema-surface/80'
               }`}
@@ -1403,7 +1570,7 @@ export function DuelGameView({ onBackToMain }) {
                     {duel.hostUsername}
                   </span>
                 </div>
-                {duel.status === 'COMPLETED' && duel.winner === 'HOST' && (
+                {duelResult.isCompleted && duelResult.winnerRole === 'HOST' && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[10px] font-extrabold text-cinema-black uppercase">
                     <Crown className="h-3 w-3" /> Winner
                   </span>
@@ -1422,7 +1589,7 @@ export function DuelGameView({ onBackToMain }) {
                     <div className="rounded-xl bg-cinema-black/60 p-3">
                       <span className="text-[10px] text-cinema-muted block">Time</span>
                       <span className="text-lg font-mono font-extrabold text-gold">
-                        {formatTime(duel.hostTimeSeconds)}
+                        {formatTime(duel.hostDurationSeconds ?? duel.hostTimeSeconds)}
                       </span>
                     </div>
                   </div>
@@ -1453,7 +1620,7 @@ export function DuelGameView({ onBackToMain }) {
             {/* Challenger Card */}
             <div
               className={`rounded-2xl border p-5 space-y-3 ${
-                duel.status === 'COMPLETED' && duel.winner === 'GUEST'
+                duelResult.isCompleted && duelResult.winnerRole === 'GUEST'
                   ? 'border-gold bg-gold/10 shadow-gold-glow'
                   : 'border-cinema-border bg-cinema-surface/80'
               }`}
@@ -1467,7 +1634,7 @@ export function DuelGameView({ onBackToMain }) {
                     {duel.guestUsername || 'Waiting for friend...'}
                   </span>
                 </div>
-                {duel.status === 'COMPLETED' && duel.winner === 'GUEST' && (
+                {duelResult.isCompleted && duelResult.winnerRole === 'GUEST' && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-[10px] font-extrabold text-cinema-black uppercase">
                     <Crown className="h-3 w-3" /> Winner
                   </span>
@@ -1486,7 +1653,7 @@ export function DuelGameView({ onBackToMain }) {
                     <div className="rounded-xl bg-cinema-black/60 p-3">
                       <span className="text-[10px] text-cinema-muted block">Time</span>
                       <span className="text-lg font-mono font-extrabold text-gold">
-                        {formatTime(duel.guestTimeSeconds)}
+                        {formatTime(duel.guestDurationSeconds ?? duel.guestTimeSeconds)}
                       </span>
                     </div>
                   </div>
@@ -1615,7 +1782,8 @@ export function DuelGameView({ onBackToMain }) {
             </button>
           </div>
         </div>
-      )}
+      );
+    })()}
     </div>
   );
 }
