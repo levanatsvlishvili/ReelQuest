@@ -44,16 +44,16 @@ function CastMemberChip({ actor, isMatch }) {
 
   return (
     <div
-      className="relative inline-block max-w-full"
+      className="relative w-full max-w-[96px]"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={() => setShowTooltip((prev) => !prev)}
     >
       <span
-        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none truncate max-w-[85px] ${
+        className={`flex items-center justify-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none truncate w-full ${
           isMatch
-            ? 'bg-black/40 text-emerald-300 border border-emerald-300/40 shadow-sm'
-            : 'bg-black/20 text-slate-300 hover:text-white'
+            ? 'bg-black/50 text-emerald-300 border border-emerald-300/50 shadow-sm'
+            : 'bg-black/25 text-slate-300 hover:text-white border border-white/5'
         }`}
       >
         <span className="truncate">{actor}</span>
@@ -591,19 +591,20 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ))}
           </div>
 
-          {/* Submitted Guess Rows */}
-          {guesses.map((g, rowIdx) => {
+          {/* Submitted Guess Rows (Reverse Chronological: Newest guess at the top!) */}
+          {[...guesses].reverse().map((g) => {
             const a = g.attributes;
-            const isLatest = rowIdx === guesses.length - 1;
+            const attemptNum = guesses.indexOf(g) + 1;
+            const isLatest = g === guesses[guesses.length - 1];
 
             return (
               <div
-                key={rowIdx}
+                key={g.guessedMovie.id || attemptNum}
                 className="grid grid-cols-7 gap-2 animate-fade-in"
               >
                 {/* Tile 1: Movie Guess */}
                 <div
-                  className={`h-20 rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     g.isExactWin
@@ -612,7 +613,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '0ms' : undefined }}
                 >
-                  <div className="h-14 w-10 shrink-0 overflow-hidden rounded border border-white/20 bg-black/40">
+                  <div className="h-16 w-11 shrink-0 overflow-hidden rounded border border-white/20 bg-black/40">
                     {g.guessedMovie.posterPath ? (
                       <img
                         src={getTmdbImageUrl(g.guessedMovie.posterPath)}
@@ -624,13 +625,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 pr-1">
-                    <span className="text-[9px] font-extrabold uppercase text-gold/90 block leading-none mb-0.5">
-                      #{rowIdx + 1}
+                    <span className="text-[9px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
+                      #{attemptNum} {isLatest && guesses.length > 1 ? '• NEW' : ''}
                     </span>
                     <h4 className="text-xs font-black truncate leading-tight text-white">
                       {g.guessedMovie.title}
                     </h4>
-                    <span className="text-[10px] text-slate-300 block truncate">
+                    <span className="text-[10px] text-slate-300 block truncate mt-0.5">
                       {g.guessedMovie.year}
                     </span>
                   </div>
@@ -638,7 +639,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                 {/* Tile 2: Director */}
                 <div
-                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.director.status === 'EXACT'
@@ -647,14 +648,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '100ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
-                    Director
-                  </span>
-                  <span className="text-xs font-black leading-tight line-clamp-2">
+                  <span className="text-xs font-black leading-snug line-clamp-2 px-1">
                     {a.director.value}
                   </span>
                   {a.director.status === 'EXACT' && (
-                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200">
+                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full">
                       <Check className="h-2.5 w-2.5" /> Match
                     </span>
                   )}
@@ -662,7 +660,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                 {/* Tile 3: Release Year */}
                 <div
-                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.year.status === 'EXACT'
@@ -673,25 +671,22 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '200ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
-                    Year
-                  </span>
                   <span className="text-base font-black font-mono leading-tight">
                     {a.year.value}
                   </span>
-                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.year.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowUp className="h-3 w-3 animate-bounce" /> Newer
                       </span>
                     )}
                     {a.year.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowDown className="h-3 w-3 animate-bounce" /> Older
                       </span>
                     )}
                     {a.year.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
                         <Check className="h-3 w-3" /> Exact
                       </span>
                     )}
@@ -700,7 +695,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                 {/* Tile 4: Genres */}
                 <div
-                  className={`h-20 rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.genres.status === 'EXACT'
@@ -711,19 +706,16 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '300ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-1 font-bold">
-                    Genres
-                  </span>
                   <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
                     {a.genres.value.slice(0, 3).map((genre, gIdx) => {
                       const isMatch = (a.genres.matching || []).includes(genre);
                       return (
                         <span
                           key={gIdx}
-                          className={`rounded px-1.5 py-0.5 text-[9px] font-black truncate max-w-[80px] ${
+                          className={`rounded px-1.5 py-0.5 text-[9px] font-black truncate max-w-[85px] ${
                             isMatch
-                              ? 'bg-black/40 text-emerald-300 border border-emerald-300/40'
-                              : 'bg-black/20 text-slate-300'
+                              ? 'bg-black/50 text-emerald-300 border border-emerald-300/40 shadow-sm'
+                              : 'bg-black/25 text-slate-300 border border-white/5'
                           }`}
                         >
                           {genre}
@@ -733,9 +725,9 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </div>
                 </div>
 
-                {/* Tile 5: Top Cast */}
+                {/* Tile 5: Top Cast (Fits cleanly inside rectangle with zero overflow!) */}
                 <div
-                  className={`h-20 rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.cast.status === 'EXACT'
@@ -746,11 +738,8 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '400ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-1 font-bold">
-                    Top Cast
-                  </span>
-                  <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
-                    {a.cast.value.map((actor, actIdx) => {
+                  <div className="flex flex-col items-center justify-center gap-1 w-full max-h-full">
+                    {a.cast.value.slice(0, 3).map((actor, actIdx) => {
                       const isMatch = (a.cast.matching || []).includes(actor);
                       return (
                         <CastMemberChip
@@ -765,7 +754,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                 {/* Tile 6: Rating / Score */}
                 <div
-                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.rating.status === 'EXACT'
@@ -776,26 +765,23 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '500ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
-                    Score
-                  </span>
                   <div className="flex items-center gap-1 text-base font-black font-mono leading-tight">
-                    <Star className="h-3 w-3 text-gold fill-gold" />
+                    <Star className="h-3.5 w-3.5 text-gold fill-gold" />
                     <span>{a.rating.value}</span>
                   </div>
-                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.rating.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowUp className="h-3 w-3" /> Higher
                       </span>
                     )}
                     {a.rating.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowDown className="h-3 w-3" /> Lower
                       </span>
                     )}
                     {a.rating.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
                         <Check className="h-3 w-3" /> Match
                       </span>
                     )}
@@ -804,7 +790,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                 {/* Tile 7: Runtime */}
                 <div
-                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
                     isLatest ? 'animate-tile-flip' : ''
                   } ${
                     a.runtime.status === 'EXACT'
@@ -815,25 +801,22 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                   style={{ animationDelay: isLatest ? '600ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
-                    Runtime
-                  </span>
                   <span className="text-base font-black font-mono leading-tight">
                     {a.runtime.value}
                   </span>
-                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.runtime.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowUp className="h-3 w-3" /> Longer
                       </span>
                     )}
                     {a.runtime.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
                         <ArrowDown className="h-3 w-3" /> Shorter
                       </span>
                     )}
                     {a.runtime.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
                         <Check className="h-3 w-3" /> Match
                       </span>
                     )}
@@ -843,42 +826,18 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             );
           })}
 
-          {/* Active Pending Attempt Row */}
-          {gameStatus === 'PLAYING' && guesses.length < MAX_GUESSES && (
-            <div className="grid grid-cols-7 gap-2">
-              <div className="h-20 rounded-xl border-2 border-gold/40 bg-gold/5 border-dashed flex flex-col items-center justify-center p-2 text-center animate-pulse">
-                <span className="text-[10px] font-extrabold uppercase text-gold">
-                  Attempt #{guesses.length + 1}
-                </span>
-                <span className="text-xs font-black text-slate-300">
-                  Search Above
-                </span>
-              </div>
-              {Array.from({ length: 6 }).map((_, cIdx) => (
-                <div
-                  key={cIdx}
-                  className="h-20 rounded-xl border border-cinema-border/40 bg-cinema-card/25 flex items-center justify-center text-cinema-muted/40 font-mono text-sm"
-                >
-                  •
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Future Unused Rows (Uniform Empty Grid Slots) */}
-          {Array.from({
-            length: Math.max(0, MAX_GUESSES - guesses.length - (gameStatus === 'PLAYING' ? 1 : 0))
-          }).map((_, rIdx) => {
-            const rowNum = guesses.length + (gameStatus === 'PLAYING' ? 2 : 1) + rIdx;
+          {/* Remaining Empty Rows (Total 10 Rows on the board) */}
+          {Array.from({ length: Math.max(0, MAX_GUESSES - guesses.length) }).map((_, rIdx) => {
+            const rowNum = guesses.length + 1 + rIdx;
             return (
-              <div key={`empty-${rIdx}`} className="grid grid-cols-7 gap-2 opacity-35">
-                <div className="h-16 rounded-xl border border-cinema-border/40 bg-cinema-surface/40 flex items-center justify-center text-[11px] font-bold text-cinema-muted">
+              <div key={`empty-${rIdx}`} className="grid grid-cols-7 gap-2 opacity-30">
+                <div className="h-[88px] rounded-xl border border-cinema-border/40 bg-cinema-surface/40 flex items-center justify-center text-[11px] font-bold text-cinema-muted">
                   #{rowNum}
                 </div>
                 {Array.from({ length: 6 }).map((_, cIdx) => (
                   <div
                     key={cIdx}
-                    className="h-16 rounded-xl border border-cinema-border/30 bg-cinema-surface/20"
+                    className="h-[88px] rounded-xl border border-cinema-border/30 bg-cinema-surface/20"
                   />
                 ))}
               </div>
