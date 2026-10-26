@@ -1,4 +1,4 @@
-import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame } from 'lucide-react';
+import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame, Film } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const GAME_MODES = [
@@ -9,6 +9,15 @@ export const GAME_MODES = [
     icon: GitFork,
     status: 'ACTIVE',
     badge: 'LIVE',
+    hasStreak: true
+  },
+  {
+    id: 'spotle',
+    title: 'Spotle',
+    subtitle: 'Daily Movie Mystery',
+    icon: Film,
+    status: 'ACTIVE',
+    badge: 'NEW',
     hasStreak: true
   },
   {

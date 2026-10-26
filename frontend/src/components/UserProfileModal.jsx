@@ -98,6 +98,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
   const filteredMatches = matchHistory.filter(m => {
     if (historyFilter === 'all') return true;
     if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
+    if (historyFilter === 'spotle') return m.gameMode === 'spotle';
     if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
     if (historyFilter === 'duels') return m.gameMode === 'duels';
     return m.gameMode === historyFilter;
@@ -495,9 +496,10 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                 <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
                   {[
                     { id: 'all', label: 'All Matches' },
-                    { id: 'daily', label: 'Beat Otara (Daily)' },
-                    { id: 'archive', label: 'Archive & Custom' },
-                    { id: 'duels', label: '1v1 Online Duels' }
+                    { id: 'daily', label: 'Beat Otara' },
+                    { id: 'spotle', label: 'Spotle (Mystery)' },
+                    { id: 'duels', label: '1v1 Online Duels' },
+                    { id: 'archive', label: 'Archive & Custom' }
                   ].map(f => (
                     <button
                       key={f.id}
@@ -528,6 +530,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                     const isDuel = m.gameMode === 'duels';
                     const isArchive = m.subMode === 'archive';
                     const isCustom = m.subMode === 'custom';
+                    const isSpotle = m.gameMode === 'spotle';
 
                     return (
                       <div
@@ -541,7 +544,12 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                         {/* Header: Mode Badge + Date + Result */}
                         <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
                           <div className="flex items-center gap-2">
-                            {isDuel ? (
+                            {isSpotle ? (
+                              <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-500/30">
+                                <Film className="h-3 w-3 text-gold" />
+                                SPOTLE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
+                              </span>
+                            ) : isDuel ? (
                               <span className="flex items-center gap-1 rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-cyan-300 border border-cyan-500/30">
                                 <Swords className="h-3 w-3" />
                                 1v1 DUEL {m.roomCode ? `#${m.roomCode}` : ''}
@@ -576,18 +584,50 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                             ) : isWin ? (
                               <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-400 border border-emerald-500/30">
                                 <Check className="h-3 w-3" />
-                                {m.matchedOtara ? 'MATCHED OTARA' : 'VICTORY'}
+                                {isSpotle ? `SOLVED (${m.hops}/10)` : m.matchedOtara ? 'MATCHED OTARA' : 'VICTORY'}
                               </span>
                             ) : (
                               <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] font-extrabold text-slate-300">
-                                DEFEAT
+                                {isSpotle ? 'UNSOLVED' : 'DEFEAT'}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Middle: Actor Route */}
-                        {(m.startActor || m.targetActor) && (
+                        {/* Middle: Spotle Mystery Movie or Actor Route */}
+                        {isSpotle && m.targetMovie ? (
+                          <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-2.5 border border-cinema-border/30">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {m.targetMovie.posterPath ? (
+                                <img
+                                  src={getTmdbImageUrl(m.targetMovie.posterPath)}
+                                  alt={m.targetMovie.title}
+                                  className="h-10 w-7 rounded object-cover border border-cinema-border shrink-0"
+                                />
+                              ) : (
+                                <div className="flex h-10 w-7 items-center justify-center rounded bg-cinema-surface border border-cinema-border text-gold shrink-0">
+                                  <Film className="h-4 w-4" />
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-bold text-white truncate">
+                                  {m.targetMovie.title} {m.targetMovie.year ? `(${m.targetMovie.year})` : ''}
+                                </h4>
+                                {m.targetMovie.director && (
+                                  <span className="text-[10px] text-cinema-muted truncate block">
+                                    Dir. {m.targetMovie.director}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-[9px] uppercase font-bold text-cinema-muted block">Guesses</span>
+                              <span className="text-xs font-black text-gold">
+                                {m.hops || 1}/10
+                              </span>
+                            </div>
+                          </div>
+                        ) : (m.startActor || m.targetActor) && (
                           <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-2.5 border border-cinema-border/30">
                             {/* Start Actor */}
                             <div className="flex items-center gap-2 min-w-0 flex-1">

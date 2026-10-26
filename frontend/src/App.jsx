@@ -19,6 +19,7 @@ import { LeaderboardView } from './components/LeaderboardView';
 import { OtaraChallengeCard } from './components/OtaraChallengeCard';
 import { DuelGameView } from './components/DuelGameView';
 import { OtaraHintModal } from './components/OtaraHintModal';
+import { SpotleGameView } from './components/SpotleGameView';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -128,6 +129,11 @@ export default function App() {
                   setActiveMode('six-degrees');
                   setIsDuelMode(false);
                 }}
+              />
+            ) : activeMode === 'spotle' ? (
+              <SpotleGameView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : activeMode !== 'six-degrees' ? (
               <UpcomingGamePreview

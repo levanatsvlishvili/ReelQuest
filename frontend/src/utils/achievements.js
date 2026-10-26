@@ -45,6 +45,7 @@ export const ACHIEVEMENT_TIERS = {
 export const GAME_MODE_FILTERS = [
   { id: 'all', label: 'All Modes' },
   { id: 'six-degrees', label: 'Beat Otara' },
+  { id: 'spotle', label: 'Spotle' },
   { id: 'duels', label: '1v1 Duels' },
   { id: 'meta', label: 'Streaks & Meta' },
   { id: 'upcoming', label: 'Coming Soon' }
@@ -224,6 +225,75 @@ export const ACHIEVEMENTS = [
   },
 
   // ==========================================
+  // SPOTLE (Daily Cinema Mystery)
+  // ==========================================
+  {
+    id: 'spotle_first_solved',
+    gameMode: 'spotle',
+    title: 'First Clue Unlocked',
+    description: 'Solve your first Spotle daily mystery movie.',
+    tier: 'bronze',
+    icon: 'Film',
+    maxProgress: 1,
+    checkProgress: (stats, history) => {
+      const won = history.filter(m => m.gameMode === 'spotle' && m.won).length;
+      return won >= 1 ? 1 : 0;
+    }
+  },
+  {
+    id: 'spotle_sleuth_3',
+    gameMode: 'spotle',
+    title: 'Cinema Sleuth',
+    description: 'Deduce the mystery movie in 3 guesses or fewer.',
+    tier: 'gold',
+    icon: 'Target',
+    maxProgress: 1,
+    checkProgress: (stats, history) => {
+      const match = history.find(m => m.gameMode === 'spotle' && m.won && m.hops <= 3 && m.hops > 0);
+      return match ? 1 : 0;
+    }
+  },
+  {
+    id: 'spotle_one_shot',
+    gameMode: 'spotle',
+    title: 'The Prophecy (One-Shot)',
+    description: 'Guess the secret mystery movie on your very first try!',
+    tier: 'diamond',
+    icon: 'Crown',
+    maxProgress: 1,
+    checkProgress: (stats, history) => {
+      const match = history.find(m => m.gameMode === 'spotle' && m.won && m.hops === 1);
+      return match ? 1 : 0;
+    }
+  },
+  {
+    id: 'spotle_streak_3',
+    gameMode: 'spotle',
+    title: 'Daily Detective',
+    description: 'Solve 3 Spotle challenges in total.',
+    tier: 'silver',
+    icon: 'Sparkles',
+    maxProgress: 3,
+    checkProgress: (stats, history) => {
+      const won = history.filter(m => m.gameMode === 'spotle' && m.won).length;
+      return Math.min(3, won);
+    }
+  },
+  {
+    id: 'spotle_archivist_pro',
+    gameMode: 'spotle',
+    title: 'Hollywood Archivist (PRO)',
+    description: 'Rewind the days and solve 5 archive Spotle challenges.',
+    tier: 'gold',
+    icon: 'History',
+    maxProgress: 5,
+    checkProgress: (stats, history) => {
+      const wonArchive = history.filter(m => m.gameMode === 'spotle' && m.won && m.subMode === 'archive').length;
+      return Math.min(5, wonArchive);
+    }
+  },
+
+  // ==========================================
   // STREAKS & META (Global Mastery)
   // ==========================================
   {
@@ -383,7 +453,7 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
     }
 
     // A game achievement can ONLY be unlocked if the user has actually played games!
-    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.id.includes('streak') || ach.id.includes('veteran');
+    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.id.includes('streak') || ach.id.includes('veteran');
     let isNowUnlocked = false;
 
     if (ach.isComingSoon) {
