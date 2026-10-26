@@ -18,7 +18,8 @@ import {
   ChevronRight,
   User,
   Star,
-  Info
+  Info,
+  Flag
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SPOTLE_MOVIES, getSpotleMovieForDate, compareSpotleMovies } from '../data/spotleMovies';
@@ -103,6 +104,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   // Game state
   const [guesses, setGuesses] = useState([]);
   const [gameStatus, setGameStatus] = useState('PLAYING'); // 'PLAYING' | 'WON' | 'LOST'
+  const [gaveUp, setGaveUp] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [revealedClues, setRevealedClues] = useState({ tagline: false, cast: false });
@@ -121,6 +123,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setDropdownOpen(false);
     setShowResultModal(false);
     setCopiedShare(false);
+    setGaveUp(false);
     setRevealedClues({ tagline: false, cast: false });
     setTimerSeconds(0);
 
@@ -130,6 +133,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         const parsed = JSON.parse(raw);
         setGuesses(parsed.guesses || []);
         setGameStatus(parsed.status || 'PLAYING');
+        setGaveUp(Boolean(parsed.gaveUp));
         setTimerSeconds(parsed.timerSeconds || 0);
         if (parsed.status === 'WON' || parsed.status === 'LOST') {
           setShowResultModal(true);
@@ -255,6 +259,48 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     }
   };
 
+  // Give Up & Reveal Answer
+  const handleGiveUp = () => {
+    if (gameStatus !== 'PLAYING') return;
+
+    setGameStatus('LOST');
+    setGaveUp(true);
+    setShowResultModal(true);
+    playDefeat();
+
+    try {
+      localStorage.setItem(
+        `reelquest_spotle_${activeDate}`,
+        JSON.stringify({
+          date: activeDate,
+          guesses,
+          status: 'LOST',
+          gaveUp: true,
+          timerSeconds
+        })
+      );
+    } catch (e) {}
+
+    saveDetailedMatch(user?.id, {
+      id: `spotle_${activeDate}_${user?.id || 'guest'}`,
+      gameMode: 'spotle',
+      subMode: isToday ? 'daily' : 'archive',
+      date: activeDate,
+      won: false,
+      hops: MAX_GUESSES,
+      optimalHops: 1,
+      durationSeconds: timerSeconds,
+      targetMovie: {
+        id: targetMovie.id,
+        title: targetMovie.title,
+        year: targetMovie.year,
+        director: targetMovie.director,
+        posterPath: targetMovie.posterPath
+      },
+      guesses: guesses.map(g => g.guessedMovie.title)
+    });
+  };
+
   // Keyboard navigation for search dropdown
   const handleKeyDown = (e) => {
     if (!dropdownOpen || suggestions.length === 0) {
@@ -331,7 +377,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in max-w-4xl mx-auto pb-12">
+    <div className="space-y-4 animate-fade-in max-w-4xl mx-auto pb-12">
       {/* ===================================================================== */}
       {/* 1. COMPACT HEADER & DATE NAVIGATOR                                    */}
       {/* ===================================================================== */}
@@ -461,110 +507,205 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       )}
 
       {/* ===================================================================== */}
-      {/* 2. SEARCH & GUESS INPUT BAR (Spotle / Wordle Core Input)              */}
+      {/* 2. SEARCH & CONTROLS BAR (Search, Attempt Counter & Give Up)          */}
       {/* ===================================================================== */}
       {gameStatus === 'PLAYING' && (
-        <div className="relative z-20">
-          <div className="relative rounded-2xl border-2 border-gold/50 bg-cinema-card/95 p-2 shadow-gold-glow/20 focus-within:border-gold focus-within:shadow-gold-glow transition flex items-center gap-2">
-            <div className="flex items-center gap-2.5 px-3 flex-1 min-w-0">
-              <Search className="h-4 w-4 text-gold shrink-0" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setDropdownOpen(true);
-                  setSelectedIndex(0);
-                }}
-                onFocus={() => setDropdownOpen(true)}
-                onKeyDown={handleKeyDown}
-                placeholder={`Type a movie title (Guess ${guesses.length + 1} of ${MAX_GUESSES})...`}
-                className="w-full bg-transparent py-2 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
-              />
-              {searchQuery && (
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Search Input Bar */}
+            <div className="relative z-20 flex-1 min-w-0">
+              <div className="relative rounded-2xl border-2 border-gold/50 bg-cinema-card/95 p-1.5 sm:p-2 shadow-gold-glow/20 focus-within:border-gold focus-within:shadow-gold-glow transition flex items-center gap-2">
+                <div className="flex items-center gap-2.5 px-3 flex-1 min-w-0">
+                  <Search className="h-4 w-4 text-gold shrink-0" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setDropdownOpen(true);
+                      setSelectedIndex(0);
+                    }}
+                    onFocus={() => setDropdownOpen(true)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={`Type a movie title (Guess ${guesses.length + 1} of ${MAX_GUESSES})...`}
+                    className="w-full bg-transparent py-2 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="rounded-lg p-1 text-cinema-muted hover:text-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+
                 <button
-                  onClick={() => setSearchQuery('')}
-                  className="rounded-lg p-1 text-cinema-muted hover:text-white"
+                  onClick={() => {
+                    if (suggestions.length > 0) {
+                      handleSelectMovieGuess(suggestions[selectedIndex] || suggestions[0]);
+                    }
+                  }}
+                  disabled={suggestions.length === 0}
+                  className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-4 sm:px-5 py-2 text-xs font-black uppercase text-cinema-black shadow-gold-glow/30 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition active:scale-95"
                 >
-                  <X className="h-4 w-4" />
+                  <span>Guess</span>
                 </button>
+              </div>
+
+              {/* Suggestions Dropdown */}
+              {dropdownOpen && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto z-40">
+                  {suggestions.map((movie, idx) => {
+                    const isSelected = idx === selectedIndex;
+                    const alreadyGuessed = guesses.some((g) => g.guessedMovie.id === movie.id);
+
+                    return (
+                      <div
+                        key={movie.id}
+                        onClick={() => !alreadyGuessed && handleSelectMovieGuess(movie)}
+                        className={`flex items-center justify-between p-2.5 sm:p-3 transition cursor-pointer ${
+                          alreadyGuessed
+                            ? 'opacity-40 cursor-not-allowed bg-cinema-black/40'
+                            : isSelected
+                              ? 'bg-gold/15 text-gold'
+                              : 'hover:bg-cinema-surface/80 text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-11 w-8 shrink-0 overflow-hidden rounded-md border border-cinema-border bg-cinema-surface">
+                            {movie.posterPath ? (
+                              <img
+                                src={getTmdbImageUrl(movie.posterPath)}
+                                alt={movie.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-[7px] text-cinema-muted">
+                                FILM
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <h4 className="text-xs sm:text-sm font-extrabold truncate text-white">{movie.title}</h4>
+                            <p className="text-[10px] sm:text-[11px] text-cinema-muted truncate">
+                              {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 pl-2">
+                          {alreadyGuessed ? (
+                            <span className="text-[9px] uppercase font-bold text-cinema-muted">Guessed</span>
+                          ) : (
+                            <span className="rounded-lg bg-gold/15 px-2 py-0.5 text-[9px] font-extrabold text-gold border border-gold/30">
+                              Select
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
-            <button
-              onClick={() => {
-                if (suggestions.length > 0) {
-                  handleSelectMovieGuess(suggestions[selectedIndex] || suggestions[0]);
-                }
-              }}
-              disabled={suggestions.length === 0}
-              className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-4 sm:px-5 py-2.5 text-xs font-black uppercase text-cinema-black shadow-gold-glow/30 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition active:scale-95"
-            >
-              <span>Guess</span>
-            </button>
-          </div>
+            {/* Attempt Counter Info Badge & Give Up Button */}
+            <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+              <div className="flex items-center gap-1.5 rounded-xl border border-gold/40 bg-gold/15 px-3.5 py-2.5 text-xs font-black text-gold shadow-sm">
+                <Trophy className="h-3.5 w-3.5 text-gold shrink-0" />
+                <span>Attempt {guesses.length + 1} / {MAX_GUESSES}</span>
+              </div>
 
-          {/* Autocomplete Dropdown */}
-          {dropdownOpen && suggestions.length > 0 && (
-            <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto z-40">
-              {suggestions.map((movie, idx) => {
-                const isSelected = idx === selectedIndex;
-                const alreadyGuessed = guesses.some((g) => g.guessedMovie.id === movie.id);
-
-                return (
-                  <div
-                    key={movie.id}
-                    onClick={() => !alreadyGuessed && handleSelectMovieGuess(movie)}
-                    className={`flex items-center justify-between p-2.5 sm:p-3 transition cursor-pointer ${
-                      alreadyGuessed
-                        ? 'opacity-40 cursor-not-allowed bg-cinema-black/40'
-                        : isSelected
-                          ? 'bg-gold/15 text-gold'
-                          : 'hover:bg-cinema-surface/80 text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-11 w-8 shrink-0 overflow-hidden rounded-md border border-cinema-border bg-cinema-surface">
-                        {movie.posterPath ? (
-                          <img
-                            src={getTmdbImageUrl(movie.posterPath)}
-                            alt={movie.title}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[7px] text-cinema-muted">
-                            FILM
-                          </div>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <h4 className="text-xs sm:text-sm font-extrabold truncate text-white">{movie.title}</h4>
-                        <p className="text-[10px] sm:text-[11px] text-cinema-muted truncate">
-                          {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="shrink-0 pl-2">
-                      {alreadyGuessed ? (
-                        <span className="text-[9px] uppercase font-bold text-cinema-muted">Guessed</span>
-                      ) : (
-                        <span className="rounded-lg bg-gold/15 px-2 py-0.5 text-[9px] font-extrabold text-gold border border-gold/30">
-                          Select
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+              <button
+                onClick={handleGiveUp}
+                className="flex items-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 px-3.5 py-2.5 text-xs font-black transition active:scale-95 shadow-sm"
+                title="Give up and reveal the secret movie"
+              >
+                <Flag className="h-3.5 w-3.5 text-rose-400" />
+                <span>Give Up</span>
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 
       {/* ===================================================================== */}
-      {/* 3. THE SPOTLE PUZZLE MATRIX (Wordle / Spotle Style Tile Board)         */}
+      {/* 3. MYSTERY CLUES SECTION (Positioned Above the Grid)                  */}
+      {/* ===================================================================== */}
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/85 p-3.5 sm:p-4 shadow-xl space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="h-4 w-4 text-gold fill-gold" />
+            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
+              Mystery Clues
+            </h3>
+          </div>
+          <span className="text-[10px] text-cinema-muted font-bold">
+            {isPro ? '🌟 PRO: All Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {/* Clue 1: Tagline */}
+          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
+                Clue #1: Tagline
+              </span>
+              <span className="text-[9px] text-cinema-muted">Unlock: 3 Guesses</span>
+            </div>
+
+            {revealedClues.tagline ? (
+              <p className="text-xs text-slate-200 italic font-medium leading-relaxed">
+                „{targetMovie.tagline || targetMovie.overview.slice(0, 90) + '...'}“
+              </p>
+            ) : canUnlockTagline ? (
+              <button
+                onClick={() => handleUnlockClue('tagline')}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
+              >
+                <span>Reveal Movie Tagline</span>
+              </button>
+            ) : (
+              <p className="text-xs text-cinema-muted">
+                Locked. Make <strong>{3 - guesses.length} more guesses</strong>.
+              </p>
+            )}
+          </div>
+
+          {/* Clue 2: Star Actor */}
+          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
+                Clue #2: Lead Co-Star
+              </span>
+              <span className="text-[9px] text-cinema-muted">Unlock: 6 Guesses</span>
+            </div>
+
+            {revealedClues.cast ? (
+              <p className="text-xs text-slate-200 font-medium">
+                Starring <strong className="text-white">{targetMovie.cast[0]}</strong> alongside <strong className="text-white">{targetMovie.cast[1]}</strong>
+              </p>
+            ) : canUnlockCast ? (
+              <button
+                onClick={() => handleUnlockClue('cast')}
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/15 py-1 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition"
+              >
+                <span>Reveal Lead Co-Star</span>
+              </button>
+            ) : (
+              <p className="text-xs text-cinema-muted">
+                Locked. Make <strong>{6 - guesses.length} more guesses</strong>.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* 4. THE SPOTLE PUZZLE MATRIX (Chronological: Guesses added below)       */}
       {/* ===================================================================== */}
       <div className="w-full overflow-x-auto pb-4 scrollbar-none perspective-1000">
         <div className="min-w-[760px] max-w-4xl mx-auto space-y-2">
@@ -591,11 +732,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ))}
           </div>
 
-          {/* Submitted Guess Rows (Reverse Chronological: Newest guess at the top!) */}
-          {[...guesses].reverse().map((g) => {
+          {/* Submitted Guess Rows (Chronological: Each new guess stacks below!) */}
+          {guesses.map((g, rowIdx) => {
             const a = g.attributes;
-            const attemptNum = guesses.indexOf(g) + 1;
-            const isLatest = g === guesses[guesses.length - 1];
+            const attemptNum = rowIdx + 1;
+            const isLatest = rowIdx === guesses.length - 1;
 
             return (
               <div
@@ -626,7 +767,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </div>
                   <div className="min-w-0 flex-1 pr-1">
                     <span className="text-[9px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
-                      #{attemptNum} {isLatest && guesses.length > 1 ? '• NEW' : ''}
+                      #{attemptNum}
                     </span>
                     <h4 className="text-xs font-black truncate leading-tight text-white">
                       {g.guessedMovie.title}
@@ -652,7 +793,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     {a.director.value}
                   </span>
                   {a.director.status === 'EXACT' && (
-                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full">
+                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200 bg-black/30 px-1.5 py-0.5 rounded-full">
                       <Check className="h-2.5 w-2.5" /> Match
                     </span>
                   )}
@@ -826,96 +967,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             );
           })}
 
-          {/* Remaining Empty Rows (Total 10 Rows on the board) */}
-          {Array.from({ length: Math.max(0, MAX_GUESSES - guesses.length) }).map((_, rIdx) => {
-            const rowNum = guesses.length + 1 + rIdx;
-            return (
-              <div key={`empty-${rIdx}`} className="grid grid-cols-7 gap-2 opacity-30">
-                <div className="h-[88px] rounded-xl border border-cinema-border/40 bg-cinema-surface/40 flex items-center justify-center text-[11px] font-bold text-cinema-muted">
-                  #{rowNum}
-                </div>
-                {Array.from({ length: 6 }).map((_, cIdx) => (
-                  <div
-                    key={cIdx}
-                    className="h-[88px] rounded-xl border border-cinema-border/30 bg-cinema-surface/20"
-                  />
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ===================================================================== */}
-      {/* 4. CINEMA VAULT CLUES (Interactive Hints Drawer)                       */}
-      {/* ===================================================================== */}
-      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/80 p-3.5 sm:p-4 shadow-xl space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-gold fill-gold" />
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-              Mystery Clues
-            </h3>
-          </div>
-          <span className="text-[10px] text-cinema-muted font-bold">
-            {isPro ? '🌟 PRO: All Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {/* Clue 1: Tagline */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                Clue #1: Tagline
-              </span>
-              <span className="text-[9px] text-cinema-muted">Unlock: 3 Guesses</span>
+          {/* When no guesses made yet: clean inviting prompt row */}
+          {guesses.length === 0 && (
+            <div className="rounded-xl border border-dashed border-cinema-border/70 bg-cinema-card/40 p-8 text-center text-cinema-muted space-y-1">
+              <p className="text-xs font-bold text-slate-300">
+                Awaiting your opening guess. Enter any movie title above!
+              </p>
+              <p className="text-[11px] text-cinema-muted">
+                Each guess will stack below with attribute clues (10 attempts remaining).
+              </p>
             </div>
-
-            {revealedClues.tagline ? (
-              <p className="text-xs text-slate-200 italic font-medium leading-relaxed">
-                „{targetMovie.tagline || targetMovie.overview.slice(0, 90) + '...'}“
-              </p>
-            ) : canUnlockTagline ? (
-              <button
-                onClick={() => handleUnlockClue('tagline')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
-              >
-                <span>Reveal Movie Tagline</span>
-              </button>
-            ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{3 - guesses.length} more guesses</strong>.
-              </p>
-            )}
-          </div>
-
-          {/* Clue 2: Star Actor */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
-                Clue #2: Lead Co-Star
-              </span>
-              <span className="text-[9px] text-cinema-muted">Unlock: 6 Guesses</span>
-            </div>
-
-            {revealedClues.cast ? (
-              <p className="text-xs text-slate-200 font-medium">
-                Starring <strong className="text-white">{targetMovie.cast[0]}</strong> alongside <strong className="text-white">{targetMovie.cast[1]}</strong>
-              </p>
-            ) : canUnlockCast ? (
-              <button
-                onClick={() => handleUnlockClue('cast')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/15 py-1 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition"
-              >
-                <span>Reveal Lead Co-Star</span>
-              </button>
-            ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{6 - guesses.length} more guesses</strong>.
-              </p>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -947,7 +1009,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-emerald-500/20'
                   : 'bg-rose-500/20 text-rose-400 border-rose-500/40'
               }`}>
-                {gameStatus === 'WON' ? `🏆 SOLVED IN ${guesses.length}/${MAX_GUESSES} GUESSES!` : '🎬 OUT OF GUESSES'}
+                {gameStatus === 'WON'
+                  ? `🏆 SOLVED IN ${guesses.length}/${MAX_GUESSES} GUESSES!`
+                  : gaveUp
+                    ? '🏳️ GAVE UP • ANSWER REVEALED'
+                    : '🎬 OUT OF GUESSES'}
               </span>
 
               <h2 className="text-2xl sm:text-3xl font-black text-white">
