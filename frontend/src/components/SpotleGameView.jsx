@@ -7,20 +7,18 @@ import {
   RotateCcw,
   Sparkles,
   Trophy,
-  ArrowRight,
   ArrowUp,
   ArrowDown,
   Check,
   X,
   Share2,
   Clock,
-  HelpCircle,
   Lightbulb,
-  Crown,
   ChevronLeft,
   ChevronRight,
   User,
-  Star
+  Star,
+  Info
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SPOTLE_MOVIES, getSpotleMovieForDate, compareSpotleMovies } from '../data/spotleMovies';
@@ -39,30 +37,28 @@ import {
 const MAX_GUESSES = 10;
 
 /**
- * Interactive Cast Member Chip with Hover/Click Tooltip Popover
- * Displays full actor name and unambiguous matched vs non-matched star badge
+ * Interactive Cast Member Chip with Hover Tooltip Popover
  */
 function CastMemberChip({ actor, isMatch }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
   return (
     <div
-      className="relative inline-block"
+      className="relative inline-block max-w-full"
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
       onClick={() => setShowTooltip((prev) => !prev)}
     >
       <span
-        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none ${
+        className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none truncate max-w-[85px] ${
           isMatch
-            ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
-            : 'bg-cinema-surface/70 text-slate-300 border border-cinema-border/60 hover:text-white hover:border-cinema-muted'
+            ? 'bg-black/40 text-emerald-300 border border-emerald-300/40 shadow-sm'
+            : 'bg-black/20 text-slate-300 hover:text-white'
         }`}
       >
-        <span className="truncate max-w-[85px] sm:max-w-[105px]">{actor}</span>
+        <span className="truncate">{actor}</span>
       </span>
 
-      {/* Floating Tooltip / Popover on hover or click */}
       {showTooltip && (
         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-30 min-w-[130px] max-w-[210px] rounded-xl border border-cinema-border/90 bg-cinema-black/95 p-2 shadow-2xl backdrop-blur-md text-center pointer-events-none animate-fade-in">
           <div className="text-[11px] font-black text-white truncate flex items-center justify-center gap-1">
@@ -97,6 +93,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const [activeDate, setActiveDate] = useState(todayStr);
   const [targetMovie, setTargetMovie] = useState(() => getSpotleMovieForDate(todayStr));
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
 
   // Search autocomplete state
   const [searchQuery, setSearchQuery] = useState('');
@@ -104,7 +101,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   // Game state
-  const [guesses, setGuesses] = useState([]); // array of compared results
+  const [guesses, setGuesses] = useState([]);
   const [gameStatus, setGameStatus] = useState('PLAYING'); // 'PLAYING' | 'WON' | 'LOST'
   const [showResultModal, setShowResultModal] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -127,7 +124,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setRevealedClues({ tagline: false, cast: false });
     setTimerSeconds(0);
 
-    // Restore saved session for this date
     try {
       const raw = localStorage.getItem(`reelquest_spotle_${activeDate}`);
       if (raw) {
@@ -178,7 +174,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const handleSelectMovieGuess = (movie) => {
     if (gameStatus !== 'PLAYING') return;
 
-    // Check if already guessed
     if (guesses.some((g) => g.guessedMovie.id === movie.id || g.guessedMovie.title.toLowerCase() === movie.title.toLowerCase())) {
       setSearchQuery('');
       setDropdownOpen(false);
@@ -196,7 +191,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setSearchQuery('');
     setDropdownOpen(false);
 
-    // Save session state to localStorage
     try {
       localStorage.setItem(
         `reelquest_spotle_${activeDate}`,
@@ -217,7 +211,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         spread: 80,
         origin: { y: 0.6 }
       });
-      // Save to detailed match history
       saveDetailedMatch(user?.id, {
         id: `spotle_${activeDate}_${user?.id || 'guest'}`,
         gameMode: 'spotle',
@@ -258,14 +251,19 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         guesses: newGuesses.map(g => g.guessedMovie.title)
       });
     } else {
-      // Mid-game audio chime
       playNodeConnect();
     }
   };
 
   // Keyboard navigation for search dropdown
   const handleKeyDown = (e) => {
-    if (!dropdownOpen || suggestions.length === 0) return;
+    if (!dropdownOpen || suggestions.length === 0) {
+      if (e.key === 'Enter' && suggestions.length > 0) {
+        e.preventDefault();
+        handleSelectMovieGuess(suggestions[0]);
+      }
+      return;
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       setSelectedIndex((prev) => (prev + 1) % suggestions.length);
@@ -332,196 +330,144 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setRevealedClues((prev) => ({ ...prev, [type]: true }));
   };
 
-  // Cinema Vault Detective Dossier briefing
-  const getDossierBriefing = () => {
-    if (gameStatus === 'WON') {
-      return `Masterful deduction! You identified "${targetMovie.title}" in ${guesses.length} guesses! A true cinematic scholar.`;
-    }
-    if (gameStatus === 'LOST') {
-      return `The mystery reel has concluded! Today's secret film was "${targetMovie.title}" (${targetMovie.year}) directed by ${targetMovie.director}. Better luck tomorrow!`;
-    }
-    if (guesses.length === 0) {
-      return `Today's mystery masterpiece is locked in the Cinema Vault. You have 10 attempts to deduce it. Enter your opening guess!`;
-    }
-    const lastGuess = guesses[guesses.length - 1];
-    const attrs = lastGuess?.attributes;
-    if (attrs?.director?.status === 'EXACT') {
-      return `Directorial Match! You found the filmmaker (${attrs.director.value}) behind today's mystery title!`;
-    }
-    if (attrs?.cast?.status === 'EXACT' || attrs?.cast?.status === 'PARTIAL') {
-      return `Star Cast Match! One or more actors from "${lastGuess.guessedMovie.title}" star in today's mystery title!`;
-    }
-    if (attrs?.year?.status === 'EXACT') {
-      return `Release Year Locked! The film came out in ${attrs.year.value}. Now narrow down director and genres.`;
-    }
-    return `Guess ${guesses.length} of ${MAX_GUESSES}. Study the yellow and green tiles to close in on the secret movie.`;
-  };
-
   return (
-    <div className="space-y-6 animate-fade-in max-w-5xl mx-auto pb-12">
+    <div className="space-y-5 animate-fade-in max-w-4xl mx-auto pb-12">
       {/* ===================================================================== */}
-      {/* 1. TOP HEADER & DAY NAVIGATOR ("დღეების გადახვევა")                      */}
+      {/* 1. COMPACT HEADER & DATE NAVIGATOR                                    */}
       {/* ===================================================================== */}
-      <div className="rounded-3xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-4 sm:p-6 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Game Title & Badges */}
-          <div className="flex items-center gap-3 text-center sm:text-left">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-gold to-amber-600 text-cinema-black shadow-gold-glow">
-              <Film className="h-6 w-6 fill-cinema-black" />
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+        {/* Brand & Mode Tag */}
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber-600 text-cinema-black shadow-gold-glow">
+            <Film className="h-5 w-5 fill-cinema-black" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight text-white">
+                Spotle <span className="text-gold">Cinema</span>
+              </h1>
+              <span className="rounded-full bg-gold/15 px-2 py-0.2 text-[9px] font-extrabold uppercase text-gold border border-gold/30">
+                DAILY PUZZLE
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  Spotle <span className="text-gold">Cinema</span>
-                </h1>
-                <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-gold border border-gold/40">
-                  DAILY MYSTERY
-                </span>
-                {isToday && (
-                  <span className="hidden sm:inline-block rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/40">
-                    TODAY
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-cinema-muted">
-                Deduce the secret daily film using attribute comparison tiles in 10 guesses.
-              </p>
-            </div>
+            <p className="text-[11px] text-cinema-muted">
+              Guess the secret film in 10 tries using attribute clue tiles.
+            </p>
+          </div>
+        </div>
+
+        {/* Date Controls & Legend Toggle */}
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            onClick={() => shiftDay(-1)}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white transition active:scale-95"
+            title="Previous Day"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+
+          <div className="flex items-center gap-1.5 rounded-lg border border-cinema-border bg-cinema-black/70 px-2.5 py-1 text-xs">
+            <Calendar className="h-3 w-3 text-gold shrink-0" />
+            <span className="font-extrabold text-white text-[11px]">
+              {new Date(activeDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric'
+              })}
+            </span>
+            {isToday && (
+              <span className="text-[8px] font-bold uppercase text-emerald-400">
+                • Live
+              </span>
+            )}
           </div>
 
-          {/* Date Rewind / Day Navigator Controls */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => shiftDay(-1)}
-              className="flex items-center justify-center h-9 w-9 rounded-xl border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white transition active:scale-95 shadow-sm"
-              title="Previous Day's Mystery Movie"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
+          <button
+            onClick={() => shiftDay(1)}
+            disabled={isToday}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95"
+            title="Next Day"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
 
-            <div className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-black/70 px-3.5 py-1.5 text-xs">
-              <Calendar className="h-3.5 w-3.5 text-gold shrink-0" />
-              <span className="font-extrabold text-white">
-                {new Date(activeDate).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric'
-                })}
-              </span>
-              {isToday && (
-                <span className="text-[9px] font-bold uppercase text-emerald-400 ml-1">
-                  • Live
-                </span>
-              )}
-            </div>
-
-            <button
-              onClick={() => shiftDay(1)}
-              disabled={isToday}
-              className="flex items-center justify-center h-9 w-9 rounded-xl border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95 shadow-sm"
-              title="Next Day"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-
-            {!isToday && (
-              <button
-                onClick={() => {
-                  playClick();
-                  setActiveDate(todayStr);
-                }}
-                className="flex items-center gap-1 rounded-xl border border-gold/40 bg-gold/15 px-3 py-2 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95 shadow-sm"
-                title="Jump to Today's Daily Mystery"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Today</span>
-              </button>
-            )}
-
+          {!isToday && (
             <button
               onClick={() => {
                 playClick();
-                setIsArchiveModalOpen(true);
+                setActiveDate(todayStr);
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-semibold text-slate-200 hover:border-gold/50 hover:text-gold transition active:scale-95"
-              title="Browse Past Spotle Challenges"
+              className="flex items-center gap-1 rounded-lg border border-gold/40 bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95"
+              title="Return to Today"
             >
-              <History className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Archive</span>
+              <RotateCcw className="h-3 w-3" />
+              <span className="hidden sm:inline text-[11px]">Today</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => {
+              playClick();
+              setIsArchiveModalOpen(true);
+            }}
+            className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1 text-xs font-semibold text-slate-200 hover:border-gold/50 hover:text-gold transition active:scale-95"
+            title="Archive Calendar"
+          >
+            <History className="h-3 w-3" />
+            <span className="hidden sm:inline text-[11px]">Archive</span>
+          </button>
+
+          <button
+            onClick={() => setShowLegend((prev) => !prev)}
+            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:text-gold transition"
+            title="How to Play / Clue Legend"
+          >
+            <Info className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* CLUE LEGEND MODAL / POPDOWN (HOW TO PLAY)                             */}
+      {/* ===================================================================== */}
+      {showLegend && (
+        <div className="rounded-xl border border-gold/30 bg-cinema-card/95 p-3.5 text-xs text-slate-300 shadow-xl space-y-2 animate-fade-in">
+          <div className="flex items-center justify-between border-b border-cinema-border/50 pb-2">
+            <span className="font-black text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+              <Sparkles className="h-3.5 w-3.5 text-gold" />
+              Spotle Tile Guide
+            </span>
+            <button onClick={() => setShowLegend(false)} className="text-cinema-muted hover:text-white">
+              <X className="h-4 w-4" />
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* ===================================================================== */}
-      {/* 2. CINEMA VAULT DOSSIER HUD                                           */}
-      {/* ===================================================================== */}
-      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-4 sm:p-5 shadow-xl backdrop-blur-md">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold/25 via-amber-500/15 to-transparent border border-gold/40 text-gold shadow-gold-glow/20">
-              <Sparkles className="h-5 w-5 text-gold" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+            <div className="flex items-center gap-2">
+              <span className="h-5 w-5 rounded bg-emerald-600 font-black text-white flex items-center justify-center text-[10px]">🟩</span>
+              <span><strong>Green:</strong> Exact match for this attribute</span>
             </div>
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-black uppercase tracking-wider text-white">
-                  Cinema Vault Briefing
-                </span>
-                <span className={`rounded-full px-2 py-0.2 text-[9px] font-extrabold uppercase border ${
-                  gameStatus === 'WON'
-                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                    : gameStatus === 'LOST'
-                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
-                      : 'bg-gold/15 text-gold border-gold/30'
-                }`}>
-                  {gameStatus === 'WON' ? 'SOLVED' : gameStatus === 'LOST' ? 'UNSOLVED' : 'IN PROGRESS'}
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
-                {getDossierBriefing()}
-              </p>
+            <div className="flex items-center gap-2">
+              <span className="h-5 w-5 rounded bg-amber-600 font-black text-white flex items-center justify-center text-[10px]">🟨</span>
+              <span><strong>Yellow:</strong> Close (Year within 3y, partial cast/genre)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="h-5 w-5 rounded bg-[#212534] font-black text-slate-300 flex items-center justify-center text-[10px]">⬛</span>
+              <span><strong>Dark:</strong> No match</span>
             </div>
           </div>
-
-          {/* 10-Attempt Visual Indicator Dots */}
-          <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0 bg-cinema-black/50 px-3 py-2 rounded-xl border border-cinema-border/60">
-            <span className="text-[10px] font-bold text-cinema-muted mr-1">Tries:</span>
-            {Array.from({ length: MAX_GUESSES }).map((_, dotIdx) => {
-              const isUsed = dotIdx < guesses.length;
-              const isWonDot = dotIdx === guesses.length - 1 && gameStatus === 'WON';
-              const isCurrent = dotIdx === guesses.length && gameStatus === 'PLAYING';
-
-              return (
-                <div
-                  key={dotIdx}
-                  className={`h-2.5 w-2.5 rounded-full transition-all ${
-                    isWonDot
-                      ? 'bg-emerald-400 shadow-emerald-500/50 scale-125 ring-2 ring-emerald-400/50'
-                      : isUsed
-                        ? 'bg-gold/80 shadow-gold-glow/40'
-                        : isCurrent
-                          ? 'bg-white/40 ring-1 ring-gold/60 animate-pulse'
-                          : 'bg-cinema-border/50'
-                  }`}
-                  title={`Attempt ${dotIdx + 1}`}
-                />
-              );
-            })}
-            <span className="text-xs font-black text-white ml-1.5 font-mono">
-              {guesses.length}/{MAX_GUESSES}
-            </span>
-          </div>
+          <p className="text-[10px] text-cinema-muted pt-1 border-t border-cinema-border/40">
+            Arrows (<strong>↑ Newer / Higher</strong> or <strong>↓ Older / Lower</strong>) guide your release year, score, and runtime.
+          </p>
         </div>
-      </div>
+      )}
 
       {/* ===================================================================== */}
-      {/* 3. AUTOCOMPLETE MOVIE SEARCH BAR                                      */}
+      {/* 2. SEARCH & GUESS INPUT BAR (Spotle / Wordle Core Input)              */}
       {/* ===================================================================== */}
       {gameStatus === 'PLAYING' && (
         <div className="relative z-20">
-          <div className="relative rounded-2xl border-2 border-gold/50 bg-cinema-card/95 p-2 shadow-gold-glow/20 focus-within:border-gold focus-within:shadow-gold-glow transition">
-            <div className="flex items-center gap-3 px-3">
-              <Search className="h-5 w-5 text-gold shrink-0" />
+          <div className="relative rounded-2xl border-2 border-gold/50 bg-cinema-card/95 p-2 shadow-gold-glow/20 focus-within:border-gold focus-within:shadow-gold-glow transition flex items-center gap-2">
+            <div className="flex items-center gap-2.5 px-3 flex-1 min-w-0">
+              <Search className="h-4 w-4 text-gold shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -533,7 +479,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                 }}
                 onFocus={() => setDropdownOpen(true)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type any movie title (e.g. Inception, Gladiator, The Dark Knight)..."
+                placeholder={`Type a movie title (Guess ${guesses.length + 1} of ${MAX_GUESSES})...`}
                 className="w-full bg-transparent py-2 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
               />
               {searchQuery && (
@@ -546,99 +492,127 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               )}
             </div>
 
-            {/* Suggestions Dropdown */}
-            {dropdownOpen && suggestions.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto">
-                {suggestions.map((movie, idx) => {
-                  const isSelected = idx === selectedIndex;
-                  const alreadyGuessed = guesses.some((g) => g.guessedMovie.id === movie.id);
+            <button
+              onClick={() => {
+                if (suggestions.length > 0) {
+                  handleSelectMovieGuess(suggestions[selectedIndex] || suggestions[0]);
+                }
+              }}
+              disabled={suggestions.length === 0}
+              className="shrink-0 flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-4 sm:px-5 py-2.5 text-xs font-black uppercase text-cinema-black shadow-gold-glow/30 hover:opacity-95 disabled:opacity-40 disabled:cursor-not-allowed transition active:scale-95"
+            >
+              <span>Guess</span>
+            </button>
+          </div>
 
-                  return (
-                    <div
-                      key={movie.id}
-                      onClick={() => !alreadyGuessed && handleSelectMovieGuess(movie)}
-                      className={`flex items-center justify-between p-3 transition cursor-pointer ${
-                        alreadyGuessed
-                          ? 'opacity-40 cursor-not-allowed bg-cinema-black/40'
-                          : isSelected
-                            ? 'bg-gold/15 text-gold'
-                            : 'hover:bg-cinema-surface/80 text-white'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="h-12 w-8 shrink-0 overflow-hidden rounded-md border border-cinema-border bg-cinema-surface">
-                          {movie.posterPath ? (
-                            <img
-                              src={getTmdbImageUrl(movie.posterPath)}
-                              alt={movie.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[8px] text-cinema-muted">
-                              FILM
-                            </div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <h4 className="text-xs sm:text-sm font-extrabold truncate">{movie.title}</h4>
-                          <p className="text-[11px] text-cinema-muted truncate">
-                            {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
-                          </p>
-                        </div>
-                      </div>
+          {/* Autocomplete Dropdown */}
+          {dropdownOpen && suggestions.length > 0 && (
+            <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto z-40">
+              {suggestions.map((movie, idx) => {
+                const isSelected = idx === selectedIndex;
+                const alreadyGuessed = guesses.some((g) => g.guessedMovie.id === movie.id);
 
-                      <div className="flex items-center gap-2 shrink-0 pl-2">
-                        {alreadyGuessed ? (
-                          <span className="text-[10px] uppercase font-bold text-cinema-muted">Guessed</span>
+                return (
+                  <div
+                    key={movie.id}
+                    onClick={() => !alreadyGuessed && handleSelectMovieGuess(movie)}
+                    className={`flex items-center justify-between p-2.5 sm:p-3 transition cursor-pointer ${
+                      alreadyGuessed
+                        ? 'opacity-40 cursor-not-allowed bg-cinema-black/40'
+                        : isSelected
+                          ? 'bg-gold/15 text-gold'
+                          : 'hover:bg-cinema-surface/80 text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-11 w-8 shrink-0 overflow-hidden rounded-md border border-cinema-border bg-cinema-surface">
+                        {movie.posterPath ? (
+                          <img
+                            src={getTmdbImageUrl(movie.posterPath)}
+                            alt={movie.title}
+                            className="h-full w-full object-cover"
+                          />
                         ) : (
-                          <span className="rounded-lg bg-gold/15 px-2.5 py-1 text-[10px] font-extrabold text-gold border border-gold/30">
-                            Guess Movie
-                          </span>
+                          <div className="flex h-full w-full items-center justify-center text-[7px] text-cinema-muted">
+                            FILM
+                          </div>
                         )}
                       </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-extrabold truncate text-white">{movie.title}</h4>
+                        <p className="text-[10px] sm:text-[11px] text-cinema-muted truncate">
+                          {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
+                        </p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+
+                    <div className="shrink-0 pl-2">
+                      {alreadyGuessed ? (
+                        <span className="text-[9px] uppercase font-bold text-cinema-muted">Guessed</span>
+                      ) : (
+                        <span className="rounded-lg bg-gold/15 px-2 py-0.5 text-[9px] font-extrabold text-gold border border-gold/30">
+                          Select
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* ===================================================================== */}
-      {/* 4. THE SPOTLE COMPARISON MATRIX                                       */}
+      {/* 3. THE SPOTLE PUZZLE MATRIX (Wordle / Spotle Style Tile Board)         */}
       {/* ===================================================================== */}
-      <div className="space-y-3">
-        {/* Table Column Headers */}
-        <div className="hidden md:grid md:grid-cols-12 gap-2 px-3 text-[11px] font-black uppercase tracking-wider text-cinema-muted">
-          <div className="col-span-3">Movie Guess</div>
-          <div className="col-span-1 text-center">Year</div>
-          <div className="col-span-2 text-center">Director</div>
-          <div className="col-span-2 text-center">Genres</div>
-          <div className="col-span-2 text-center">Top Cast</div>
-          <div className="col-span-1 text-center">Score</div>
-          <div className="col-span-1 text-center">Runtime</div>
-        </div>
+      <div className="w-full overflow-x-auto pb-4 scrollbar-none perspective-1000">
+        <div className="min-w-[760px] max-w-4xl mx-auto space-y-2">
+          {/* Header Row: 7 Category Tiles */}
+          <div className="grid grid-cols-7 gap-2 text-center select-none">
+            {[
+              { label: 'Movie', icon: Film },
+              { label: 'Director', icon: User },
+              { label: 'Year', icon: Calendar },
+              { label: 'Genres', icon: Sparkles },
+              { label: 'Top Cast', icon: Star },
+              { label: 'Score', icon: Trophy },
+              { label: 'Runtime', icon: Clock }
+            ].map((col, cIdx) => (
+              <div
+                key={cIdx}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-cinema-border/70 bg-cinema-surface/90 py-2.5 px-1 shadow-sm text-cinema-muted"
+              >
+                <col.icon className="h-3 w-3 text-gold shrink-0" />
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-200">
+                  {col.label}
+                </span>
+              </div>
+            ))}
+          </div>
 
-        {/* Guesses List */}
-        {guesses.map((g, idx) => {
-          const a = g.attributes;
-          return (
-            <div
-              key={idx}
-              className={`rounded-2xl border p-3 md:p-2.5 transition-all shadow-lg animate-fade-in ${
-                g.isExactWin
-                  ? 'border-emerald-500 bg-gradient-to-r from-emerald-950/40 via-cinema-card to-emerald-950/40 shadow-emerald-500/20'
-                  : 'border-cinema-border/80 bg-cinema-card/90'
-              }`}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-2 items-center">
-                {/* 1. Movie Title & Poster */}
-                <div className="col-span-12 md:col-span-3 flex items-center gap-2.5 min-w-0 pb-2 md:pb-0 border-b md:border-b-0 border-cinema-border/40">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-cinema-surface border border-cinema-border text-[10px] font-black text-gold">
-                    {idx + 1}
-                  </span>
-                  <div className="h-10 w-7 shrink-0 overflow-hidden rounded border border-cinema-border bg-cinema-surface">
+          {/* Submitted Guess Rows */}
+          {guesses.map((g, rowIdx) => {
+            const a = g.attributes;
+            const isLatest = rowIdx === guesses.length - 1;
+
+            return (
+              <div
+                key={rowIdx}
+                className="grid grid-cols-7 gap-2 animate-fade-in"
+              >
+                {/* Tile 1: Movie Guess */}
+                <div
+                  className={`h-20 rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
+                    g.isExactWin
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                      : 'bg-cinema-card/95 border-cinema-border/80 text-white'
+                  }`}
+                  style={{ animationDelay: isLatest ? '0ms' : undefined }}
+                >
+                  <div className="h-14 w-10 shrink-0 overflow-hidden rounded border border-white/20 bg-black/40">
                     {g.guessedMovie.posterPath ? (
                       <img
                         src={getTmdbImageUrl(g.guessedMovie.posterPath)}
@@ -649,66 +623,107 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                       <Film className="h-full w-full p-1 text-cinema-muted" />
                     )}
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs sm:text-sm font-extrabold text-white truncate">
+                  <div className="min-w-0 flex-1 pr-1">
+                    <span className="text-[9px] font-extrabold uppercase text-gold/90 block leading-none mb-0.5">
+                      #{rowIdx + 1}
+                    </span>
+                    <h4 className="text-xs font-black truncate leading-tight text-white">
                       {g.guessedMovie.title}
-                    </h3>
-                    <span className="text-[10px] text-cinema-muted block">
+                    </h4>
+                    <span className="text-[10px] text-slate-300 block truncate">
                       {g.guessedMovie.year}
                     </span>
                   </div>
                 </div>
 
-                {/* 2. Release Year */}
+                {/* Tile 2: Director */}
                 <div
-                  className={`col-span-6 md:col-span-1 flex flex-col items-center justify-center rounded-xl p-2 text-center border font-bold text-xs ${
-                    a.year.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                      : a.year.status === 'CLOSE'
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                        : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
+                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
+                    a.director.status === 'EXACT'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                      : 'bg-[#212534] border-cinema-border/80 text-slate-200'
                   }`}
+                  style={{ animationDelay: isLatest ? '100ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Year</span>
-                  <div className="flex items-center gap-1 font-mono">
-                    <span>{a.year.value}</span>
-                    {a.year.direction === 'HIGHER' && <ArrowUp className="h-3.5 w-3.5 text-gold shrink-0 animate-bounce" />}
-                    {a.year.direction === 'LOWER' && <ArrowDown className="h-3.5 w-3.5 text-gold shrink-0 animate-bounce" />}
-                    {a.year.direction === 'EQUAL' && <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
+                    Director
+                  </span>
+                  <span className="text-xs font-black leading-tight line-clamp-2">
+                    {a.director.value}
+                  </span>
+                  {a.director.status === 'EXACT' && (
+                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200">
+                      <Check className="h-2.5 w-2.5" /> Match
+                    </span>
+                  )}
+                </div>
+
+                {/* Tile 3: Release Year */}
+                <div
+                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
+                    a.year.status === 'EXACT'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                      : a.year.status === 'CLOSE'
+                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                  }`}
+                  style={{ animationDelay: isLatest ? '200ms' : undefined }}
+                >
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
+                    Year
+                  </span>
+                  <span className="text-base font-black font-mono leading-tight">
+                    {a.year.value}
+                  </span>
+                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                    {a.year.direction === 'HIGHER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowUp className="h-3 w-3 animate-bounce" /> Newer
+                      </span>
+                    )}
+                    {a.year.direction === 'LOWER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowDown className="h-3 w-3 animate-bounce" /> Older
+                      </span>
+                    )}
+                    {a.year.direction === 'EQUAL' && (
+                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                        <Check className="h-3 w-3" /> Exact
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* 3. Director */}
+                {/* Tile 4: Genres */}
                 <div
-                  className={`col-span-6 md:col-span-2 flex flex-col items-center justify-center rounded-xl p-2 text-center border text-xs font-bold ${
-                    a.director.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                      : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
-                  }`}
-                >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Director</span>
-                  <span className="truncate max-w-full">{a.director.value}</span>
-                </div>
-
-                {/* 4. Genres */}
-                <div
-                  className={`col-span-6 md:col-span-2 flex flex-col items-center justify-center rounded-xl p-2 text-center border text-xs font-bold ${
+                  className={`h-20 rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
                     a.genres.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
                       : a.genres.status === 'PARTIAL'
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                        : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
+                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
                   }`}
+                  style={{ animationDelay: isLatest ? '300ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Genres</span>
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-1 font-bold">
+                    Genres
+                  </span>
                   <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
                     {a.genres.value.slice(0, 3).map((genre, gIdx) => {
                       const isMatch = (a.genres.matching || []).includes(genre);
                       return (
                         <span
                           key={gIdx}
-                          className={`rounded px-1.5 py-0.2 text-[10px] font-extrabold ${
-                            isMatch ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40' : 'text-slate-300'
+                          className={`rounded px-1.5 py-0.5 text-[9px] font-black truncate max-w-[80px] ${
+                            isMatch
+                              ? 'bg-black/40 text-emerald-300 border border-emerald-300/40'
+                              : 'bg-black/20 text-slate-300'
                           }`}
                         >
                           {genre}
@@ -718,17 +733,22 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </div>
                 </div>
 
-                {/* 5. Top Cast */}
+                {/* Tile 5: Top Cast */}
                 <div
-                  className={`col-span-6 md:col-span-2 flex flex-col items-center justify-center rounded-xl p-2 text-center border text-xs font-bold ${
+                  className={`h-20 rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
                     a.cast.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
                       : a.cast.status === 'PARTIAL'
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                        : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
+                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
                   }`}
+                  style={{ animationDelay: isLatest ? '400ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Cast</span>
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-1 font-bold">
+                    Top Cast
+                  </span>
                   <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
                     {a.cast.value.map((actor, actIdx) => {
                       const isMatch = (a.cast.matching || []).includes(actor);
@@ -743,91 +763,154 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </div>
                 </div>
 
-                {/* 6. Score */}
+                {/* Tile 6: Rating / Score */}
                 <div
-                  className={`col-span-6 md:col-span-1 flex flex-col items-center justify-center rounded-xl p-2 text-center border font-bold text-xs ${
+                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
                     a.rating.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
                       : a.rating.status === 'CLOSE'
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                        : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
+                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
                   }`}
+                  style={{ animationDelay: isLatest ? '500ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Rating</span>
-                  <div className="flex items-center gap-1 font-mono">
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
+                    Score
+                  </span>
+                  <div className="flex items-center gap-1 text-base font-black font-mono leading-tight">
                     <Star className="h-3 w-3 text-gold fill-gold" />
                     <span>{a.rating.value}</span>
-                    {a.rating.direction === 'HIGHER' && <ArrowUp className="h-3 w-3 text-gold shrink-0" />}
-                    {a.rating.direction === 'LOWER' && <ArrowDown className="h-3 w-3 text-gold shrink-0" />}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                    {a.rating.direction === 'HIGHER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowUp className="h-3 w-3" /> Higher
+                      </span>
+                    )}
+                    {a.rating.direction === 'LOWER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowDown className="h-3 w-3" /> Lower
+                      </span>
+                    )}
+                    {a.rating.direction === 'EQUAL' && (
+                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                        <Check className="h-3 w-3" /> Match
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* 7. Runtime */}
+                {/* Tile 7: Runtime */}
                 <div
-                  className={`col-span-6 md:col-span-1 flex flex-col items-center justify-center rounded-xl p-2 text-center border font-bold text-xs ${
+                  className={`h-20 rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md ${
+                    isLatest ? 'animate-tile-flip' : ''
+                  } ${
                     a.runtime.status === 'EXACT'
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
                       : a.runtime.status === 'CLOSE'
-                        ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-                        : 'bg-cinema-surface/70 border-cinema-border text-slate-300'
+                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
                   }`}
+                  style={{ animationDelay: isLatest ? '600ms' : undefined }}
                 >
-                  <span className="text-[9px] uppercase tracking-wider text-cinema-muted md:hidden">Runtime</span>
-                  <div className="flex items-center gap-1 font-mono">
-                    <span>{a.runtime.value}</span>
-                    {a.runtime.direction === 'HIGHER' && <ArrowUp className="h-3 w-3 text-gold shrink-0" />}
-                    {a.runtime.direction === 'LOWER' && <ArrowDown className="h-3 w-3 text-gold shrink-0" />}
+                  <span className="text-[9px] uppercase tracking-wider text-white/60 mb-0.5 font-bold">
+                    Runtime
+                  </span>
+                  <span className="text-base font-black font-mono leading-tight">
+                    {a.runtime.value}
+                  </span>
+                  <div className="flex items-center gap-1 mt-0.5 font-black text-xs">
+                    {a.runtime.direction === 'HIGHER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowUp className="h-3 w-3" /> Longer
+                      </span>
+                    )}
+                    {a.runtime.direction === 'LOWER' && (
+                      <span className="flex items-center gap-0.5 text-gold bg-black/30 px-1.5 py-0.2 rounded-full text-[10px]">
+                        <ArrowDown className="h-3 w-3" /> Shorter
+                      </span>
+                    )}
+                    {a.runtime.direction === 'EQUAL' && (
+                      <span className="flex items-center gap-0.5 text-emerald-200 text-[10px]">
+                        <Check className="h-3 w-3" /> Match
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
 
-        {/* Empty Placeholder Rows for Remaining Attempts */}
-        {Array.from({ length: Math.max(0, MAX_GUESSES - guesses.length) }).map((_, pIdx) => {
-          const rowNum = guesses.length + pIdx + 1;
-          const isNextActive = pIdx === 0 && gameStatus === 'PLAYING';
-
-          return (
-            <div
-              key={`placeholder-${pIdx}`}
-              className={`rounded-2xl border p-3 text-center transition ${
-                isNextActive
-                  ? 'border-gold/30 bg-cinema-card/40 border-dashed animate-pulse'
-                  : 'border-cinema-border/30 bg-cinema-surface/20 opacity-40'
-              }`}
-            >
-              <span className="text-xs font-bold text-cinema-muted">
-                {isNextActive ? `Guess ${rowNum} of ${MAX_GUESSES} • Awaiting Movie Title...` : `Attempt #${rowNum}`}
-              </span>
+          {/* Active Pending Attempt Row */}
+          {gameStatus === 'PLAYING' && guesses.length < MAX_GUESSES && (
+            <div className="grid grid-cols-7 gap-2">
+              <div className="h-20 rounded-xl border-2 border-gold/40 bg-gold/5 border-dashed flex flex-col items-center justify-center p-2 text-center animate-pulse">
+                <span className="text-[10px] font-extrabold uppercase text-gold">
+                  Attempt #{guesses.length + 1}
+                </span>
+                <span className="text-xs font-black text-slate-300">
+                  Search Above
+                </span>
+              </div>
+              {Array.from({ length: 6 }).map((_, cIdx) => (
+                <div
+                  key={cIdx}
+                  className="h-20 rounded-xl border border-cinema-border/40 bg-cinema-card/25 flex items-center justify-center text-cinema-muted/40 font-mono text-sm"
+                >
+                  •
+                </div>
+              ))}
             </div>
-          );
-        })}
+          )}
+
+          {/* Future Unused Rows (Uniform Empty Grid Slots) */}
+          {Array.from({
+            length: Math.max(0, MAX_GUESSES - guesses.length - (gameStatus === 'PLAYING' ? 1 : 0))
+          }).map((_, rIdx) => {
+            const rowNum = guesses.length + (gameStatus === 'PLAYING' ? 2 : 1) + rIdx;
+            return (
+              <div key={`empty-${rIdx}`} className="grid grid-cols-7 gap-2 opacity-35">
+                <div className="h-16 rounded-xl border border-cinema-border/40 bg-cinema-surface/40 flex items-center justify-center text-[11px] font-bold text-cinema-muted">
+                  #{rowNum}
+                </div>
+                {Array.from({ length: 6 }).map((_, cIdx) => (
+                  <div
+                    key={cIdx}
+                    className="h-16 rounded-xl border border-cinema-border/30 bg-cinema-surface/20"
+                  />
+                ))}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ===================================================================== */}
-      {/* 5. CINEMA VAULT CLUES (Interactive Dynamic Hints)                     */}
+      {/* 4. CINEMA VAULT CLUES (Interactive Hints Drawer)                       */}
       {/* ===================================================================== */}
-      <div className="rounded-2xl border border-gold/30 bg-cinema-card/90 p-4 sm:p-5 shadow-xl space-y-4">
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/80 p-3.5 sm:p-4 shadow-xl space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-gold fill-gold" />
-            <h3 className="text-sm font-extrabold text-white">Cinema Vault Clues</h3>
+            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
+              Mystery Clues
+            </h3>
           </div>
-          <span className="text-[11px] text-cinema-muted">
-            {isPro ? '🌟 PRO: Unlimited Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
+          <span className="text-[10px] text-cinema-muted font-bold">
+            {isPro ? '🌟 PRO: All Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {/* Clue 1: Tagline */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3.5 space-y-1.5">
+          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-3 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                Clue #1: Tagline &amp; Theme
+                Clue #1: Tagline
               </span>
-              <span className="text-[10px] text-cinema-muted">Unlock: 3 Guesses</span>
+              <span className="text-[9px] text-cinema-muted">Unlock: 3 Guesses</span>
             </div>
 
             {revealedClues.tagline ? (
@@ -837,24 +920,24 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ) : canUnlockTagline ? (
               <button
                 onClick={() => handleUnlockClue('tagline')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
               >
                 <span>Reveal Movie Tagline</span>
               </button>
             ) : (
               <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{3 - guesses.length} more guesses</strong> to reveal clue.
+                Locked. Make <strong>{3 - guesses.length} more guesses</strong>.
               </p>
             )}
           </div>
 
           {/* Clue 2: Star Actor */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3.5 space-y-1.5">
+          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-3 space-y-1">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
                 Clue #2: Lead Co-Star
               </span>
-              <span className="text-[10px] text-cinema-muted">Unlock: 6 Guesses</span>
+              <span className="text-[9px] text-cinema-muted">Unlock: 6 Guesses</span>
             </div>
 
             {revealedClues.cast ? (
@@ -864,13 +947,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ) : canUnlockCast ? (
               <button
                 onClick={() => handleUnlockClue('cast')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/15 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition"
+                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/15 py-1 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition"
               >
                 <span>Reveal Lead Co-Star</span>
               </button>
             ) : (
               <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{6 - guesses.length} more guesses</strong> to reveal clue.
+                Locked. Make <strong>{6 - guesses.length} more guesses</strong>.
               </p>
             )}
           </div>
@@ -878,7 +961,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       </div>
 
       {/* ===================================================================== */}
-      {/* 6. POST-GAME VICTORY / DEFEAT MODAL                                   */}
+      {/* 5. POST-GAME VICTORY / DEFEAT MODAL                                   */}
       {/* ===================================================================== */}
       {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
@@ -891,11 +974,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             </button>
 
             {/* Cinematic Trophy / Reel Icon */}
-            <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-gold/25 via-amber-600/20 to-transparent border-2 border-gold/40 shadow-gold-glow/40 animate-fade-in">
+            <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-gold/25 via-amber-600/20 to-transparent border-2 border-gold/40 shadow-gold-glow/40 animate-fade-in">
               {gameStatus === 'WON' ? (
-                <Trophy className="h-12 w-12 text-gold animate-bounce" />
+                <Trophy className="h-10 w-10 text-gold animate-bounce" />
               ) : (
-                <Film className="h-12 w-12 text-cinema-muted" />
+                <Film className="h-10 w-10 text-cinema-muted" />
               )}
             </div>
 
