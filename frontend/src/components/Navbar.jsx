@@ -1,8 +1,20 @@
-import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEffects';
 
 export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
   const { user, stats, isAuthenticated } = useAuth();
+  const [muted, setMuted] = useState(isSoundMuted());
+
+  useEffect(() => {
+    return subscribeSoundMuted((newMuted) => setMuted(newMuted));
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = toggleSound();
+    setMuted(next);
+  };
 
   const currentStreak = stats?.streak ?? 0;
 
@@ -59,6 +71,14 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
             title="How to Play"
           >
             <HelpCircle className="h-4 w-4" />
+          </button>
+
+          <button
+            onClick={handleToggleSound}
+            className="rounded-lg border border-cinema-border bg-cinema-surface p-2 text-slate-300 transition hover:border-gold/50 hover:text-gold"
+            title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          >
+            {muted ? <VolumeX className="h-4 w-4 text-slate-400" /> : <Volume2 className="h-4 w-4 text-gold" />}
           </button>
 
           <button

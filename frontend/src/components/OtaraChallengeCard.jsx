@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Play, Sparkles, Trophy, Footprints, Clock, ArrowRight, ShieldCheck, HelpCircle, Swords, Lightbulb } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 import OtaraObservingMascot from './OtaraObservingMascot';
+import { playClick, playHintWhisper, playNodeConnect } from '../utils/soundEffects';
 
 export function OtaraChallengeCard({
   challenge,
@@ -13,6 +14,10 @@ export function OtaraChallengeCard({
   onOpenDuel,
   onOpenHint
 }) {
+  const [activeEmotion, setActiveEmotion] = useState('OBSERVING');
+  const prevMovesRef = useRef(moves);
+  const emotionTimerRef = useRef(null);
+
   if (!challenge) return null;
 
   const optimalHops = challenge.optimalHops || 2;
@@ -22,6 +27,54 @@ export function OtaraChallengeCard({
   const isGaveUp = gameStatus === 'GAVE_UP';
   const isFinished = isWon || isGaveUp;
   const matchedOtara = isWon && moves <= optimalHops;
+
+  // React dynamically to player moves during active gameplay
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    if (moves > prevMovesRef.current && prevMovesRef.current !== 0) {
+      if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
+
+      if (moves <= optimalHops) {
+        // Ideal/Optimal move: Otara is impressed!
+        setActiveEmotion('IMPRESSED');
+        emotionTimerRef.current = setTimeout(() => {
+          setActiveEmotion('OBSERVING');
+        }, 3200);
+      } else {
+        // Detour move: Otara is encouraging!
+        setActiveEmotion('ENCOURAGING');
+        emotionTimerRef.current = setTimeout(() => {
+          setActiveEmotion('OBSERVING');
+        }, 3200);
+      }
+    }
+    prevMovesRef.current = moves;
+
+    return () => {
+      if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
+    };
+  }, [moves, optimalHops, isPlaying]);
+
+  const handleStartClick = () => {
+    playClick();
+    if (onStart) onStart();
+  };
+
+  const handleDuelClick = () => {
+    playClick();
+    if (onOpenDuel) onOpenDuel();
+  };
+
+  const handleHintClick = () => {
+    playHintWhisper();
+    setActiveEmotion('HINT');
+    if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
+    emotionTimerRef.current = setTimeout(() => {
+      setActiveEmotion('OBSERVING');
+    }, 4000);
+    if (onOpenHint) onOpenHint();
+  };
 
   // Pre-Game Ready Screen
   if (isReady) {
@@ -93,7 +146,7 @@ export function OtaraChallengeCard({
             <div className="pt-2">
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
                 <button
-                  onClick={onStart}
+                  onClick={handleStartClick}
                   className="group w-full sm:w-auto inline-flex items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark px-8 py-3.5 text-sm sm:text-base font-extrabold text-cinema-black shadow-gold-glow transition-all duration-300 hover:scale-105 active:scale-95"
                 >
                   <Play className="h-5 w-5 fill-cinema-black transition-transform group-hover:scale-110" />
@@ -102,7 +155,7 @@ export function OtaraChallengeCard({
 
                 {onOpenDuel && (
                   <button
-                    onClick={onOpenDuel}
+                    onClick={handleDuelClick}
                     className="group w-full sm:w-auto inline-flex items-center justify-center gap-2.5 rounded-2xl border-2 border-gold/60 bg-cinema-black/80 px-6 py-3.5 text-sm sm:text-base font-extrabold text-gold shadow-lg transition-all duration-300 hover:bg-gold/15 hover:border-gold hover:scale-105 active:scale-95"
                   >
                     <Swords className="h-5 w-5 text-gold transition-transform group-hover:rotate-12" />
@@ -160,7 +213,7 @@ export function OtaraChallengeCard({
           <div className="flex flex-wrap items-center gap-2 shrink-0">
             {onOpenDuel && (
               <button
-                onClick={onOpenDuel}
+                onClick={handleDuelClick}
                 className="flex items-center gap-1.5 rounded-xl border border-gold/40 bg-cinema-black/60 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold/15 transition active:scale-95"
               >
                 <Swords className="h-4 w-4" />
@@ -169,7 +222,10 @@ export function OtaraChallengeCard({
             )}
             {onOpenSummary && (
               <button
-                onClick={onOpenSummary}
+                onClick={() => {
+                  playClick();
+                  onOpenSummary();
+                }}
                 className="flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95 shadow-sm"
               >
                 <Trophy className="h-4 w-4" />
@@ -182,20 +238,50 @@ export function OtaraChallengeCard({
     );
   }
 
-  // Active Gameplay HUD: Otara is observing the player live with animated eye tracking!
+  // Active Gameplay HUD: Otara is observing the player live with dynamic emotions & animated eye tracking!
+  const getCommentaryText = () => {
+    if (activeEmotion === 'IMPRESSED') {
+      return `„Spot on! Right on the golden par pace! One step closer to cinema glory.“`;
+    }
+    if (activeEmotion === 'ENCOURAGING') {
+      return `„A scenic detour, but the connection is still alive. Search for a direct co-star!“`;
+    }
+    if (activeEmotion === 'HINT') {
+      return `„Otara's Oracle Whisper: Look for celebrated blockbusters where both stars shared the marquee!“`;
+    }
+    if (moves === 0) {
+      return `„I already found the route in ${optimalHops} hops. Select your opening film...“`;
+    }
+    if (moves < optimalHops) {
+      return `„Looking sharp! You're at ${moves} hops, right on pace with my calculation.“`;
+    }
+    if (moves === optimalHops) {
+      return `„Tense moment! One direct connection will tie my record!“`;
+    }
+    return `„You took a scenic detour, but keep pushing forward. Bridge the gap!“`;
+  };
+
   return (
     <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3 sm:p-4 shadow-xl backdrop-blur-md">
       {/* Subtle ambient light */}
       <div className="absolute -left-12 -top-12 h-40 w-40 rounded-full bg-gold/10 blur-2xl pointer-events-none" />
 
       <div className="flex items-center gap-4 sm:gap-6">
-        {/* Animated Observing Otara with live eye tracking */}
+        {/* Dynamic Emotional Otara Mascot */}
         <div className="relative shrink-0 flex items-center justify-center">
-          <OtaraObservingMascot moves={moves} optimalHops={optimalHops} size="md" />
-          <div className="absolute bottom-1 right-2 flex h-3.5 w-3.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-cinema-black"></span>
-          </div>
+          <OtaraObservingMascot
+            moves={moves}
+            optimalHops={optimalHops}
+            size="md"
+            emotion={activeEmotion}
+            showBadge={activeEmotion !== 'OBSERVING'}
+          />
+          {activeEmotion === 'OBSERVING' && (
+            <div className="absolute bottom-1 right-2 flex h-3.5 w-3.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-cinema-black"></span>
+            </div>
+          )}
         </div>
 
         {/* Dynamic commentary speech bubble */}
@@ -203,10 +289,24 @@ export function OtaraChallengeCard({
           <div className="flex items-center gap-2">
             <span className="text-xs font-black text-white flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-gold fill-gold" />
-              Otara is Watching
+              {activeEmotion === 'IMPRESSED' ? (
+                <span className="text-gold">Otara is Impressed!</span>
+              ) : activeEmotion === 'ENCOURAGING' ? (
+                <span className="text-indigo-300">Otara is Cheering!</span>
+              ) : activeEmotion === 'HINT' ? (
+                <span className="text-amber-400">Oracle Hint Active</span>
+              ) : (
+                'Otara is Watching'
+              )}
             </span>
-            <span className="rounded-full bg-emerald-500/15 border border-emerald-500/40 px-2 py-0.5 text-[9px] font-extrabold text-emerald-400 tracking-wider">
-              LIVE EYE TRACKING
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider border ${
+              activeEmotion === 'IMPRESSED'
+                ? 'bg-gold/20 border-gold/40 text-gold'
+                : activeEmotion === 'ENCOURAGING'
+                  ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                  : 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
+            }`}>
+              {activeEmotion === 'OBSERVING' ? 'LIVE EYE TRACKING' : activeEmotion}
             </span>
             <span className="hidden sm:inline-block rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[9px] font-bold text-gold">
               ORACLE
@@ -214,13 +314,7 @@ export function OtaraChallengeCard({
           </div>
 
           <p className="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
-            {moves === 0
-              ? `„I already found the route in ${optimalHops} hops. Select your opening film...“`
-              : moves < optimalHops
-                ? `„Looking sharp! You're at ${moves} hops, right on pace with my calculation.“`
-                : moves === optimalHops
-                  ? `„Tense moment! One direct connection will tie my record!“`
-                  : `„You took a scenic detour, but the connection is still alive. Reach the target!“`}
+            {getCommentaryText()}
           </p>
 
           <div className="pt-1 flex items-center justify-between gap-3 text-[11px] text-cinema-muted">
@@ -236,7 +330,7 @@ export function OtaraChallengeCard({
 
             {onOpenHint && (
               <button
-                onClick={onOpenHint}
+                onClick={handleHintClick}
                 className="inline-flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3 py-1 text-xs font-black text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow transition active:scale-95"
                 title="Ask Otara for a Cinephile Hint"
               >

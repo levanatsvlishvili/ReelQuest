@@ -1,16 +1,27 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Trophy, Lightbulb, HeartHandshake } from 'lucide-react';
 
 /**
  * OtaraObservingMascot:
- * Interactive 2D cartoon mascot with dynamic eye-tracking pupils and natural blinking.
- * During active gameplay, Otara sits attentively with hand on chin,
- * watching the user's cursor as they browse movies and choose routes.
+ * Interactive 2D cartoon mascot with dynamic emotions and eye-tracking pupils.
+ * 
+ * Emotions:
+ * - 'OBSERVING': Default active gameplay. Sits attentively with hand on chin,
+ *   watching the user's cursor with dynamic pupil tracking and natural blinking.
+ * - 'IMPRESSED': Triggered on optimal/ideal moves or benchmark par. Thumbs up and bright smile!
+ * - 'ENCOURAGING': Triggered on detours, mistakes, or undos. Supportive open pose.
+ * - 'HINT': Triggered when player opens Otara's oracle hint. Mystical glowing stance.
+ * - 'VICTORY': Celebration stance upon completing the chain.
+ * 
+ * Core visual appearance strictly preserved using official mascot assets.
  */
 export default function OtaraObservingMascot({
   moves = 0,
   optimalHops = 3,
   className = '',
   size = 'md', // 'sm' | 'md' | 'lg'
+  emotion = 'OBSERVING', // 'OBSERVING' | 'IMPRESSED' | 'ENCOURAGING' | 'HINT' | 'VICTORY'
+  showBadge = false,
 }) {
   const containerRef = useRef(null);
   const [pupilOffset, setPupilOffset] = useState({ x: 0, y: 0 });
@@ -20,14 +31,15 @@ export default function OtaraObservingMascot({
   const targetOffsetRef = useRef({ x: 0, y: 0 });
   const currentOffsetRef = useRef({ x: 0, y: 0 });
 
-  // 1. Mouse Tracking with Smooth LERP
+  // 1. Mouse Tracking with Smooth LERP (only when in OBSERVING emotion)
   useEffect(() => {
+    if (emotion !== 'OBSERVING') return;
+
     const handleMouseMove = (e) => {
       lastMouseMoveRef.current = Date.now();
       if (!containerRef.current) return;
 
       const rect = containerRef.current.getBoundingClientRect();
-      // Estimated position of Otara's eyes on screen
       const eyesX = rect.left + rect.width * 0.49;
       const eyesY = rect.top + rect.height * 0.21;
 
@@ -35,7 +47,6 @@ export default function OtaraObservingMascot({
       const dy = e.clientY - eyesY;
       const dist = Math.hypot(dx, dy);
 
-      // Max eye travel limit (px)
       const maxDistX = 3.8;
       const maxDistY = 2.4;
       const pull = Math.min(1, dist / 350);
@@ -50,21 +61,18 @@ export default function OtaraObservingMascot({
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
-    // Smooth animation loop for eye position
     const animate = () => {
       const now = Date.now();
       const timeSinceMouse = now - lastMouseMoveRef.current;
 
-      // If idle for more than 2 seconds, perform autonomous scanning
+      // Autonomous idle scanning
       if (timeSinceMouse > 2000) {
         const t = (now - lastMouseMoveRef.current - 2000) / 1000;
-        // Subtle scan: look slightly down-left at the path, then center, then right
         const scanX = Math.sin(t * 1.5) * 2.5;
         const scanY = 1.2 + Math.cos(t * 1.2) * 1.0;
         targetOffsetRef.current = { x: scanX, y: scanY };
       }
 
-      // LERP toward target
       const lerpFactor = 0.12;
       currentOffsetRef.current.x += (targetOffsetRef.current.x - currentOffsetRef.current.x) * lerpFactor;
       currentOffsetRef.current.y += (targetOffsetRef.current.y - currentOffsetRef.current.y) * lerpFactor;
@@ -83,10 +91,12 @@ export default function OtaraObservingMascot({
       window.removeEventListener('mousemove', handleMouseMove);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, []);
+  }, [emotion]);
 
-  // 2. Natural Random Blinking
+  // 2. Natural Random Blinking (only when in OBSERVING emotion)
   useEffect(() => {
+    if (emotion !== 'OBSERVING') return;
+
     let blinkTimeout;
     const triggerBlink = () => {
       setIsBlinking(true);
@@ -100,7 +110,7 @@ export default function OtaraObservingMascot({
 
     blinkTimeout = setTimeout(triggerBlink, 3000);
     return () => clearTimeout(blinkTimeout);
-  }, []);
+  }, [emotion]);
 
   // Size configurations
   const sizeClasses = {
@@ -109,6 +119,71 @@ export default function OtaraObservingMascot({
     lg: 'w-44 sm:w-52 h-48 sm:h-58',
   };
 
+  // Render Alternate Emotional Poses (Impressed, Encouraging, Hint, Victory)
+  if (emotion === 'IMPRESSED' || emotion === 'VICTORY') {
+    return (
+      <div
+        ref={containerRef}
+        className={`relative select-none pointer-events-none animate-otara-pop ${sizeClasses[size] || sizeClasses.md} ${className}`}
+      >
+        <img
+          src="/assets/otara/otara-impressed.png"
+          alt="Otara is Impressed"
+          className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] drop-shadow-[0_0_22px_rgba(230,175,46,0.45)]"
+        />
+        {showBadge && (
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-gold/90 px-2 py-0.5 text-[9px] font-black uppercase text-cinema-black shadow-lg">
+            <Sparkles className="h-2.5 w-2.5 fill-cinema-black" />
+            <span>Optimal Pace</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (emotion === 'ENCOURAGING') {
+    return (
+      <div
+        ref={containerRef}
+        className={`relative select-none pointer-events-none animate-otara-pop ${sizeClasses[size] || sizeClasses.md} ${className}`}
+      >
+        <img
+          src="/assets/otara/otara-encouraging.png"
+          alt="Otara is Encouraging"
+          className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] drop-shadow-[0_0_16px_rgba(59,130,246,0.3)]"
+        />
+        {showBadge && (
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-indigo-600/90 px-2 py-0.5 text-[9px] font-black uppercase text-white shadow-lg">
+            <HeartHandshake className="h-2.5 w-2.5" />
+            <span>Keep Going</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (emotion === 'HINT') {
+    return (
+      <div
+        ref={containerRef}
+        className={`relative select-none pointer-events-none animate-otara-glow ${sizeClasses[size] || sizeClasses.md} ${className}`}
+      >
+        <img
+          src="/assets/otara/otara-challenge.png"
+          alt="Otara Oracle Hint"
+          className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] drop-shadow-[0_0_28px_rgba(230,175,46,0.6)]"
+        />
+        {showBadge && (
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-gold px-2 py-0.5 text-[9px] font-black uppercase text-cinema-black shadow-lg">
+            <Lightbulb className="h-2.5 w-2.5 fill-cinema-black" />
+            <span>Oracle Clue</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default: OBSERVING with live eye-tracking pupils & natural blinking
   return (
     <div
       ref={containerRef}

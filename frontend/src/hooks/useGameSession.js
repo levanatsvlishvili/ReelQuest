@@ -7,6 +7,7 @@ import {
   submitGameScore
 } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { playClick, playNodeConnect, playVictory, playDefeat } from '../utils/soundEffects';
 
 export function useGameSession() {
   const { user, recordGame } = useAuth();
@@ -178,6 +179,7 @@ export function useGameSession() {
   }, [selectedMovie, currentActor]);
 
   const selectMovie = useCallback((movie) => {
+    playClick();
     setSelectedMovie(movie);
   }, []);
 
@@ -200,6 +202,12 @@ export function useGameSession() {
 
     const isWin = actor.id === challenge.targetActor.id;
     const newStatus = isWin ? 'WON' : 'PLAYING';
+
+    if (isWin) {
+      playVictory();
+    } else {
+      playNodeConnect();
+    }
 
     saveSession(challenge.challengeId, {
       chain: newChain,
@@ -270,6 +278,7 @@ export function useGameSession() {
     if (!challenge) return;
 
     // 1. If a movie is currently selected, stepping back unselects the movie first!
+    playClick();
     if (selectedMovie) {
       setSelectedMovie(null);
       setUndosCount(c => c + 1);
@@ -302,6 +311,7 @@ export function useGameSession() {
 
   const undoToStep = useCallback((targetIndex) => {
     if (targetIndex < 0 || targetIndex >= chain.length - 1 || !challenge) return;
+    playClick();
 
     const newChain = chain.slice(0, targetIndex + 1);
     const targetNode = newChain[targetIndex];
@@ -370,6 +380,7 @@ export function useGameSession() {
 
   const giveUp = useCallback(() => {
     if (!challenge) return;
+    playDefeat();
     setGameStatus('GAVE_UP');
     fetchOptimalPath(challenge.startActor.id, challenge.targetActor.id)
       .then(shortest => setOptimalPath(shortest || []));
