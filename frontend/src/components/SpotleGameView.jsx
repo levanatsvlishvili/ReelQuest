@@ -27,7 +27,6 @@ import { SPOTLE_MOVIES, getSpotleMovieForDate, compareSpotleMovies } from '../da
 import { saveDetailedMatch } from '../api/matchHistory';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
-import OtaraObservingMascot from './OtaraObservingMascot';
 import { SpotleArchiveModal } from './SpotleArchiveModal';
 import {
   playClick,
@@ -38,6 +37,56 @@ import {
 } from '../utils/soundEffects';
 
 const MAX_GUESSES = 10;
+
+/**
+ * Interactive Cast Member Chip with Hover/Click Tooltip Popover
+ * Displays full actor name and unambiguous matched vs non-matched star badge
+ */
+function CastMemberChip({ actor, isMatch }) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div
+      className="relative inline-block"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onClick={() => setShowTooltip((prev) => !prev)}
+    >
+      <span
+        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none ${
+          isMatch
+            ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 shadow-sm'
+            : 'bg-cinema-surface/70 text-slate-300 border border-cinema-border/60 hover:text-white hover:border-cinema-muted'
+        }`}
+      >
+        <span className="truncate max-w-[85px] sm:max-w-[105px]">{actor}</span>
+      </span>
+
+      {/* Floating Tooltip / Popover on hover or click */}
+      {showTooltip && (
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1.5 z-30 min-w-[130px] max-w-[210px] rounded-xl border border-cinema-border/90 bg-cinema-black/95 p-2 shadow-2xl backdrop-blur-md text-center pointer-events-none animate-fade-in">
+          <div className="text-[11px] font-black text-white truncate flex items-center justify-center gap-1">
+            <User className="h-3 w-3 text-gold shrink-0" />
+            <span>{actor}</span>
+          </div>
+          <div className="mt-1">
+            {isMatch ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-400 border border-emerald-500/30">
+                <Check className="h-2.5 w-2.5" />
+                Matched Star
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-cinema-surface px-1.5 py-0.5 text-[9px] font-medium text-cinema-muted border border-cinema-border">
+                Different Cast
+              </span>
+            )}
+          </div>
+          <div className="absolute left-1/2 -bottom-1 -translate-x-1/2 border-4 border-transparent border-t-cinema-black/95" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const { user } = useAuth();
@@ -59,13 +108,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const [gameStatus, setGameStatus] = useState('PLAYING'); // 'PLAYING' | 'WON' | 'LOST'
   const [showResultModal, setShowResultModal] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
-  const [activeEmotion, setActiveEmotion] = useState('OBSERVING');
   const [revealedClues, setRevealedClues] = useState({ tagline: false, cast: false });
   const [timerSeconds, setTimerSeconds] = useState(0);
 
   const searchInputRef = useRef(null);
   const timerRef = useRef(null);
-  const emotionTimerRef = useRef(null);
 
   const isToday = activeDate === todayStr;
 
@@ -77,7 +124,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setDropdownOpen(false);
     setShowResultModal(false);
     setCopiedShare(false);
-    setActiveEmotion('OBSERVING');
     setRevealedClues({ tagline: false, cast: false });
     setTimerSeconds(0);
 
@@ -163,12 +209,8 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       );
     } catch (e) {}
 
-    // Otara Emotion & SFX Trigger
-    if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
-
     if (isWin) {
       playVictory();
-      setActiveEmotion('IMPRESSED');
       setShowResultModal(true);
       confetti({
         particleCount: 120,
@@ -196,7 +238,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       });
     } else if (isLoss) {
       playDefeat();
-      setActiveEmotion('ENCOURAGING');
       setShowResultModal(true);
       saveDetailedMatch(user?.id, {
         id: `spotle_${activeDate}_${user?.id || 'guest'}`,
@@ -217,23 +258,8 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         guesses: newGuesses.map(g => g.guessedMovie.title)
       });
     } else {
-      // Mid-game feedback
+      // Mid-game audio chime
       playNodeConnect();
-      // Count matching attributes
-      const attrs = compared.attributes;
-      let warmPoints = 0;
-      if (attrs.year.status === 'EXACT' || attrs.year.status === 'CLOSE') warmPoints++;
-      if (attrs.director.status === 'EXACT') warmPoints += 2;
-      if (attrs.genres.status === 'EXACT' || attrs.genres.status === 'PARTIAL') warmPoints++;
-      if (attrs.cast.status === 'EXACT' || attrs.cast.status === 'PARTIAL') warmPoints++;
-
-      if (warmPoints >= 3) {
-        setActiveEmotion('IMPRESSED');
-        emotionTimerRef.current = setTimeout(() => setActiveEmotion('OBSERVING'), 3200);
-      } else {
-        setActiveEmotion('ENCOURAGING');
-        emotionTimerRef.current = setTimeout(() => setActiveEmotion('OBSERVING'), 3200);
-      }
     }
   };
 
@@ -303,33 +329,32 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
   const handleUnlockClue = (type) => {
     playHintWhisper();
-    setActiveEmotion('HINT');
     setRevealedClues((prev) => ({ ...prev, [type]: true }));
-    if (emotionTimerRef.current) clearTimeout(emotionTimerRef.current);
-    emotionTimerRef.current = setTimeout(() => setActiveEmotion('OBSERVING'), 4000);
   };
 
-  // Otara's live commentary
-  const getOtaraCommentary = () => {
+  // Cinema Vault Detective Dossier briefing
+  const getDossierBriefing = () => {
     if (gameStatus === 'WON') {
-      return `„Masterful deduction! You identified "${targetMovie.title}" in ${guesses.length} guesses! A true Hollywood scholar.“`;
+      return `Masterful deduction! You identified "${targetMovie.title}" in ${guesses.length} guesses! A true cinematic scholar.`;
     }
     if (gameStatus === 'LOST') {
-      return `„The reel has run out! Today's secret film was "${targetMovie.title}" (${targetMovie.year}) directed by ${targetMovie.director}. Better luck tomorrow!“`;
-    }
-    if (activeEmotion === 'HINT') {
-      return `„Listen to the Oracle... Study the director's visual signatures and cast chemistry!“`;
-    }
-    if (activeEmotion === 'IMPRESSED') {
-      return `„Spot on! You hit key attributes—you're closing in on the mystery film!“`;
-    }
-    if (activeEmotion === 'ENCOURAGING') {
-      return `„Cold trail! Notice the directional arrows—adjust the release decade and genre.“`;
+      return `The mystery reel has concluded! Today's secret film was "${targetMovie.title}" (${targetMovie.year}) directed by ${targetMovie.director}. Better luck tomorrow!`;
     }
     if (guesses.length === 0) {
-      return `„I have locked today's mystery masterpiece in the vault. You have 10 guesses. Name your opening film!“`;
+      return `Today's mystery masterpiece is locked in the Cinema Vault. You have 10 attempts to deduce it. Enter your opening guess!`;
     }
-    return `„Guess ${guesses.length} of ${MAX_GUESSES}. Study the yellow and green tiles to narrow down the title.“`;
+    const lastGuess = guesses[guesses.length - 1];
+    const attrs = lastGuess?.attributes;
+    if (attrs?.director?.status === 'EXACT') {
+      return `Directorial Match! You found the filmmaker (${attrs.director.value}) behind today's mystery title!`;
+    }
+    if (attrs?.cast?.status === 'EXACT' || attrs?.cast?.status === 'PARTIAL') {
+      return `Star Cast Match! One or more actors from "${lastGuess.guessedMovie.title}" star in today's mystery title!`;
+    }
+    if (attrs?.year?.status === 'EXACT') {
+      return `Release Year Locked! The film came out in ${attrs.year.value}. Now narrow down director and genres.`;
+    }
+    return `Guess ${guesses.length} of ${MAX_GUESSES}. Study the yellow and green tiles to close in on the secret movie.`;
   };
 
   return (
@@ -429,44 +454,62 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       </div>
 
       {/* ===================================================================== */}
-      {/* 2. OTARA MASCOT COMMENTARY BANNER                                     */}
+      {/* 2. CINEMA VAULT DOSSIER HUD                                           */}
       {/* ===================================================================== */}
-      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3 sm:p-4 shadow-xl backdrop-blur-md">
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="relative shrink-0 flex items-center justify-center">
-            <OtaraObservingMascot
-              moves={guesses.length}
-              size="md"
-              emotion={activeEmotion}
-              showBadge={activeEmotion !== 'OBSERVING'}
-            />
+      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-4 sm:p-5 shadow-xl backdrop-blur-md">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-gold/25 via-amber-500/15 to-transparent border border-gold/40 text-gold shadow-gold-glow/20">
+              <Sparkles className="h-5 w-5 text-gold" />
+            </div>
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black uppercase tracking-wider text-white">
+                  Cinema Vault Briefing
+                </span>
+                <span className={`rounded-full px-2 py-0.2 text-[9px] font-extrabold uppercase border ${
+                  gameStatus === 'WON'
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : gameStatus === 'LOST'
+                      ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                      : 'bg-gold/15 text-gold border-gold/30'
+                }`}>
+                  {gameStatus === 'WON' ? 'SOLVED' : gameStatus === 'LOST' ? 'UNSOLVED' : 'IN PROGRESS'}
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
+                {getDossierBriefing()}
+              </p>
+            </div>
           </div>
 
-          <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-gold fill-gold" />
-                {activeEmotion === 'IMPRESSED' ? (
-                  <span className="text-gold">Otara is Impressed!</span>
-                ) : activeEmotion === 'ENCOURAGING' ? (
-                  <span className="text-indigo-300">Otara is Guiding!</span>
-                ) : activeEmotion === 'HINT' ? (
-                  <span className="text-amber-400">Oracle Hint Whisper</span>
-                ) : (
-                  'Otara is Watching'
-                )}
-              </span>
-              <span className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.2 text-[9px] font-bold text-gold">
-                ORACLE
-              </span>
-              <span className="text-[10px] text-cinema-muted ml-auto font-bold">
-                Attempt <strong className="text-white">{guesses.length}</strong> / {MAX_GUESSES}
-              </span>
-            </div>
+          {/* 10-Attempt Visual Indicator Dots */}
+          <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0 bg-cinema-black/50 px-3 py-2 rounded-xl border border-cinema-border/60">
+            <span className="text-[10px] font-bold text-cinema-muted mr-1">Tries:</span>
+            {Array.from({ length: MAX_GUESSES }).map((_, dotIdx) => {
+              const isUsed = dotIdx < guesses.length;
+              const isWonDot = dotIdx === guesses.length - 1 && gameStatus === 'WON';
+              const isCurrent = dotIdx === guesses.length && gameStatus === 'PLAYING';
 
-            <p className="text-xs sm:text-sm text-slate-200 font-medium leading-snug">
-              {getOtaraCommentary()}
-            </p>
+              return (
+                <div
+                  key={dotIdx}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    isWonDot
+                      ? 'bg-emerald-400 shadow-emerald-500/50 scale-125 ring-2 ring-emerald-400/50'
+                      : isUsed
+                        ? 'bg-gold/80 shadow-gold-glow/40'
+                        : isCurrent
+                          ? 'bg-white/40 ring-1 ring-gold/60 animate-pulse'
+                          : 'bg-cinema-border/50'
+                  }`}
+                  title={`Attempt ${dotIdx + 1}`}
+                />
+              );
+            })}
+            <span className="text-xs font-black text-white ml-1.5 font-mono">
+              {guesses.length}/{MAX_GUESSES}
+            </span>
           </div>
         </div>
       </div>
@@ -690,14 +733,11 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     {a.cast.value.map((actor, actIdx) => {
                       const isMatch = (a.cast.matching || []).includes(actor);
                       return (
-                        <span
+                        <CastMemberChip
                           key={actIdx}
-                          className={`rounded px-1 py-0.2 text-[10px] font-extrabold ${
-                            isMatch ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40' : 'text-slate-300'
-                          }`}
-                        >
-                          {actor.split(' ')[0]}
-                        </span>
+                          actor={actor}
+                          isMatch={isMatch}
+                        />
                       );
                     })}
                   </div>
@@ -767,13 +807,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       </div>
 
       {/* ===================================================================== */}
-      {/* 5. OTARA ORACLE CLUES (Interactive Dynamic Hints)                     */}
+      {/* 5. CINEMA VAULT CLUES (Interactive Dynamic Hints)                     */}
       {/* ===================================================================== */}
       <div className="rounded-2xl border border-gold/30 bg-cinema-card/90 p-4 sm:p-5 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Lightbulb className="h-4 w-4 text-gold fill-gold" />
-            <h3 className="text-sm font-extrabold text-white">Otara's Oracle Clues</h3>
+            <h3 className="text-sm font-extrabold text-white">Cinema Vault Clues</h3>
           </div>
           <span className="text-[11px] text-cinema-muted">
             {isPro ? '🌟 PRO: Unlimited Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
@@ -850,13 +890,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               <X className="h-5 w-5" />
             </button>
 
-            {/* Mascot Image */}
-            <div className="relative mx-auto h-28 w-24 sm:h-32 sm:w-28 animate-otara-float">
-              <img
-                src={gameStatus === 'WON' ? '/assets/otara/otara-impressed.png' : '/assets/otara/otara-encouraging.png'}
-                alt="Otara"
-                className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)]"
-              />
+            {/* Cinematic Trophy / Reel Icon */}
+            <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-gold/25 via-amber-600/20 to-transparent border-2 border-gold/40 shadow-gold-glow/40 animate-fade-in">
+              {gameStatus === 'WON' ? (
+                <Trophy className="h-12 w-12 text-gold animate-bounce" />
+              ) : (
+                <Film className="h-12 w-12 text-cinema-muted" />
+              )}
             </div>
 
             <div>
