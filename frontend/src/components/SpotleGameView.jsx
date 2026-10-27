@@ -732,17 +732,19 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ))}
           </div>
 
-          {/* Submitted Guess Rows (Chronological: Each new guess stacks below!) */}
-          {guesses.map((g, rowIdx) => {
-            const a = g.attributes;
-            const attemptNum = rowIdx + 1;
-            const isLatest = rowIdx === guesses.length - 1;
+          {/* Submitted Guess Rows (Reverse-chronological: Newest guess on top, oldest below) */}
+          {[...guesses]
+            .map((g, idx) => ({ ...g, attemptNum: idx + 1, isLatest: idx === guesses.length - 1 }))
+            .reverse()
+            .map((g) => {
+              const a = g.attributes;
+              const { attemptNum, isLatest } = g;
 
-            return (
-              <div
-                key={g.guessedMovie.id || attemptNum}
-                className="grid grid-cols-7 gap-2 animate-fade-in"
-              >
+              return (
+                <div
+                  key={g.guessedMovie.id || attemptNum}
+                  className="grid grid-cols-7 gap-2 animate-fade-in"
+                >
                 {/* Tile 1: Movie Guess */}
                 <div
                   className={`h-[88px] rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md overflow-hidden ${
