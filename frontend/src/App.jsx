@@ -20,6 +20,7 @@ import { OtaraChallengeCard } from './components/OtaraChallengeCard';
 import { DuelGameView } from './components/DuelGameView';
 import { OtaraHintModal } from './components/OtaraHintModal';
 import { SpotleGameView } from './components/SpotleGameView';
+import { FrameSleuthGameView } from './components/FrameSleuthGameView';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -132,6 +133,11 @@ export default function App() {
               />
             ) : activeMode === 'spotle' ? (
               <SpotleGameView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
+              />
+            ) : activeMode === 'frame-sleuth' ? (
+              <FrameSleuthGameView
                 onOpenPro={() => setIsProModalOpen(true)}
                 onOpenAuth={() => setIsAuthOpen(true)}
               />

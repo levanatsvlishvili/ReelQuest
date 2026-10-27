@@ -20,7 +20,8 @@ import {
   User,
   Calendar,
   Layers,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
@@ -43,7 +44,8 @@ const ICON_COMPONENTS = {
   Swords,
   Zap,
   Flame,
-  Award
+  Award,
+  Camera
 };
 
 export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
@@ -99,6 +101,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
     if (historyFilter === 'all') return true;
     if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
     if (historyFilter === 'spotle') return m.gameMode === 'spotle';
+    if (historyFilter === 'frame-sleuth') return m.gameMode === 'frame-sleuth';
     if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
     if (historyFilter === 'duels') return m.gameMode === 'duels';
     return m.gameMode === historyFilter;
@@ -498,6 +501,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                     { id: 'all', label: 'All Matches' },
                     { id: 'daily', label: 'Beat Otara' },
                     { id: 'spotle', label: 'Spotle (Mystery)' },
+                    { id: 'frame-sleuth', label: 'Frame Sleuth' },
                     { id: 'duels', label: '1v1 Online Duels' },
                     { id: 'archive', label: 'Archive & Custom' }
                   ].map(f => (
@@ -531,6 +535,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                     const isArchive = m.subMode === 'archive';
                     const isCustom = m.subMode === 'custom';
                     const isSpotle = m.gameMode === 'spotle';
+                    const isFrameSleuth = m.gameMode === 'frame-sleuth';
 
                     return (
                       <div
@@ -544,7 +549,12 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                         {/* Header: Mode Badge + Date + Result */}
                         <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
                           <div className="flex items-center gap-2">
-                            {isSpotle ? (
+                            {isFrameSleuth ? (
+                              <span className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-violet-300 border border-violet-500/30">
+                                <Camera className="h-3 w-3 text-violet-400" />
+                                FRAME SLEUTH {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
+                              </span>
+                            ) : isSpotle ? (
                               <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-500/30">
                                 <Film className="h-3 w-3 text-gold" />
                                 SPOTLE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
@@ -584,18 +594,24 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                             ) : isWin ? (
                               <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-400 border border-emerald-500/30">
                                 <Check className="h-3 w-3" />
-                                {isSpotle ? `SOLVED (${m.hops}/10)` : m.matchedOtara ? 'MATCHED OTARA' : 'VICTORY'}
+                                {isFrameSleuth
+                                  ? `SOLVED (${m.framesUsed || m.hops || 1}/6)`
+                                  : isSpotle
+                                    ? `SOLVED (${m.hops}/10)`
+                                    : m.matchedOtara
+                                      ? 'MATCHED OTARA'
+                                      : 'VICTORY'}
                               </span>
                             ) : (
                               <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] font-extrabold text-slate-300">
-                                {isSpotle ? 'UNSOLVED' : 'DEFEAT'}
+                                {isFrameSleuth || isSpotle ? 'UNSOLVED' : 'DEFEAT'}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Middle: Spotle Mystery Movie or Actor Route */}
-                        {isSpotle && m.targetMovie ? (
+                        {/* Middle: Spotle or Frame Sleuth Mystery Movie or Actor Route */}
+                        {(isSpotle || isFrameSleuth) && m.targetMovie ? (
                           <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-2.5 border border-cinema-border/30">
                             <div className="flex items-center gap-2.5 min-w-0">
                               {m.targetMovie.posterPath ? (
@@ -606,7 +622,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                                 />
                               ) : (
                                 <div className="flex h-10 w-7 items-center justify-center rounded bg-cinema-surface border border-cinema-border text-gold shrink-0">
-                                  <Film className="h-4 w-4" />
+                                  {isFrameSleuth ? <Camera className="h-4 w-4 text-violet-400" /> : <Film className="h-4 w-4" />}
                                 </div>
                               )}
                               <div className="min-w-0">
@@ -621,9 +637,11 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                               </div>
                             </div>
                             <div className="text-right shrink-0">
-                              <span className="text-[9px] uppercase font-bold text-cinema-muted block">Guesses</span>
+                              <span className="text-[9px] uppercase font-bold text-cinema-muted block">
+                                {isFrameSleuth ? 'Frames' : 'Guesses'}
+                              </span>
                               <span className="text-xs font-black text-gold">
-                                {m.hops || 1}/10
+                                {isFrameSleuth ? `${m.framesUsed || m.hops || 1}/6` : `${m.hops || 1}/10`}
                               </span>
                             </div>
                           </div>
