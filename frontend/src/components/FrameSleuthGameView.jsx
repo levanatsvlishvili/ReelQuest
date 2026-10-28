@@ -577,12 +577,32 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             </span>
             {viewedFrameIndex === 0 && (
               <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-300 border border-amber-500/30 backdrop-blur-md hidden sm:inline">
-                Ambience / Wide Shot
+                Difficulty: Hardest (Ambience & Setting)
+              </span>
+            )}
+            {viewedFrameIndex === 1 && (
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-200 border border-amber-400/30 backdrop-blur-md hidden sm:inline">
+                Environment & World
+              </span>
+            )}
+            {viewedFrameIndex === 2 && (
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-sky-300 border border-sky-500/30 backdrop-blur-md hidden sm:inline">
+                Scene & Objects
+              </span>
+            )}
+            {viewedFrameIndex === 3 && (
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-indigo-300 border border-indigo-500/30 backdrop-blur-md hidden sm:inline">
+                Action & Supporting Context
+              </span>
+            )}
+            {viewedFrameIndex === 4 && (
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30 backdrop-blur-md hidden sm:inline">
+                Recognizable Scene
               </span>
             )}
             {viewedFrameIndex === 5 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30 backdrop-blur-md hidden sm:inline">
-                Final Clue / Key Scene
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-emerald-400 border border-emerald-500/40 backdrop-blur-md hidden sm:inline">
+                Final Clue: Iconic Hero Shot
               </span>
             )}
           </div>

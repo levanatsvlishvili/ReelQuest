@@ -1,8 +1,9 @@
 /**
  * Frame Sleuth Movie Dataset & Mystery Engine for ReelQuest
  * 
- * Contains 167+ iconic movies, each equipped with 6 progressive
- * cinematic scene stills (from obscure/ambient clues up to iconic hero shots).
+ * Contains 173+ iconic movies, each equipped with 6 progressive
+ * 100% textless cinematic scene stills (from obscure/ambient clues up to iconic hero shots).
+ * Strictly filtered to contain NO movie titles, text, or logos on any image.
  */
 
 export const FRAME_SLEUTH_MOVIES = [
@@ -31,11 +32,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "",
     "overview": "Arkham Asylum has been destroyed, and all its inmates have been unleashed upon Gotham City. As Batman races to round up some of his greatest enemies, he is pushed to his physical and mental limits and into a final confrontation with a new threat: the man called Bane!",
     "frames": [
-      "/s8UIvaFwKRWGo4sYmKsOYJqoKxY.jpg",
-      "/v0EQWmpi9HJZDSlGTnwxMsMxMQ8.jpg",
+      "/gOaG3BYOY2Tx4Esn1ebpa6joaBf.jpg",
+      "/9wRpASIHIdPNd0ejc7RI2kMB7fg.jpg",
       "/wurLik6ixzMivMrvlredEcqAyFh.jpg",
-      "/3MRgIcnzmyr4ZVzY2EiLfkE4NLp.jpg",
-      "/3JuvG16iekTpX2t9LJIrAgMzjjS.jpg",
+      "/6ijJALSG96hURfGyto8LJckVcuj.jpg",
+      "/mVSI9AjayLvbMyky8KPWCiGBCNS.jpg",
       "/caBIySpwuFi2i7ynvHIlnxJLOdN.jpg"
     ]
   },
@@ -64,43 +65,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The legacy reawakens.",
     "overview": "Avatar Aang, the world's last Airbender, learns of an ancient power that could save his culture from extinction. With the help of his friends, he embarks on a global quest to find it before it falls into the wrong hands and threatens to upend the peace they sacrificed everything to achieve.",
     "frames": [
-      "/5Jn4ncXSOfaXi9naB6Xbbu95sJK.jpg",
-      "/iVetUEWXcqC88a7tM1o4KgzZJDO.jpg",
+      "/l7Pd03Q0mKxA1P9YhUEVztzy86b.jpg",
       "/pxQInEtiYlbeEnXKelsgGqCwYj7.jpg",
-      "/grt1nXDstde8ROPqMBCkAPMn92M.jpg",
-      "/qPNG2riEQLBknaa20RhUCr8QtWA.jpg",
-      "/ezbrL1dMymKQZw7mDEWa2ZTzN7d.jpg"
-    ]
-  },
-  {
-    "id": "tt40187050",
-    "tmdbId": 1632181,
-    "title": "Accidental Partners",
-    "year": 2026,
-    "director": "Ihtzi Hurtado",
-    "genres": [
-      "Comedy",
-      "Romance"
-    ],
-    "cast": [
-      "Angelique Boyer",
-      "Bárbara de Regil",
-      "Diego Klein",
-      "Lucía Uribe",
-      "Isabella Camil"
-    ],
-    "rating": 8.8,
-    "runtime": 110,
-    "posterPath": "/j0CIVzeR7hRAPBPGR54qDZoOQpp.jpg",
-    "tagline": "",
-    "overview": "Two women discover they were both scammed by the same man (who also got them pregnant). They form an alliance to take revenge.",
-    "frames": [
-      "/h19ZHvxGnpqSzm2JyHEwMhl7zRs.jpg",
-      "/tdY46jlxbcvgMHKlJhSCebahhBh.jpg",
-      "/6COXQxHDJDEmHWACnVpD9qYWpGF.jpg",
-      "/mJpUOJPvOr7uebA8CqkD7N4rRbB.jpg",
-      "/iCML6fBe3X0y06P33bM7dyYXPKZ.jpg",
-      "/zmYBKAaW5O9rh5MCnESBYQaxp8x.jpg"
+      "/AbYXQZGgNm1J9lylCq8LgLYSzSc.jpg",
+      "/u9SYUi2ewwGYdKsgTsc3At3do8H.jpg",
+      "/sS3zGYFPcfM5pArVNWl6qLyaSmU.jpg",
+      "/qPNG2riEQLBknaa20RhUCr8QtWA.jpg"
     ]
   },
   {
@@ -127,44 +97,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It's time to have some fun.",
     "overview": "The Demon Slayer Corps are drawn into the Infinity Castle, where Tanjiro, Nezuko, and the Hashira face terrifying Upper Rank demons in a desperate fight as the final battle against Muzan Kibutsuji begins.",
     "frames": [
-      "/KK8y31yKsNt5WglQMnFlNvhv2b.jpg",
-      "/68f2Zu8AY6FQDrg1ZtjrxI4cGef.jpg",
+      "/Nd1ISL1eqXewlUeAiTMH6b271W.jpg",
       "/jDqL1V6wjMFJ5z5SufgHQPGBVOd.jpg",
-      "/7vUBxKhsaADf7Gh4lG4RiMyQpDz.jpg",
+      "/85ia9BN0UHWyvTCJHLED5dlkTjQ.jpg",
+      "/63RnEJRNzRDvi0Fv4jhrT2eh0fl.jpg",
       "/52RYVGTokBTYj0jc27R6aktEGzs.jpg",
       "/1RgPyOhN4DRs225BGTlHJqCudII.jpg"
-    ]
-  },
-  {
-    "id": "tt39390497",
-    "tmdbId": 1621552,
-    "title": "Facing El Chapo",
-    "year": 2026,
-    "director": "Chava Cartas",
-    "genres": [
-      "Crime",
-      "Action",
-      "Thriller"
-    ],
-    "cast": [
-      "Alfonso Herrera",
-      "Noé Hernández",
-      "Hector Kotsifakis",
-      "Paola Fernández",
-      "Gerardo Trejoluna"
-    ],
-    "rating": 8.8,
-    "runtime": 91,
-    "posterPath": "/alpf5v4UqSFawPmG9RX03Or4BDk.jpg",
-    "tagline": "",
-    "overview": "Two Mexican officers must survive the final hours of their shift after crossing a ruthless cartel boss.",
-    "frames": [
-      "/wt4cKsS20mk48HRHyO5CSsy6gBP.jpg",
-      "/1hZfswetUfVVIwMlj97tYhqduS9.jpg",
-      "/vtECz8dl9ntS4huX9JUA79SeL7V.jpg",
-      "/qbLWYKQW02P3MdPZ08Bw6nVS9Pq.jpg",
-      "/raVBwQY4Ru5yt0FDE4zDYSIlFgd.jpg",
-      "/c4U96GrPRfnNrS01mBtqnocvlLJ.jpg"
     ]
   },
   {
@@ -192,11 +130,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Transform your destiny.",
     "overview": "A small woodland creature and a majestic bird, two natural sworn enemies of the Valley, magically trade places and set off on an adventure of a lifetime to switch back. Their journey soon uncovers a greater threat—one that could endanger not only their species, but the entire valley they call home.",
     "frames": [
-      "/3kd3AMJGudaW7wLYhIanKGpnUez.jpg",
-      "/7qs28fdwWPv4uBE6brR5WLp56Go.jpg",
+      "/uAuHCTmxuSE8QBBO8Eyee5UaDp7.jpg",
+      "/bSoD4DSclvabfBAwNP3CZuI8pOj.jpg",
       "/fOx3Fnqm7ft6WZOOSYbbjOAfCyL.jpg",
+      "/4iEHnkKkEugzulWRd9A7LfgBD25.jpg",
       "/r4Tfw8CPeeI4EIHI3wH9qNkycZd.jpg",
-      "/q5LJT8QYjUU4uKlT9x2aQpxz09t.jpg",
       "/zMwhWailP1WY7sb6AoE6b8ugoy.jpg"
     ]
   },
@@ -223,12 +161,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An offer you can't refuse.",
     "overview": "Spanning the years 1945 to 1955, a chronicle of the fictional Italian-American Corleone crime family. When organized crime family patriarch, Vito Corleone barely survives an attempt on his life, his youngest son, Michael steps in to take care of the would-be killers, launching a campaign of bloody revenge.",
     "frames": [
-      "/eklTdm6b7LE2Syla8foBFtNlf3I.jpg",
-      "/2dow5eNlhJme3C3tjuYg0lAo5Cy.jpg",
-      "/kCcuqeoIBgOzx8xbJVkmsUuG9nG.jpg",
-      "/9cuuw3287U3h5UwAknDpTGQYlao.jpg",
-      "/tTZxpznAhJpL0pmuxmmLNmmigah.jpg",
-      "/AbgEQO2mneCSOc8CSnOMa8pBS8I.jpg"
+      "/HyCAvY8UhTgMjixiBPoq9r9ICm.jpg",
+      "/A4URPGVoSo2yJuOL3hQg4WC0j5H.jpg",
+      "/23spjdXuktwkdO1nbkyaubxiAmR.jpg",
+      "/ySPC8e9qoipVBCS3a1FMFHqo9JX.jpg",
+      "/jdHsptJbtalEuVhCV5i7kSC3g0x.jpg",
+      "/tmU7GeKVybMWFButWEGl2M4GeiP.jpg"
     ]
   },
   {
@@ -254,12 +192,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Fear can hold you prisoner. Hope can set you free.",
     "overview": "Imprisoned in the 1940s for the double murder of his wife and her lover, upstanding banker Andy Dufresne begins a new life at the Shawshank prison, where he puts his accounting skills to work for an amoral warden. During his long stretch in prison, Dufresne comes to be admired by the other inmates -- including an older prisoner named Red -- for his integrity and unquenchable sense of hope.",
     "frames": [
-      "/z2fqbvyYLzYYDa5lGrtURIScqLX.jpg",
-      "/tumYpUaRYo18cJYVSb89c8XmQE.jpg",
-      "/gNCqY2Y6e3wV8cnSVy4Xqpdl6oE.jpg",
-      "/fScXhSc5SZWnKBB1PnqfXtjLjsN.jpg",
-      "/gZMgEUYbh0DIBNaRJT0ofxLDJ5T.jpg",
-      "/jFkuJbWsciMwgcpOEkJIlxTElEp.jpg"
+      "/9h5d3eGBeIS8WEEKpeic63sPIDH.jpg",
+      "/ziatJSyHpcHo4SHwY0L3IonTAuK.jpg",
+      "/crLfhuTYadl39DucKK8HcEJctIf.jpg",
+      "/1c7EVzpMudkPRwqYU1vjrUnxXX2.jpg",
+      "/v8xVDqt8uCul3c3mgx4VpGCwxJC.jpg",
+      "/kXfqcdQKsToO0OUXHcrrNCHDBzO.jpg"
     ]
   },
   {
@@ -286,9 +224,9 @@ export const FRAME_SLEUTH_MOVIES = [
     "frames": [
       "/za6UYAWXp1faIjIq5179sAEsv42.jpg",
       "/rXFNjKk5NWfeW8juVRFTH8L99fU.jpg",
-      "/tADfgZsJu6zH2RazevOFh23UqAO.jpg",
-      "/e2uXB2C4Rov55zCz7I2S0HaqeA1.jpg",
-      "/3x1hh3VGugF4pvLURkLLOmb1rj5.jpg",
+      "/cr1Xmqb9kyUkM5C15A7wdKw9Msy.jpg",
+      "/sDxiYpf26i9b1WxA5CkoCLZScVh.jpg",
+      "/2ExdVu0AITPediwjpxGEl9e2NuF.jpg",
       "/qqHQsStV6exghCM7zbObuYBiYxw.jpg"
     ]
   },
@@ -315,11 +253,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Discover the making of a king.",
     "overview": "The story of Michael Jackson, one of the most influential artists the world has ever known, and his life beyond the music. His journey from the discovery of his extraordinary talent as the lead of the Jackson Five, to the visionary artist whose creative ambition fueled a relentless pursuit to become the biggest entertainer in the world, highlighting both his life off-stage and some of the most iconic performances from his early solo career.",
     "frames": [
-      "/6wTVhPektLbzJSru9UXpRW5dBAP.jpg",
-      "/rtEf4hu8iFFv0qOLEHAqoJE8BC2.jpg",
-      "/jgi4DXkxmjgYqfrCBvW9CsEavfb.jpg",
-      "/9k1ZEKl2RnlLRFt52Yo78yPAOPF.jpg",
-      "/joPZFstfdjpsuzlrnGeCbY0FuPS.jpg",
+      "/mAKcLRg65VrNINp2KQtpNb91eNm.jpg",
+      "/qmyWJcVx8ibjZZD8oVqoF2LtklU.jpg",
+      "/jOodAXQo4VovqV8YruBTW63zWDx.jpg",
+      "/q4rkoLp1k5jReEkt21rqMt0oOzO.jpg",
+      "/tpqqJyEo6wHE9xyADKesT8Jyv1F.jpg",
       "/ufSwlnECLoUbBjPrFqEQcWBzHwc.jpg"
     ]
   },
@@ -347,12 +285,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Love, Sacrifice and Vengeance.",
     "overview": "Hunted for her rare blood type, a caged woman vows to fight alongside the assassin she loves to protect their future when an old enemy resurfaces.",
     "frames": [
-      "/469GT9VEvUfK7ii4ooOBuP1FgFp.jpg",
-      "/hrtva2e6i4kNRcte3mBD0FUqceb.jpg",
-      "/yiaSEozxqjizCt5ytVvYjwjmtNP.jpg",
+      "/ixbEVHhxI0kYt9V67hSwAIXYl0x.jpg",
+      "/mfsVHGtgLLdncMC8JKFMJTk95qF.jpg",
       "/zqcNccP3vGVHXYE3NDSVPHhrkB8.jpg",
       "/eCsrzMDYCwvI4lQlTB9QCtnPipU.jpg",
-      "/xA6AM5MvEkieZKlv1Tn3sN23I7i.jpg"
+      "/xA6AM5MvEkieZKlv1Tn3sN23I7i.jpg",
+      "/d1TupF3vMdQ6BhnADkFiNf0ZBOo.jpg"
     ]
   },
   {
@@ -378,12 +316,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Believe in the Hail Mary.",
     "overview": "Science teacher Ryland Grace wakes up on a spaceship light years from home with no recollection of who he is or how he got there. As his memory returns, he begins to uncover his mission: solve the riddle of the mysterious substance causing the sun to die out. He must call on his scientific knowledge and unorthodox ideas to save everything on Earth from extinction.",
     "frames": [
-      "/zbXsrhAOGaydbLkyqmwLhmNQTfP.jpg",
-      "/xDi6LhpqESQudvKpl9yidrFplAK.jpg",
-      "/qzJmCgyRqbari5kt756quzeA3wn.jpg",
-      "/wpI3O8kKthh5wV6nkvsI1RXLZkz.jpg",
-      "/j7uorNhCAOsod1MJViqwqNtPA3r.jpg",
-      "/wLWvHcQz7N13DvSOTV7bHgwGXpT.jpg"
+      "/e1ujU0ZJ5ZDYHNB6S9w4I7tjwwE.jpg",
+      "/pN3cp9NVZB0JcqbF5c5HOkuJT2Z.jpg",
+      "/4pFmWMajKYinuIJ7aZjojg07WJl.jpg",
+      "/t1v0zTDeWrzFmRdr2JqijtVcRUl.jpg",
+      "/fFyLcR22R4ynrecqjMniKXm0UTp.jpg",
+      "/8Tfys3mDZVp4tNoH2ktm06a0Tau.jpg"
     ]
   },
   {
@@ -411,11 +349,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "The true story of how businessman Oskar Schindler saved over a thousand Jewish lives from the Nazis while they worked as slaves in his factory during World War II.",
     "frames": [
       "/mQExnTjz4mWA8FdLdCxxsuaGhTr.jpg",
-      "/aRtIBG1RUJl3Upe2rYORcXkyDiA.jpg",
-      "/5cZeLB5SRyrOoC4kIxxNrq0re13.jpg",
-      "/ykeZIKOJ28psgUiXhWxATMOHCNL.jpg",
-      "/doTbKYSihM8NUJ1nSrUutbiDGOY.jpg",
-      "/zb6fM1CX41D9rF9hdgclu0peUmy.jpg"
+      "/5pmfLCePZfDw3P5z6WOiNDauB6Z.jpg",
+      "/lnxTTpHzpjgla7YX8MGkQG2bg0Y.jpg",
+      "/eMAHXzZXoNzximFSYm2hn0LiPB0.jpg",
+      "/zZtNb5DZ9QXTh3I4HXq9o9Phbs9.jpg",
+      "/loRmRzQXZeqG78TqZuyvSlEQfZb.jpg"
     ]
   },
   {
@@ -441,12 +379,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The rise and fall of the Corleone empire.",
     "overview": "In the continuing saga of the Corleone crime family, a young Vito Corleone grows up in Sicily and in 1910s New York. In the 1950s, Michael Corleone attempts to expand the family business into Las Vegas, Hollywood and Cuba.",
     "frames": [
-      "/sesYdnMf1OGkdsqDXtXqFWmaliF.jpg",
+      "/qM3stnNxcOdw91qyJ7fpFB932zL.jpg",
       "/wzwbStKUetxF6jLjGGFNKbaYGQk.jpg",
-      "/8B4eofeSJ1z5s920mGTypilSTWh.jpg",
-      "/pKEQEqHSqkNDLMaXEulKWg3WcOm.jpg",
-      "/w7ws1KHEtB08Kq0f8S5ec3iBWnv.jpg",
-      "/pGzqRKrYeK4LogoysNro0vG8d8N.jpg"
+      "/xYhkV6W8za2vqGvwgb7W77SLE4R.jpg",
+      "/jB6bgk4pKtQzSNxr1qiTPgPy9zV.jpg",
+      "/b6w7gKLQLS2zw4JK0XmKgQ4gnzr.jpg",
+      "/kGzFbGhp99zva6oZODW5atUtnqi.jpg"
     ]
   },
   {
@@ -472,11 +410,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "",
     "overview": "14-year-old Elias increasingly feels like an outsider in his village. When he meets his new neighbour of the same age, Alexander, Elias is confronted with his burgeoning sexuality.",
     "frames": [
-      "/pS6xZTNxtFF5Un5AJl8MJ3pbQOs.jpg",
-      "/hxLrYPKRmFlWBY8GQ4oGxU60ujC.jpg",
-      "/5whzA587yf40126ZNvaEpizJ8nf.jpg",
-      "/jVd1ejbzkkDFAsgiqCh0LuPlnR.jpg",
-      "/A1kTIUB5pKrhstVxeoyryN61u4P.jpg",
+      "/zBfCSJV5WELi4CtZnNC63aVGsUn.jpg",
+      "/2Uc0pbPOcqH1527PM9Sjv3m4h8t.jpg",
+      "/ijsMeZ6B83llOxKfofgdaJ1qufF.jpg",
+      "/pg68wsJc9n89PanRdGlGhfacVz8.jpg",
+      "/uZb5AOnOsUfaWIqhrMNtM7IECLq.jpg",
       "/3HaqAPZ0C8n6Hd5T86U53yJlBAN.jpg"
     ]
   },
@@ -505,12 +443,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Lost Love, Flower, Chainsaw.",
     "overview": "In a brutal war between devils, hunters, and secret enemies, a mysterious girl named Reze has stepped into Denji's world, and he faces his deadliest battle yet, fueled by love in a world where survival knows no rules.",
     "frames": [
-      "/pQBjQCtldmru3EhWVH83qKfnvPL.jpg",
-      "/fERONWr0u8vXURPokkPpwDtgfNg.jpg",
-      "/vzYtgNE8mGzThOx6RoGD9xOfUD.jpg",
-      "/6Za3MUPC3DhHx3Fl1fNd1kLvmUy.jpg",
-      "/mkgAmzbv6ZkWSzBiEGtUKqoT3ts.jpg",
-      "/gqTz24ZRsCP6AKjARmEivY7m0cK.jpg"
+      "/nFc7WdpeuMDJvDTHjSpj4HWTEFz.jpg",
+      "/wtO89qx6opq6ZbnawzxoEV3DbUn.jpg",
+      "/pFRO56jUCkHoHhwiAFkp4p84R7y.jpg",
+      "/vqbtgQQmwZaaxJKwkOgiyBlcz1c.jpg",
+      "/hsuXGtsM9VjdWqiDIFzaUvVDnNT.jpg",
+      "/kfXgo2rMF1A19celCwLyQ4Xwpf8.jpg"
     ]
   },
   {
@@ -537,12 +475,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Come… fall In love, all over again…",
     "overview": "Raj is a rich, carefree, happy-go-lucky second generation NRI. Simran is the daughter of Chaudhary Baldev Singh, who in spite of being an NRI is very strict about adherence to Indian values. Simran has left for India to be married to her childhood fiancé. Raj leaves for India with a mission at his hands, to claim his lady love under the noses of her whole family. Thus begins a saga.",
     "frames": [
-      "/28VcIIvP2qvTLVAxamVZQXYhT7d.jpg",
-      "/kQCEyQHQHQpYIwE7wDqBoatv1h5.jpg",
-      "/4T7GCEfqY1x4mvF8tNRlbutpRA2.jpg",
+      "/hkxiKB94OHWm9owgBRYN0ciEsDZ.jpg",
+      "/n1P9nNjH5exjpmiskttZUGk8n8n.jpg",
+      "/sutX2J6m0KrWD3G5JOreEqnhpBc.jpg",
       "/hzA57Ll8ngfDRSMsRkp2fCJjA8q.jpg",
-      "/6N5d02quKqMKqvTpOdFmBDy9scY.jpg",
-      "/jgvpmV3OehTGXVTkfL06NAvBm2d.jpg"
+      "/c3FR5vfnR61ySpO9CqO7pBsfz7m.jpg",
+      "/84beTJf26mfhoasUlKSOiNSutyS.jpg"
     ]
   },
   {
@@ -570,11 +508,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "A man with a low IQ has accomplished great things in his life and been present during significant historic events—in each case, far exceeding what anyone imagined he could do. But despite all he has achieved, his one true love eludes him.",
     "frames": [
       "/7xQWxQzSzBz3q97KR1PhC6GLoZI.jpg",
-      "/8kbYwXmHP3iATjxsAZ5iuAwcVFn.jpg",
-      "/nsxQt5gU1ntXWnO9v8lWcyUbPRt.jpg",
-      "/3h1JZGDhZ8nzxdgvkxha0qBqi05.jpg",
-      "/mzfx54nfDPTUXZOG48u4LaEheDy.jpg",
-      "/66Kn4XWhkuPkJxOJyPEx4U2CUfN.jpg"
+      "/jd3fhdfYEuWfmUmdCHLuE5llUgv.jpg",
+      "/buJOnU5FK6iIXL0iQIRfgbl5dsH.jpg",
+      "/apMfdiVZkAgE5w9jywQnbMi8KEo.jpg",
+      "/p2SUCM0aETWpiXultaoH9C9uL1r.jpg",
+      "/ghgfzbEV7kbpbi1O8eIILKVXEA8.jpg"
     ]
   },
   {
@@ -600,12 +538,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Three decades of life in the mafia.",
     "overview": "The true story of Henry Hill, a half-Irish, half-Sicilian Brooklyn kid who is adopted by neighbourhood gangsters at an early age and climbs the ranks of a Mafia family under the guidance of Jimmy Conway.",
     "frames": [
-      "/gAExVzTezNr0FwmsZ9bscF2rNgD.jpg",
-      "/80r0i5Utswx8Z3oZgMS4XQp4WJ9.jpg",
-      "/mr5ZBE57MHalRWH0VO3DUhvqq6R.jpg",
-      "/tXbXsSdV4Z9eUlJ5SIAHWo1uFtQ.jpg",
-      "/UBP8EgqILAt5mb5hJ6jO4uIfYW.jpg",
-      "/gILte6Zd7m1YneIr6MVhh30S9pr.jpg"
+      "/rURjgNT4om0zvlWDD2QWBJ162YM.jpg",
+      "/9qcWtFywaIc8geDZ9Y7r6ONuYY7.jpg",
+      "/mVKaXUbOHHRuTV1aP6kuIfLUsY6.jpg",
+      "/qfZ1l7ySLkkveCg5btB9G6QmYXg.jpg",
+      "/chrngg9mjM6tSU3BF9VHITgn1Ke.jpg",
+      "/sw7mordbZxgITU877yTpZCud90M.jpg"
     ]
   },
   {
@@ -632,12 +570,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "What befalls others today, may be your own fate tomorrow.",
     "overview": "Down-on-his-luck veteran Tsugumo Hanshirō enters the courtyard of the prosperous House of Iyi. Unemployed, and with no family, he hopes to find a place to commit seppuku—and a worthy second to deliver the coup de grâce in his suicide ritual. The senior counselor for the Iyi clan questions the ronin’s resolve and integrity, suspecting Hanshirō of seeking charity rather than an honorable end. What follows is a pair of interlocking stories which lay bare the difference between honor and respect, and promises to examine the legendary foundations of the Samurai code.",
     "frames": [
-      "/yFzPyYtDHMRui177IUkoWgDvix1.jpg",
-      "/m1fOJfuWDdeypTfeidGXQLZ3cG1.jpg",
+      "/vEjrhhPcCwJkPreAummU6wkLvFa.jpg",
+      "/ba7Qhgwhcbj4euPxgjd6pONgKsl.jpg",
       "/7BouxOe9XkF8cy96KDELe6MuWD7.jpg",
       "/lT0ZOc7XT3sMYXFXz6gE5EhoV0N.jpg",
-      "/23XAzEpKuKUFLW2aWANbuNmqSvL.jpg",
-      "/3hfSFo23Vfg7i4PlbNzztJOk5Tz.jpg"
+      "/578m772cRRJ3a0xmkGNY5jZ8yz7.jpg",
+      "/23XAzEpKuKUFLW2aWANbuNmqSvL.jpg"
     ]
   },
   {
@@ -664,12 +602,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Mankind was born on Earth. It was never meant to die here.",
     "overview": "The adventures of a group of explorers who make use of a newly discovered wormhole to surpass the limitations on human space travel and conquer the vast distances involved in an interstellar voyage.",
     "frames": [
-      "/ebEHbfUSiYR0OjT78vLARFuqFlp.jpg",
-      "/k05yY6hHAlmiUi8c05CnMhhkwGG.jpg",
-      "/kny1MrqhG3nqVXNdCOatUK4A4Gm.jpg",
-      "/eZm0fWJtVftiqs5kKOOzke8nJIR.jpg",
-      "/Ad8BWEmfHLq8lpC0HPaBm2mXoZu.jpg",
-      "/8sNiAPPYU14PUepFNeSNGUTiHW.jpg"
+      "/gBFcwbEmADA2QIj3MafZ7UZMlX7.jpg",
+      "/fGSkCwkP1OjCoAkUkXUBqOAxOb5.jpg",
+      "/kuaMcvVC1zzhH5BUozTQ9N3gqyt.jpg",
+      "/o1X16EAEf3feNvhd1OS4Iqa5ZO6.jpg",
+      "/1pjMhcDSlWT7hYzxB38wwlp7Wc6.jpg",
+      "/vgnoBSVzWAV9sNQUORaDGvDp7wx.jpg"
     ]
   },
   {
@@ -696,12 +634,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Act like you own the place.",
     "overview": "All unemployed, Ki-taek's family takes peculiar interest in the wealthy and glamorous Parks for their livelihood until they get entangled in an unexpected incident.",
     "frames": [
-      "/cuFeb9bZfiQUJUpKDwcDdpT623c.jpg",
-      "/650k8IZOh7NreCQ4I6B5h4XQC19.jpg",
-      "/4npDqHC8nee1V68czoBhfO8KpHc.jpg",
-      "/oa1NfODv0U1cz0jtgmKccv2bmAv.jpg",
+      "/yA0e69UK3c02DbE6PMJ8VJwUCkb.jpg",
+      "/oQaBu6zymRiaHiUFyVV6zOFQPSJ.jpg",
+      "/otp5YXXxHvPR9z26RXgW0lAo10w.jpg",
+      "/tv2gjDxaxyhVNDESFLJ6oGT10sL.jpg",
       "/uG3m6jBwU8jUkt0jbUOj8Vb2Y11.jpg",
-      "/hiKmpZMGZsrkA3cdce8a7Dpos1j.jpg"
+      "/TU9NIjwzjoKPwQHoHshkFcQUCG.jpg"
     ]
   },
   {
@@ -728,12 +666,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "You won’t know the facts until you’ve seen the fiction.",
     "overview": "A burger-loving hit man, his philosophical partner, a drug-addled gangster's moll and a washed-up boxer converge in this sprawling, comedic crime caper. Their adventures unfurl in three stories that ingeniously trip back and forth in time.",
     "frames": [
-      "/vf9wqdMsF6E1fOdSizA0LbHZWQQ.jpg",
-      "/aGnbW6lsbkwfxC8mhdGZv701CYA.jpg",
-      "/x7n68dlDNwS8TjuqKme4gbBbiH4.jpg",
-      "/jlVOS4D6ledQGxGdL0EIte3TXfL.jpg",
-      "/ih6mIvRzQ9uayDZ5R4rfRWq1Cm4.jpg",
-      "/96hiUXEuYsu4tcnvlaY8tEMFM0m.jpg"
+      "/hiShwHIT1NAvTcA7ThCySbsUIH.jpg",
+      "/hfveTGW4H6zcw5WiwjqCdropIUg.jpg",
+      "/zHvJ26ZSePslgZf1DWvFfAXnbAE.jpg",
+      "/7PNSr7qKtdusxuFXb5IyEfQTPlD.jpg",
+      "/9pGM43a9VmXxwIxmhJoiDkcB2hT.jpg",
+      "/suaEOtk1N1sgg2MTM7oZd2cfVp3.jpg"
     ]
   },
   {
@@ -760,12 +698,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A brand new day starts now.",
     "overview": "Fighting crime full-time as Spider-Man in a world that doesn't remember him—and the pressure of seeing his old friends move on without him—sparks a change in Peter Parker he may not have the power to control. But that transformation might also be the only thing that can stop a shocking new threat to the city and those he loves - a powerful villain no one can even see.",
     "frames": [
-      "/66e2cyJ54l6RpUvrm1Tt6LQxY9P.jpg",
-      "/8DG3gHWzCpiqnMk9kCeMk4RCJyC.jpg",
-      "/riY64HjYQwDnFOVnESlnmwagfi8.jpg",
-      "/aJbVw1OdpuM8kVbnrROJxg5wn3O.jpg",
-      "/ej0MW2QbYThpcRTFvF3cT6qgw6E.jpg",
-      "/f9mM7tDrZ3LlHPQu9I5A6TTxTb9.jpg"
+      "/3Toz5ZCd2PHvHza2haWZXQeO97a.jpg",
+      "/7XWRh2oBxUx7a44vWZAWYzf1Uqw.jpg",
+      "/nwA2uzjjtDYHF0KxXL2YvxAHLSA.jpg",
+      "/2Es8HvjgIoNxYbsQnVa8OJVz2Wk.jpg",
+      "/bPW6HcI0E1eklEle61LVQuD1Cwc.jpg",
+      "/vjMvFSmGUxEtqVdaZgvFee9XkZl.jpg"
     ]
   },
   {
@@ -792,12 +730,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Prepare to be spirited away.",
     "overview": "A young girl, Chihiro, becomes trapped in a strange new world of spirits. When her parents undergo a mysterious transformation, she must call upon the courage she never knew she had to free her family.",
     "frames": [
-      "/ueLGTd9zP2lYzB9VUBD23lEw43U.jpg",
-      "/vC3sUhRVoKOv5hdBtPOMEU2V913.jpg",
-      "/hDcSdyQXFGOIqwWWLdCUsJANt9K.jpg",
-      "/xOIwp6tMCtmbMJE0ZKRoF9Gvo.jpg",
-      "/22QSPfoHDxzExQgH1F6z39kvYkA.jpg",
-      "/m4TUa2ciEWSlk37rOsjiSIvZDXE.jpg"
+      "/eQA0TxAwfgiveLAw568eu5yqFcz.jpg",
+      "/bSXfU4dwZyBA1vMmXvejdRXBvuF.jpg",
+      "/vRwob80XFVPk4B5b2eK70lRkRjQ.jpg",
+      "/tPzhuIgHfrY8ODEuDLxr3JLdJUU.jpg",
+      "/bVggfCvAPnFalIctxgpaCRTF97z.jpg",
+      "/Ab8mkHmkYADjU7wQiOkia9BzGvS.jpg"
     ]
   },
   {
@@ -824,12 +762,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Welcome to a world without rules.",
     "overview": "Batman raises the stakes in his war on crime. With the help of Lt. Jim Gordon and District Attorney Harvey Dent, Batman sets out to dismantle the remaining criminal organizations that plague the streets. The partnership proves to be effective, but they soon find themselves prey to a reign of chaos unleashed by a rising criminal mastermind known to the terrified citizens of Gotham as the Joker.",
     "frames": [
-      "/hFRZPCv6DbtOs5phJ51IlYC0Kjw.jpg",
-      "/y3UZEEL6dR8lr9lAQITy450866A.jpg",
-      "/zJXigbphQSFOV8Vvmcz79DILtek.jpg",
-      "/eIBOBfO2iJu4iEn8unhQUgsc7EA.jpg",
-      "/vRTuvuTiJR5FrmPak2IMoeHbFmU.jpg",
-      "/9FE5eD92WfVCiivM9Pq9GVSrlWk.jpg"
+      "/wjAQ8RYIeG9QKVpbq4yxhSStWog.jpg",
+      "/lUqTG6rw55VYqy2HAjtzZL00j49.jpg",
+      "/qtD799RpbfZ4PokJWlGuZQGfbbH.jpg",
+      "/gCXqGU0TpsLr6NJrCPU5J3rmxRs.jpg",
+      "/x5f2uTfw0Pqc5QI4ch5AHICee2o.jpg",
+      "/nMKdUUepR0i5zn0y1T4CsSB5chy.jpg"
     ]
   },
   {
@@ -854,12 +792,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "For three men the Civil War wasn't hell. It was practice.",
     "overview": "While the Civil War rages on between the Union and the Confederacy, three men – a quiet loner, a ruthless hitman, and a Mexican bandit – comb the American Southwest in search of a strongbox containing $200,000 in stolen gold.",
     "frames": [
-      "/3XEo7MxJLQhZ7RKZlFRPXu2I6Ft.jpg",
-      "/hoJGzhFWnjAZcftutsoqXkTTzFt.jpg",
-      "/zZv1ZgglS80WvBktQUBBEooVqqH.jpg",
-      "/ckSCPh5EIKrABOxEHX1qgUmEZS3.jpg",
-      "/bc7mLueh5kideXRxdrZkPFTLyGF.jpg",
-      "/lk0aGHigkfxh1vH547EkOiIOVKL.jpg"
+      "/mCACsUo3EvsxqL7UleTd9S439PK.jpg",
+      "/id1aPrsPOO2eQBIgLhUGxDF1SPC.jpg",
+      "/aTF3Ob8k3uuwLUM14DKn63JCkBr.jpg",
+      "/60NIRR0C8sh7MxhfPx7QEOmkYOG.jpg",
+      "/3H0TPj81yFK17tFNtNXkRTeuzng.jpg",
+      "/x4biAVdPVCghBlsVIzB6NmbghIz.jpg"
     ]
   },
   {
@@ -886,12 +824,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Paul Edgecomb didn't believe in miracles. Until the day he met one.",
     "overview": "A supernatural tale set on death row in a Southern prison, where gentle giant John Coffey possesses the mysterious power to heal people's ailments. When the cell block's head guard, Paul Edgecomb, recognizes Coffey's miraculous gift, he tries desperately to help stave off the condemned man's execution.",
     "frames": [
-      "/f96TqsUSyxB9HSAi0q3m5NEaMwj.jpg",
-      "/yxgfWyXF241HnCQ43JJlEr7Hka3.jpg",
-      "/f8reL52go8kGhArTEqgUcwBrAGq.jpg",
-      "/b3YKSf7aHLA1XZ4flqfFFN9YGrE.jpg",
-      "/yhstLsmDNDt2scnffVi0tPowIIA.jpg",
-      "/amZavErrjrdgDwhsIdpWxHNenIx.jpg"
+      "/efnN2oX5ArS2GVAkyXczKUvYW4Q.jpg",
+      "/nZOYEIkrzx5w46JfvA7m5ru8C2U.jpg",
+      "/xt7WTyrCIhHC6wtjNTpufInfcuW.jpg",
+      "/lDg5NCZB4u1P4O5PULxtdThPMyX.jpg",
+      "/lgJlu0Fp1mdTaFEeaQJ7DskhSOr.jpg",
+      "/vxJ08SvwomfKbpboCWynC3uqUg4.jpg"
     ]
   },
   {
@@ -918,12 +856,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The journey ends.",
     "overview": "As armies mass for a final battle that will decide the fate of the world--and powerful, ancient forces of Light and Dark compete to determine the outcome--one member of the Fellowship of the Ring is revealed as the noble heir to the throne of the Kings of Men. Yet, the sole hope for triumph over evil lies with a brave hobbit, Frodo, who, accompanied by his loyal friend Sam and the hideous, wretched Gollum, ventures deep into the very dark heart of Mordor on his seemingly impossible quest to destroy the Ring of Power.​",
     "frames": [
-      "/ddMXjbrkEJfGq4NZhWaFrMT80eE.jpg",
-      "/iqSIw0Q49d0s2GTUy1rt2SXvWeJ.jpg",
-      "/6bqeDKvD6ivRPjINok5uSufLYIg.jpg",
-      "/sAn1tb2dhZDzdw8Gvv6N39mRfsu.jpg",
-      "/2lJvXf3IqHDDxGL0wIjyxkLXgbz.jpg",
-      "/ctiw6FZK4N36LmkjSklWEbuvlq9.jpg"
+      "/wn5xg63OQ7iQ6rn1bbIMwVat1OI.jpg",
+      "/hf4TjMwFCn8GpxWYXhNyhRGyGQn.jpg",
+      "/f1zmkqXqlTw1FMPTnrbQAp4Wh4r.jpg",
+      "/Ae9EYFrxur2QMYWNUq8kTMAFBdt.jpg",
+      "/bpeiV13Lix5oGzUmGKFdKf9h0RP.jpg",
+      "/2u7zbn8EudG6kLlBzUYqP8RyFU4.jpg"
     ]
   },
   {
@@ -950,11 +888,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Separated by distance, connected by fate.",
     "overview": "High schoolers Mitsuha and Taki are complete strangers living separate lives. But one night, they suddenly switch places. Mitsuha wakes up in Taki’s body, and he in hers. This bizarre occurrence continues to happen randomly, and the two must adjust their lives around each other.",
     "frames": [
-      "/j5KH4hjhFl5hVkJtOsQKx9bNDWa.jpg",
-      "/iCk0GuGYcmyKbfZIIs3ZCFs5CAv.jpg",
-      "/de6skzU80j6GivJGTLC1cCZKaUB.jpg",
-      "/olDiGphkdgYMlp3LFhftNoDNych.jpg",
-      "/i7g59G3Cd9WK7yT2Tt54bweIQGv.jpg",
+      "/5P419H8iToDg8nePX3ZIw841vxN.jpg",
+      "/3AhUnaYMtetFkVym7mg1hJzm7gT.jpg",
+      "/wTFN4jB35Htt2jRUSShONhE7Z51.jpg",
+      "/zQ3W1RXwr7UAXgwTdcDqO7fJj1j.jpg",
+      "/1jmktVyjeUKcnk8aeeqKHRAJyNQ.jpg",
       "/mMtUybQ6hL24FXo0F3Z4j2KG7kZ.jpg"
     ]
   },
@@ -982,11 +920,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "A ticking-time-bomb insomniac and a slippery soap salesman channel primal male aggression into a shocking new form of therapy. Their concept catches on, with underground \"fight clubs\" forming in every town, until an eccentric gets in the way and ignites an out-of-control spiral toward oblivion.",
     "frames": [
       "/jKgtfy5JXgXrh0Yh80UAQOPJRq7.jpg",
-      "/xUXCkcJQrQMhHrIkn0Oamq2POla.jpg",
+      "/gnP9wFKK4ZYuLo3jQ72ysSV4pMz.jpg",
       "/iJyeDrBLXAE5ipTUJH3kCAXUB0T.jpg",
-      "/vxqKGixpgNndTz58YbFpTlw8lpB.jpg",
-      "/mnNqRN1SAmAiHcfck5MgXm7DzeV.jpg",
-      "/c6OLXfKAk5BKeR6broC8pYiCquX.jpg"
+      "/tVV95MUq9FlsKwERnOCwPe6sSy4.jpg",
+      "/52AfXWuXCHn3UjD17rBruA9f5qb.jpg",
+      "/hZkgoQYus5vegHoetLkCJzb17zJ.jpg"
     ]
   },
   {
@@ -1013,12 +951,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Love comes first.",
     "overview": "Sophie, a young milliner, is turned into an elderly woman by a witch who enters her shop and curses her. She encounters a wizard named Howl and gets caught up in his resistance to fighting for the king.",
     "frames": [
-      "/dVb6pHnBS66heliAxFV47vMXcG3.jpg",
-      "/vyaE49HAGx2f6MhhMCcMlmcMwCQ.jpg",
-      "/8ccM6BRk4oeHPkXpeuwnqvw2B8x.jpg",
-      "/oZggdgTPWAOnVVUAUlWAbjm9i4R.jpg",
-      "/vUgRDJSSKfRLd8nzLhtchNmY3eF.jpg",
-      "/nv5wwZou159v5OC61i4ElR7OqyY.jpg"
+      "/7eFuAC5XARL3JqiGPTnpUuwqVOo.jpg",
+      "/lgfZ1QkuWg4lmE80AT7av5ygklC.jpg",
+      "/zFwVXJPpd8HQpLTJHNkP7d1UrNg.jpg",
+      "/4GPzl717TBXirCr8QJMjVoDr3Ug.jpg",
+      "/pjy0T63vIFYvxRSJ3ZtjB4tmWV4.jpg",
+      "/iuFbU5jiNh8DAxLBGifZCvv3KmB.jpg"
     ]
   },
   {
@@ -1045,11 +983,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Your mind is the scene of the crime.",
     "overview": "Cobb, a skilled thief who commits corporate espionage by infiltrating the subconscious of his targets is offered a chance to regain his old life as payment for a task considered to be impossible: \"inception\", the implantation of another person's idea into a target's subconscious.",
     "frames": [
-      "/zah9yise78vFSMq9UtAQdEUtRfw.jpg",
-      "/td7fdDkQhfTcaUmzsyETrWpckvZ.jpg",
-      "/i7CsYZtB0iK9Td1Ub4EQoCZ3ZP5.jpg",
-      "/emQ3QsiyiUXlKo83vp7VrtrskYs.jpg",
-      "/koYANShm411GCCBwhm5lN96RfBs.jpg",
+      "/wlplHYKyhbQOQYTA3D8laMmCta9.jpg",
+      "/uCVN4Ae0JlB4Jt3hSt8WEC0MhFm.jpg",
+      "/dg9UZZSrrKZ0SUcRnlaX1YZ4k8F.jpg",
+      "/b9po61n5dvEgQ366SAbdh1Hdjz1.jpg",
+      "/zlIBglEnHkxmPGVwEfywC7hXncb.jpg",
       "/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg"
     ]
   },
@@ -1076,11 +1014,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An unforgettable fable that proves love, family and imagination conquer all.",
     "overview": "A touching story of an Italian book seller of Jewish ancestry who lives in his own little fairy tale. His creative and happy life would come to an abrupt halt when his entire family is deported to a concentration camp during World War II. While locked up he tries to convince his son that the whole thing is just a game.",
     "frames": [
-      "/pGR3x3641kaFRzx9utKfGaDzMiE.jpg",
-      "/qlcleVEGvECQfFb9gQB8Pjs73OY.jpg",
+      "/l5sIjKBTXp7rhfALluUtET396yQ.jpg",
+      "/zL6jPIVYPhssSkzONWyragGuS2S.jpg",
       "/2UFfaKATgs91CS9P2ONHfT5LVSr.jpg",
       "/6JmcxU4Scb8ffjvj9vammMzc30z.jpg",
-      "/zL6jPIVYPhssSkzONWyragGuS2S.jpg",
+      "/gavyCu1UaTaTNPsVaGXT6pe5u24.jpg",
       "/6aNKD81RHR1DqUUa8kOZ1TBY1Lp.jpg"
     ]
   },
@@ -1106,12 +1044,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "In this clean, orderly, disciplined world, who needs guys like McMurphy? Everybody.",
     "overview": "A petty criminal fakes insanity to serve his sentence in a mental ward rather than prison. He soon finds himself as a leader to the other patients—and an enemy to the cruel, domineering nurse who runs the ward.",
     "frames": [
-      "/qb08lgkLtjkAv42SBTSDpenbt0U.jpg",
-      "/l0xDajITMas2RlY0X3JbZASQ3ed.jpg",
+      "/oyJaC8mdHcusQrJJX7Tt560THeo.jpg",
+      "/zuCBWvYSrZZJvEZxd4OFzu2ViZS.jpg",
+      "/3HMUrPwed9BIBtYD75ZZzvHzlbc.jpg",
       "/hb3FLfyoFcm47l2KDyBtKP7x3eF.jpg",
-      "/5Q1TS4BR9QaoHfkYD06h3ezVshP.jpg",
-      "/1w1O52wejAcmR89LXFq2mrx3N7k.jpg",
-      "/uA8eSNAUUUyfHNIrG4h0zHxzt9W.jpg"
+      "/6Oa3zTiluBz2W8D2ou1MY16dUiF.jpg",
+      "/vMylmakO2K9cZexNUze8wa9muJp.jpg"
     ]
   },
   {
@@ -1138,12 +1076,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A new and altogether different screen excitement!!!",
     "overview": "When larcenous real estate clerk Marion Crane goes on the lam with a wad of cash and hopes of starting a new life, she ends up at the notorious Bates Motel, where manager Norman Bates cares for his housebound mother.",
     "frames": [
-      "/AswBnr8dAGT0wu9kqlrtrRw6rjl.jpg",
-      "/vnxstD9L7ylCkGiVYVdX4AlRxPu.jpg",
-      "/ga3Az0W8D7GOfFiq3CpaXP11RUD.jpg",
-      "/flMptnUHZLh7TpOMr3UtES6kRJU.jpg",
-      "/1BvfL1NDtmjbtai4Yk0dh4XQuid.jpg",
-      "/vzXQEAmXIEWAtPCgB81bAS6EJCy.jpg"
+      "/qEkJPAr6eBfyLz3Oeab1B8jPNPh.jpg",
+      "/aMT60rTR9WcYvpTilUlD0PzcdvU.jpg",
+      "/oBrByzmVgQ6dwwTdLzW1Ll5oMf5.jpg",
+      "/kosltq2TpGxVvSfNa6ixVbHH7BI.jpg",
+      "/twetf44RMgwJ5vjf1dHM3FByOsi.jpg",
+      "/uif5fUshJrXyyDzfpzp1DLw3N0S.jpg"
     ]
   },
   {
@@ -1170,12 +1108,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Gluttony. Greed. Sloth. Envy. Wrath. Pride. Lust.",
     "overview": "Two homicide detectives are on a desperate hunt for a serial killer whose crimes are based on the \"seven deadly sins\" in this dark and haunting film that takes viewers from the tortured remains of one victim to the next. The seasoned Det. Somerset researches each sin in an effort to get inside the killer's mind, while his novice partner, Mills, scoffs at his efforts to unravel the case.",
     "frames": [
-      "/46VHSr46zoY9Hsy0G7jaixBqKXz.jpg",
-      "/lSInJF5lw6o0SP9Jbi9noiJx0x2.jpg",
-      "/q5sds7XJpWIqTuhBlIu5vxT2Nff.jpg",
-      "/noxYRqcrkymLxAGf3kgjaUueMoW.jpg",
+      "/ydp4mktKmNEShHjBxN2YejolUN0.jpg",
+      "/syKMWryiRnjCGi79AgovIJlM6uu.jpg",
+      "/pwL5EhyX5dRY9laizSYBXVEaS4w.jpg",
       "/nQknjkQ4uYg2es1DBURDWim1ziz.jpg",
-      "/i5H7zusQGsysGQ8i6P361Vnr0n2.jpg"
+      "/fopucwQz3d46dB9CQG4Q3YbN5Ff.jpg",
+      "/dYjZ27hDw2QFaEIfzbNGwW0IkV9.jpg"
     ]
   },
   {
@@ -1203,12 +1141,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Enter a universe where more than one wears the mask.",
     "overview": "Struggling to find his place in the world while juggling school and family, Brooklyn teenager Miles Morales is unexpectedly bitten by a radioactive spider and develops unfathomable powers just like the one and only Spider-Man. While wrestling with the implications of his new abilities, Miles discovers a super collider created by the madman Wilson \"Kingpin\" Fisk, causing others from across the Spider-Verse to be inadvertently transported to his dimension.",
     "frames": [
-      "/fIy1Cu81TxgYvBdE66NVU3tvNMy.jpg",
-      "/fa2qAKmKOJaCtSYJmHRc6VgDK1Y.jpg",
-      "/efXPcOMIFyUNiARTdneoyQwOjl6.jpg",
-      "/igfUMYZ63YlnA5ByVkpti4YR5IP.jpg",
-      "/5CYTiYSuvv5aW55aOdNVvDVycaf.jpg",
-      "/1ntePsIqeklfmrQJqZPncCydsqY.jpg"
+      "/etBY8WuVI4JVBf8t44hNU24qoX5.jpg",
+      "/3VUqLlMUXmgXmhqJL8HMwbugQte.jpg",
+      "/chN5CQV6UodZvoEqvJhhgiPHK0o.jpg",
+      "/7VNtymSyizm73WtbZkjPydj5l1s.jpg",
+      "/b9YkKJcW3pPaXgMZu9uoT7v9yRB.jpg",
+      "/7d6EY00g1c39SGZOoCJ5Py9nNth.jpg"
     ]
   },
   {
@@ -1235,12 +1173,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The Star Wars saga continues.",
     "overview": "The epic saga continues as Luke Skywalker, in hopes of defeating the evil Galactic Empire, learns the ways of the Jedi from aging master Yoda. But Darth Vader is more determined than ever to capture Luke. Meanwhile, rebel leader Princess Leia, cocky Han Solo, Chewbacca, and droids C-3PO and R2-D2 are thrown into various stages of capture, betrayal and despair.",
     "frames": [
-      "/f4SviFYqqQKJQIFMLycp7umMQj0.jpg",
-      "/bTt04eoqhfNd9NxBGUJZHu9oSYi.jpg",
-      "/oGZoAchwT92obcutgNHTu9uWTHs.jpg",
-      "/jScpA7ymi8jpSGJ0GRIChfEPBAT.jpg",
-      "/wfN0T17s15CJuJnycoe3qi4PVu8.jpg",
-      "/dMZxEdrWIzUmUoOz2zvmFuutbj7.jpg"
+      "/2AtBDPSgvjYkTw8FZKTPlVzhtaf.jpg",
+      "/a1KeJycJrPtKRV8RwoNDhAuj8TE.jpg",
+      "/64uSBj3JeU6EGgrDRTyzwbfDPvX.jpg",
+      "/jzwAfFvueebloG8xvRH9Smp1ilS.jpg",
+      "/eDqaUwwkB8bTnabnusxK2RcOp6L.jpg",
+      "/aJCtkxLLzkk1pECehVjKHA2lBgw.jpg"
     ]
   },
   {
@@ -1267,12 +1205,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "One ring to rule them all.",
     "overview": "Young hobbit Frodo Baggins, after inheriting a mysterious ring from his uncle Bilbo, must leave his home in order to keep it from falling into the hands of its evil creator. Along the way, a fellowship is formed to protect the ringbearer and make sure that the ring arrives at its final destination: Mt. Doom, the only place where it can be destroyed.",
     "frames": [
-      "/ouFrH8DUc6mxUgcibdypTV5F4cf.jpg",
-      "/f0h8WoXtI6qACQtJgyPb6yDFFB2.jpg",
-      "/rwxo6dfeNXxzvBaMGzIEJiS3H98.jpg",
-      "/9ilNwwf9YzDV2lNJ3JUKGgXvHP7.jpg",
-      "/tdmlSbLl84hfHx635AqHLB8Qh8M.jpg",
-      "/oiwc338EoBgS4sEI2ixAny4KQKg.jpg"
+      "/atAgkg1ILczZQNDSHCTARPMTQOs.jpg",
+      "/4BEE96MnraIINPbYdTKAvyuzXu.jpg",
+      "/6z9mOJMIXyhoNOVZoSuZU3S1vQP.jpg",
+      "/29t27rSQel2Ao8I7OwUkUF66RVB.jpg",
+      "/oiwc338EoBgS4sEI2ixAny4KQKg.jpg",
+      "/ua5EHfleb44L5hfHPs2BPqRAove.jpg"
     ]
   },
   {
@@ -1299,12 +1237,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The journey continues.",
     "overview": "Frodo Baggins and the other members of the Fellowship continue on their sacred quest to destroy the One Ring--but on separate paths. Their destinies lie at two towers--Orthanc Tower in Isengard, where the corrupt wizard Saruman awaits, and Sauron's fortress at Barad-dur, deep within the dark lands of Mordor.",
     "frames": [
-      "/16PLHS9xYtPu0eJKYlCllkhOQER.jpg",
-      "/e4wI3cLQMVzofSjOjSNkpFxVYzk.jpg",
-      "/mGpKF9OyyLuP3tPorNJOspYTbU5.jpg",
-      "/rg5d5iFyB3Vw1zKBYd3hxJGgS8O.jpg",
-      "/tcW9O1VU6bk1mDWvROn9CPPj73p.jpg",
-      "/6G73mNyooWAEQTpckPSnFxFoNmc.jpg"
+      "/v3zspMxp2ltoClTgcz1BGz5AqNP.jpg",
+      "/fb8OavtooAAVaAdLE1s9ZSlkS86.jpg",
+      "/aLCaxlYbouPl22ZNVhLTNKR4mzU.jpg",
+      "/kUdrF5ARZLaklEdAoJesnY8irKF.jpg",
+      "/4UZ9JGRTfeQGQollirsfGjvQkPw.jpg",
+      "/9BUvLUz1GhbNpcyQRyZm1HNqMq4.jpg"
     ]
   },
   {
@@ -1330,12 +1268,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Music was his passion. Survival was his masterpiece.",
     "overview": "The true story of pianist Władysław Szpilman's experiences in Warsaw during the Nazi occupation. When the Jews of the city find themselves forced into a ghetto, Szpilman finds work playing in a café; and when his family is deported in 1942, he stays behind, works for a while as a laborer, and eventually goes into hiding in the ruins of the war-torn city.",
     "frames": [
-      "/uXNWVR5jcHA9tyiNsgzLDRa6JIG.jpg",
-      "/A3WoE8l6ym5Zy4x9Mx2zEotNgl9.jpg",
+      "/pvxV026wap5CZ0hQRwpdnzhJ3nf.jpg",
       "/tzGA6ip6dhYn9apYbGV2U2uRW8e.jpg",
-      "/1Pdtdxec3aCz0fVp86FmjwaAhxx.jpg",
-      "/dVr11o9or7AS8AMPfwjSpEU83iU.jpg",
-      "/jZGNfJUGUj5U1bbr3GYrmKBnrIF.jpg"
+      "/43qoaxPabvW2cDDI60Dam6mHV0K.jpg",
+      "/giYF7lVVxDrMTsHCPVleLotmEfL.jpg",
+      "/1XqIhsqnAozznGhxlGdI0GPcCro.jpg",
+      "/dVr11o9or7AS8AMPfwjSpEU83iU.jpg"
     ]
   },
   {
@@ -1362,11 +1300,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Do your best, he said…",
     "overview": "Under the direction of a ruthless instructor, a talented young drummer begins to pursue perfection at any cost, even his humanity.",
     "frames": [
-      "/gin2Zg2THaFBoTOxy77QHz5ls3b.jpg",
-      "/nnUVThqr2jBOlTQeEUT9P7c5GzN.jpg",
-      "/9pdWVUCGVzgDjoAfm8ihcAGNauA.jpg",
-      "/wRWweY3KKBULAClFKCy2XEMNMYV.jpg",
-      "/hFCPCPF2F9KY6CkCqDBzjHpG2J8.jpg",
+      "/oECBxXUZszeAfIdgO2MNdRs2e73.jpg",
+      "/uuM4j0bj401ovXz76KjzAnOo8SW.jpg",
+      "/nv1lnF9vhkWXqOz2IzVUseJZAtC.jpg",
+      "/snZDM1Nsu4ONKNHpf8TsRsDHM0a.jpg",
+      "/nkmtCLg6afpSfdQcyNs2jemfSLR.jpg",
       "/fRGxZuo7jJUWQsVg9PREb98Aclp.jpg"
     ]
   },
@@ -1392,12 +1330,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Some legacies must end.",
     "overview": "Derek Vineyard is paroled after serving 3 years in prison for killing two African-American men. Through his brother, Danny Vineyard's narration, we learn that before going to prison, Derek was a skinhead and the leader of a violent white supremacist gang that committed acts of racial crime throughout L.A. and his actions greatly influenced Danny. Reformed and fresh out of prison, Derek severs contact with the gang and becomes determined to keep Danny from going down the same violent path as he did.",
     "frames": [
-      "/vpmYIsZx4i4taKiUbuhI7qvZGiL.jpg",
-      "/x6ucyou1anzDcsK7MoiHkamI2TR.jpg",
-      "/lXDH81haXhZvwTbCCcfQLRRXO6K.jpg",
-      "/1C3mpvfLJhHOVcvl1vXkNTmXdAH.jpg",
-      "/oaOJSuaXD1c2JLRfoA6Sn2pAblU.jpg",
-      "/6qHI1IYj7QlLSCwHRzkL62X175s.jpg"
+      "/xpK1qecIMMPIpGZgP4Qi8VeS6DE.jpg",
+      "/9EaO5XjI6j6qRdKbUHddwPe0eNJ.jpg",
+      "/uxc9gJAvcIcMJEgzA8o3uzvn23F.jpg",
+      "/rJXhcj2KrDx1tZ3zHgoXCulFSzr.jpg",
+      "/mBdZ5rOB8RxluHwBfS64ZzaVanB.jpg",
+      "/o4Thn9ooTZAZOYrlbWgVB20weSf.jpg"
     ]
   },
   {
@@ -1423,12 +1361,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "This is the end...",
     "overview": "At the height of the Vietnam war, Captain Benjamin Willard is sent on a dangerous mission that, officially, \"does not exist, nor will it ever exist.\" His goal is to locate - and eliminate - a mysterious Green Beret Colonel named Walter Kurtz, who has been leading his personal army on illegal guerrilla missions into enemy territory.",
     "frames": [
-      "/63IqxP1FKt0gpoK0EQOFVH4GRvR.jpg",
-      "/zshEHLhwFSDnkyBHWu6s58ceouA.jpg",
-      "/gxS1n5HKVCm71zzAI1wtNQCom7r.jpg",
-      "/34jbP6aDFiLG23kkORWVgjDy5Vs.jpg",
-      "/tOLCIhFAySNT46zfxZJKdYg6c06.jpg",
-      "/49fzLedFVKgGgFChLMuulDJBY1c.jpg"
+      "/qiazJStHANIAkXLKsxTcbScEU4O.jpg",
+      "/rP3j9zXhC2AYUiS1tovGBdhxeZ5.jpg",
+      "/3B2HaX1EZePvf0niHyvtw3uble5.jpg",
+      "/e1j2Uih09ncouab2Bzxy67kmZj2.jpg",
+      "/49fzLedFVKgGgFChLMuulDJBY1c.jpg",
+      "/9Qs9oyn4iE8QtQjGZ0Hp2WyYNXT.jpg"
     ]
   },
   {
@@ -1455,11 +1393,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "He was never in time for his classes... He wasn't in time for his dinner... Then one day... he wasn't in his time at all.",
     "overview": "Eighties teenager Marty McFly is accidentally sent back in time to 1955, inadvertently disrupting his parents' first meeting and attracting his mother's romantic interest. Marty must repair the damage to history by rekindling his parents' romance and - with the help of his eccentric inventor friend Doc Brown - return to 1985.",
     "frames": [
-      "/euynA9WJRm4yKrZQslRwouJJIY1.jpg",
-      "/rVpmcdOfKfilJEu3Kl6eHJQ39vd.jpg",
-      "/d313wqiZ5XUlZJRergjm9eqs3bQ.jpg",
-      "/viYXIzNaZfXVYjeWmFkSiVfAW7m.jpg",
-      "/rwIwP6WsefQW0B3d4DVqxUs3L20.jpg",
+      "/gw7XRFlfXixbiZbA9WD5GOl2GVS.jpg",
+      "/lqfVLFVXcHE2dovbHtRts7IjXdQ.jpg",
+      "/zVInUL4YpLrRH0h8FzH4zFpcF3.jpg",
+      "/eaBNnoESSr46tECZIsZe9JCJzEK.jpg",
+      "/mh2f2iwNgoGwDzjmjspszW6oesU.jpg",
       "/5bzPWQ2dFUl2aZKkp7ILJVVkRed.jpg"
     ]
   },
@@ -1485,12 +1423,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "He was their inspiration. He made their lives extraordinary.",
     "overview": "At an elite, old-fashioned boarding school in New England, a passionate English teacher inspires his students to rebel against convention and seize the potential of every day, courting the disdain of the stern headmaster.",
     "frames": [
-      "/A0uDOgjn1P7jvgRsPKOaLd4qKgq.jpg",
-      "/xnDOvSanazSJ1MQP8VIBlFszAmi.jpg",
+      "/a09JhRO0mO2RNjfv5d77s9Gayqx.jpg",
+      "/hApYoNu0vQBciRnGXAlOmrlc0aG.jpg",
       "/o7dAAgbi9qxuIzU5T9MIonPBGoJ.jpg",
       "/mefznk6Gfwzy0G9Lt3olVofNbv9.jpg",
-      "/5hYntCZGK8rl2VY8TRPH9Txu44G.jpg",
-      "/IaglqOQN25OWcOVioWuiPw6FVq.jpg"
+      "/lFIXZpwwlF9hg8NM3RazaIJDuaj.jpg",
+      "/hpzQHv8cA7j2Dn2CphOFYmllXzj.jpg"
     ]
   },
   {
@@ -1517,12 +1455,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "If you want the job done right, hire a professional.",
     "overview": "Léon, the top hit man in New York, has earned a rep as an effective \"cleaner\". But when his next-door neighbors are wiped out by a loose-cannon DEA agent, he becomes the unwilling custodian of 12-year-old Mathilda. Before long, Mathilda's thoughts turn to revenge, and she considers following in Léon's footsteps.",
     "frames": [
-      "/o3lF7VcNfdv0CFiqt9MU8xtX7D2.jpg",
-      "/mYDvJlVeoZjhX0xCrTtFALNWuWr.jpg",
-      "/dwoZZMuZd2jB6ZRzMXAwad6YcNM.jpg",
-      "/rtUOro8dRC0vS1EBwFoI7PuvfHI.jpg",
-      "/i3CiRNzmQMOqYpAPNNf2Io6ijqW.jpg",
-      "/fj0hwDJEOOHllRim2BMt5L7tbjf.jpg"
+      "/pvUnJXOtF5RxPBOOkS1r7NVa71c.jpg",
+      "/zlT047PDh8Ujfp9nUc4vWYSCsEQ.jpg",
+      "/oc3wyd4Tv4aKqYkS2x5Jv6F3lqo.jpg",
+      "/tNumZZtn6ffJvt0xllcIYlFfYaI.jpg",
+      "/1UWszQdHI7j3zBqA4kx8Lk60Di8.jpg",
+      "/jRJrQ72VLyEnVsvwfep8Xjlvu8c.jpg"
     ]
   },
   {
@@ -1549,12 +1487,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The fate of the world rests on the courage of one warrior.",
     "overview": "Ashitaka, a prince of the disappearing Emishi people, is cursed by a demonized boar god and must journey to the west to find a cure. Along the way, he encounters San, a young human woman fighting to protect the forest, and Lady Eboshi, who is trying to destroy it. Ashitaka must find a way to bring balance to this conflict.",
     "frames": [
-      "/66jW0kDHy3fB81NXlTvTXzrn99L.jpg",
-      "/uaUUFKCxO46KP6YZBGBEHEXSlWm.jpg",
-      "/86sva9446EqLrRhPOOtYHUfolB9.jpg",
-      "/jbL1iFvsX10zJLCL1Njou74XqXa.jpg",
+      "/cwnPwEhQ94Q5f1QJTSLBeD8ob3J.jpg",
+      "/jHHeG5wBIlY2fRXwwo2bHfvdN20.jpg",
+      "/1O8JwTFtURrc38HeeLXItgtRMUd.jpg",
       "/vD9fft9411clsGi0zM6HGabZcey.jpg",
-      "/gl0jzn4BupSbL2qMVeqrjKkF9Js.jpg"
+      "/wPwLLtHmtXS8JQ7wX9CeLoeW69Y.jpg",
+      "/mpNd0rTVrp6vHJ9Je7wSa3zC8JS.jpg"
     ]
   },
   {
@@ -1582,12 +1520,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It's how you wear the mask that matters.",
     "overview": "After reuniting with Gwen Stacy, Brooklyn’s full-time, friendly neighborhood Spider-Man is catapulted across the Multiverse, where he encounters the Spider Society, a team of Spider-People charged with protecting the Multiverse's very existence. But when the heroes clash on how to handle a new threat, Miles finds himself pitted against the other Spiders and must set out on his own to save those he loves most.",
     "frames": [
-      "/hHuKXHiwMTEf9yzYsJVQlJupxKW.jpg",
-      "/8wqJec63b5CQImLiGLVANsbyTLd.jpg",
-      "/hMnp7Bi94Fez0l2WV9Z2xrDhceX.jpg",
-      "/jS4z8y70ESrZwmFJubqYuceFtnX.jpg",
-      "/dqE1EAO3VacCHe2u8NJqsScbcYD.jpg",
-      "/kVd3a9YeLGkoeR50jGEXM6EqseS.jpg"
+      "/uL2f2YbFZLrWA5WGiapAr34js0M.jpg",
+      "/u7dYiNhWkJtzCQQseZH3KZS7VVS.jpg",
+      "/bn31E14V4OlaQyqZ61CTeKJjryH.jpg",
+      "/v7q8FGi9j07nbjK6gGo0JqMdgmB.jpg",
+      "/tQ0GkuDFx9uswFlFdwlf6U5UcNx.jpg",
+      "/4HodYYKEIsGOdinkGi2Ucz6X9i0.jpg"
     ]
   },
   {
@@ -1613,11 +1551,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Sometimes you have to reach into someone else's world to find out what's missing in your own.",
     "overview": "A true story of two men who should never have met – a quadriplegic aristocrat who was injured in a paragliding accident and a young man from the projects.",
     "frames": [
-      "/xAGBjVN6FCxBaEMQH4Rg2IAS7R3.jpg",
-      "/4QuehtQDFSZmoiulFMAYKdYuIZB.jpg",
-      "/fOHMPh0OzlzwcQb33Z3nCiv9xnA.jpg",
-      "/fTdhRmRCmlgDa3hYfEwBSoyOyDt.jpg",
-      "/7r0sD6zslAAm86zwWXqw6teaibG.jpg",
+      "/utw4mp6OX3IZZdVL76UiQH8R3Tb.jpg",
+      "/gRdCTw2NSpuEoER3ej5ahpVAlH.jpg",
+      "/iLIf4wl1ajYW5psHglNioVOyw5C.jpg",
+      "/5bbMoulhnx3ArCUKUXISbKFV3B0.jpg",
+      "/bGksau9GGu0uJ8DJQ8DYc9JW5LM.jpg",
       "/q6OGlZ1KMEb14AC8KbPCxyNOal6.jpg"
     ]
   },
@@ -1645,11 +1583,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The greatest adventure of all is finding our place in the Circle of Life.",
     "overview": "Young lion prince Simba, eager to one day become king of the Pride Lands, grows up under the watchful eye of his father Mufasa; all the while his villainous uncle Scar conspires to take the throne for himself. Amid betrayal and tragedy, Simba must confront his past and find his rightful place in the Circle of Life.",
     "frames": [
-      "/psdpjyE3OLWIP9AZTT9eL9EJJkM.jpg",
-      "/VPgcjdumWukoSS4kTJUUZ8Y9SK.jpg",
-      "/v9VJV6C755vmBXnNlCByeVd4E4X.jpg",
-      "/gB6wpMvHkFshldO2t0wYPqddusa.jpg",
-      "/i6TDfYzq2OEl3rDPVzUl83nloVc.jpg",
+      "/6pCC2fgdrZZu6kigeFNgtEPgVtP.jpg",
+      "/wn0xIQhUdihDiqTdVmWzvmloXVA.jpg",
+      "/2LapO8PPs5skLyBYMlUfR4JIssM.jpg",
+      "/qYzO0XkIOWjrjUkYOOcAuPkAJRZ.jpg",
+      "/6GF9uJs7AnbcJvyfoZyjZv063Oo.jpg",
       "/wXsQvli6tWqja51pYxXNG1LFIGV.jpg"
     ]
   },
@@ -1676,12 +1614,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Believe the unbelievable.",
     "overview": "Set in the 22nd century, The Matrix tells the story of a computer hacker who joins a group of underground insurgents fighting the vast and powerful computers who now rule the earth.",
     "frames": [
-      "/TDH9dG9r6cK8G5aJJIV5fRD5EA.jpg",
-      "/ftuQusODC0fQQu25jpOlp3SBuxq.jpg",
-      "/tqUDu1kYPTGguhIpN55mb1i1ly5.jpg",
-      "/sAkJHcqcEt2JA6mVbta5CF2JeIo.jpg",
-      "/m8jVrOxO0ZpGXRgauzfqSGoJGc0.jpg",
-      "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg"
+      "/y3le2LY1gbR9pp7amjTE4icaXn5.jpg",
+      "/lcKRAKWlnoQjxNtA1HK8tlh0aZ4.jpg",
+      "/gr9FgfgvkMmbKmjsz9SkAOn8Igu.jpg",
+      "/nPbI1lVsNEyX4cqspCXkvL4qsas.jpg",
+      "/tlm8UkiQsitc8rSuIAscQDCnP8d.jpg",
+      "/icmmSD4vTTDKOq2vvdulafOGw93.jpg"
     ]
   },
   {
@@ -1709,11 +1647,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Clarice Starling is a top student at the FBI's training academy.  Jack Crawford wants Clarice to interview Dr. Hannibal Lecter, a brilliant psychiatrist who is also a violent psychopath, serving life behind bars for various acts of murder and cannibalism.  Crawford believes that Lecter may have insight into a case and that Starling, as an attractive young woman, may be just the bait to draw him out.",
     "frames": [
       "/mg30dSzfJXGFVTZSXpp774lPkSU.jpg",
-      "/uZrP3WFtOHHLiSWbmGYiKYQSgfK.jpg",
-      "/nU3Kg0woSVP4dF24kBcTTZD3DSk.jpg",
+      "/pHbPEmR6yrG4UIaAockDuUwkDzo.jpg",
+      "/b6vfaRVbLERXHEM4uwfqCpLKtAd.jpg",
+      "/omRwB6Lx4LpN5NTzxe1AJfmvsHL.jpg",
       "/lO45dvI9kxJme9nlEegFTir9oTP.jpg",
-      "/4M8dqAQjQvgS8LLZkqrwLU13T2Y.jpg",
-      "/mbOx1wxMLikzwWUO9TKAcFIy6op.jpg"
+      "/aYcnDyLMnpKce1FOYUpZrXtgUye.jpg"
     ]
   },
   {
@@ -1739,12 +1677,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Being the adventures of a young man whose principal interests are rape, ultra-violence and Beethoven.",
     "overview": "In a near-future Britain, young Alexander DeLarge and his pals get their kicks beating and raping anyone they please. When not destroying the lives of others, Alex swoons to the music of Beethoven. The state, eager to crack down on juvenile crime, gives an incarcerated Alex the option to undergo an invasive procedure that'll rob him of all personal agency. In a time when conscience is a commodity, can Alex change his tune?",
     "frames": [
-      "/uQ4Nf3RyihzvJHOuwjeEtjJFErg.jpg",
-      "/pc4ME84nLq1dZBryxz6s0CmiUKk.jpg",
-      "/knEyIdlZlLIybro8RUVE0kTEyLX.jpg",
-      "/6OYgy7n9Iadoq83g9jb2Wdid0dw.jpg",
-      "/9L1iTXyptMR0OSRwJpGc3Ey8yb2.jpg",
-      "/nLFxvLokHe3bQmrmAfljIfax2jQ.jpg"
+      "/bNDQjpQtQGEHVUUCuVe3ccd6Aa0.jpg",
+      "/nXrGiZlZhRAB5o7rG2AQ1QLcIHf.jpg",
+      "/skyOmzgiSSH8pggZxkbZ5KhKPCz.jpg",
+      "/lFj5OAfe5T0ZbaTeawEsWifWXGj.jpg",
+      "/rCzIkO93CHULAUbRyGShvActNua.jpg",
+      "/a6r0DnAQdnR0758H1V4tbhHdB8Q.jpg"
     ]
   },
   {
@@ -1770,12 +1708,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "In space no one can hear you scream.",
     "overview": "During its return to the earth, commercial spaceship Nostromo intercepts a distress signal from a distant planet. When a three-member team of the crew discovers a chamber containing thousands of eggs on the planet, a creature inside one of the eggs attacks an explorer. The entire crew is unaware of the impending nightmare set to descend upon them when the alien parasite planted inside its unfortunate host is birthed.",
     "frames": [
-      "/dklZcBCu0PnNScTQHFeXBGGioQB.jpg",
-      "/8dUtZqpDp8Lt55JkCChStJaoL22.jpg",
+      "/uj1KQYLP4FoD5eSmLPzVxXXU9lK.jpg",
+      "/amMOe2P9mhZh8oRQNanogFbvOZo.jpg",
       "/wMCF6odTSZ5Y321KVQVjvhsi9TA.jpg",
-      "/gZbcm1ADEXuxs1TsBVOBdk4heGI.jpg",
-      "/anWr5l2ESTk4ClLMDZy8ttOPKR.jpg",
-      "/caZ3wsV1sQN8eZvZdXUZiHQcoib.jpg"
+      "/zUYFrUA9s9kmE8ngDm3NsVRXtn7.jpg",
+      "/8ZPNCAS7Yp4dFUArwfbQCWoRHA9.jpg",
+      "/AmR3JG1VQVxU8TfAvljUhfSFUOx.jpg"
     ]
   },
   {
@@ -1802,11 +1740,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Avenge the fallen.",
     "overview": "After the devastating events of Avengers: Infinity War, the universe is in ruins due to the efforts of the Mad Titan, Thanos. With the help of remaining allies, the Avengers must assemble once more in order to undo Thanos' actions and restore order to the universe once and for all, no matter what consequences may be in store.",
     "frames": [
-      "/3uE2GVshybzB0KN0DSsBS9aTTXv.jpg",
-      "/iN3oNMbya305a3poxzjW7AaxWxY.jpg",
-      "/tReQTJy0R0RxdjAk74VXzeFgls9.jpg",
-      "/r81xcgdw3aOnZjrqLDVo49D8qm5.jpg",
-      "/5NhA9MYPwMtmd4RcCHkgyfOG9Lg.jpg",
+      "/xtNht2v3A05Zrs6IJDOxVJyWoYN.jpg",
+      "/yIyT9WhnbNuTllowu2hgGvDqEFD.jpg",
+      "/afgXc5MZhDvTkECxnunhndI0NUZ.jpg",
+      "/9RUDLvjbe4SxyfWjCNjrx1kjeA8.jpg",
+      "/eqTCA7NkaUVu1nOIS0o2yTWcMfX.jpg",
       "/7RyHsO4yDXtBv1zUU3mTpHeQ0d5.jpg"
     ]
   },
@@ -1834,12 +1772,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An entire universe. Once and for all.",
     "overview": "As the Avengers and their allies have continued to protect the world from threats too large for any one hero to handle, a new danger has emerged from the cosmic shadows: Thanos. A despot of intergalactic infamy, his goal is to collect all six Infinity Stones, artifacts of unimaginable power, and use them to inflict his twisted will on all of reality. Everything the Avengers have fought for has led up to this moment - the fate of Earth and existence itself has never been more uncertain.",
     "frames": [
-      "/drJrTE32iST3DXjrp4CfNdT3Uhe.jpg",
-      "/tY1RzvSP7bKVpau9lbb9zlesUaI.jpg",
-      "/jZo0wpRHx82WN0dRzWTbTk8ndP5.jpg",
-      "/8elF67OY4skxC4MfdxxBGd2NemM.jpg",
+      "/zMNmFrmVw0IHEa5UJpIwf7q9xBd.jpg",
+      "/A74tDcI8fo68LanC9ov2PSBojGT.jpg",
+      "/tvM067UvIvRqGruzsZ3B2yYYR50.jpg",
+      "/odmM7QtethJokb33LNTjZKxglvY.jpg",
       "/z75yuSzbDUPyx380GPa0g6IdaOn.jpg",
-      "/mDfJG3LC3Dqb67AZ52x3Z0jU0uB.jpg"
+      "/bOGkgRGdhrBYJSLpXaxhXVstddV.jpg"
     ]
   },
   {
@@ -1867,12 +1805,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The celebration of a lifetime.",
     "overview": "Despite his family’s baffling generations-old ban on music, Miguel dreams of becoming an accomplished musician like his idol, Ernesto de la Cruz. Desperate to prove his talent, Miguel finds himself in the stunning and colorful Land of the Dead following a mysterious chain of events. Along the way, he meets charming trickster Hector, and together, they set off on an extraordinary journey to unlock the real story behind Miguel's family history.",
     "frames": [
-      "/mvL8JXc8gq27Nn29eNNqTh3F9af.jpg",
-      "/6ch101aK2f2a1jY2dByhAli47Kf.jpg",
-      "/dV8LIdxBHZHfBQp1uMuzF749qiK.jpg",
-      "/u018zss2PloCHqXgrvKMsDDuVDd.jpg",
-      "/askg3SMvhqEl4OL52YuvdtY40Yb.jpg",
-      "/g7CHF8gTLGooTbP4GznIGwaqAGL.jpg"
+      "/hEn1BZCetp0f2HJBvYGFDLWM8pC.jpg",
+      "/ekGnVD29gg7T4BMbTiBur6pO4Gz.jpg",
+      "/hWGEEuYpT0KnjEVRUYmNijjQ6G8.jpg",
+      "/pDUsu66LTidULuDQWlj3yOquNtL.jpg",
+      "/bnkf3C2ZMF6i7MLOemWqEHDMqfh.jpg",
+      "/askg3SMvhqEl4OL52YuvdtY40Yb.jpg"
     ]
   },
   {
@@ -1898,12 +1836,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Life, liberty, and the pursuit of vengeance.",
     "overview": "With the help of a German bounty hunter, a freed slave sets out to rescue his wife from a brutal Mississippi plantation owner.",
     "frames": [
-      "/aVu1yeAJHBoW40JVLZbN9MAFRzw.jpg",
-      "/sYJ4AuH6BZs0fDqWCdQ4phCoxxt.jpg",
-      "/eixoTTn61yrf2uvq1DogefJGCrz.jpg",
-      "/t0zV2ha2ldCPtGYhQecMlHFDl7h.jpg",
-      "/gh3cS7fBeTLZFxoKRoGNsdFYDxY.jpg",
-      "/5ygng1tW8r2hLqPl3hjNsuG0NwC.jpg"
+      "/qm0xjeO1QjOrKtsXNXUwG4mUsLX.jpg",
+      "/xYOkwpPAfy64vpAkL4yGakRGymi.jpg",
+      "/19RgT7l0qFuFberqA0xNioltY8N.jpg",
+      "/yLr2uJ6SYXlbzADsfzg01uD7Asu.jpg",
+      "/s4cJQaj40SwMifUrrdtdOJsjnRO.jpg",
+      "/2oZklIzUbvZXXzIFzv7Hi68d6xf.jpg"
     ]
   },
   {
@@ -1930,12 +1868,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "What we do in life echoes in eternity.",
     "overview": "After the death of Emperor Marcus Aurelius, his devious son takes power and demotes Maximus, one of Rome's most capable generals who Marcus preferred. Eventually, Maximus is forced to become a gladiator and battle to the death against other men for the amusement of paying audiences.",
     "frames": [
-      "/gkEEW2jbWZe2i1gHk9IHXi557hr.jpg",
-      "/xldsT1v5GClike9FcCqNRS8ijn4.jpg",
-      "/cXL2XiVSe6zHWbdxDmakY32Nmer.jpg",
-      "/yJI7Xpk0JRw7vhHbBdqPQBJYFPm.jpg",
-      "/1g2Oribnq9fLTBqLQtLIhA7X1Zy.jpg",
-      "/Ar7QuJ7sJEiC0oP3I8fKBKIQD9u.jpg"
+      "/t98T0uhwMdR51KqEvwlIE6GDSCb.jpg",
+      "/d4mQ4WwJhHkyox9YTZXUlPC1xfg.jpg",
+      "/ap6srVRB9g1jwrGsBowfvIceDSM.jpg",
+      "/7PBXKqTDCsSZb3GATn94DfXoAGx.jpg",
+      "/u1CC2m4owXbAbQfGzXNMcbnUv6G.jpg",
+      "/hND7xAaxxBgaIspp9iMsaEXOSTz.jpg"
     ]
   },
   {
@@ -1960,12 +1898,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Some people can never believe in themselves, until someone believes in them.",
     "overview": "Will Hunting is a headstrong, working-class genius who is failing the lessons of life. After one too many run-ins with the law, Will's last chance is a psychology professor, who might be the only man who can reach him.",
     "frames": [
-      "/uuHeAR61QqGjJjFGnk36J1YwtNa.jpg",
-      "/3qkfrgpXNHdhB4sDGCpLxuS0JYP.jpg",
-      "/u6pEFP5ZwzMfQc36LrqLk0ulPJC.jpg",
-      "/oLsts7ct0NVkdYpx5rZg10MG6zh.jpg",
-      "/h7HuX5a5d6L9XyDyUlgAgXuLrCl.jpg",
-      "/zPDyunXChoj3rsqjIiOAwSmC02W.jpg"
+      "/nsqru5pTljlqmfLj7UUEkWH5xcF.jpg",
+      "/3AmbLVgT7FFayy11nSt8scQFdpK.jpg",
+      "/oPzj6AKTR2wJyayChoSLiSz9H1x.jpg",
+      "/nBemIVLygG18e0DLRWo5YadqdWB.jpg",
+      "/cqegECy0S1NbwtQwlYKcF6GMe87.jpg",
+      "/bpV8wn48s82au37QyUJ51S7X2Vf.jpg"
     ]
   },
   {
@@ -1992,12 +1930,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Inspired by a True Friendship.",
     "overview": "Tony Lip, a bouncer in 1962, is hired to drive pianist Don Shirley on a tour through the Deep South in the days when African Americans, forced to find alternate accommodations and services due to segregation laws below the Mason-Dixon Line, relied on a guide called The Negro Motorist Green Book.",
     "frames": [
-      "/8xFgl3dJEpveipfNWxRTSQEoN33.jpg",
+      "/5uupyAix9HY9ZnP6bilifjlcizO.jpg",
+      "/jIvpDFmc9fNEoOHpBYQluxb5yNp.jpg",
       "/rXwTbXXcVdcpCy3lmmU6Wy6Gr59.jpg",
       "/txKNdZ1Q2GYEZcoXkcDKlRBFdTe.jpg",
-      "/bVzedVBgUT5NucgBHaUfOzifMKl.jpg",
       "/bjhyMfL5yLtliwBuheRD4HOI78G.jpg",
-      "/5En0fmDagt3Pk8d7P3uTwfeQceg.jpg"
+      "/78PjwaykLY2QqhMfWRDvmfbC6EV.jpg"
     ]
   },
   {
@@ -2024,12 +1962,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "One of the greatest heroes in American history never fired a bullet.",
     "overview": "WWII American Army Medic Desmond T. Doss, who served during the Battle of Okinawa, refuses to kill people and becomes the first Conscientious Objector in American history to receive the Congressional Medal of Honor.",
     "frames": [
-      "/y33dZFZtZV7qG5f4vAvROc697K7.jpg",
-      "/lSqMPi6bDWvjGPtWkcxST1iwl7j.jpg",
-      "/sGRUKHSE9bmKIV2HxgvU6oaczwL.jpg",
-      "/w5GX5pzLG1qXLzCWuZapZFj4b7K.jpg",
-      "/cGmM5fp19o1wjq83MHqcFuGwIxX.jpg",
-      "/vDKRMZGFTKP9nQolzeSB1rB1w6p.jpg"
+      "/9NJin2dciX81bjRL0fIuwTExG1E.jpg",
+      "/uBn6NO1aU6L0k2iI1PiOreVTrFx.jpg",
+      "/hA3wfDxHmTvzkWEFXKqXqrGBXqC.jpg",
+      "/yQIBS8B9l2qXoPoPtxSXvH7CfoT.jpg",
+      "/rshlQ6LfPRSWFhpGL4s5ZkIPR51.jpg",
+      "/6O0lsCK90jZCyPvyYSt8Szzlnd6.jpg"
     ]
   },
   {
@@ -2056,12 +1994,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Once upon a time in Nazi occupied France...",
     "overview": "In Nazi-occupied France during World War II, a group of Jewish-American soldiers known as \"The Basterds\" are chosen specifically to spread fear throughout the Third Reich by scalping and brutally killing Nazis. The Basterds, lead by Lt. Aldo Raine soon cross paths with a French-Jewish teenage girl who runs a movie theater in Paris which is targeted by the soldiers.",
     "frames": [
-      "/x8K90TQSuJ7vPh5gIa8FeggeL18.jpg",
-      "/yjjObRZC5T38PhdUF8rt7ezNXgT.jpg",
-      "/4UEy2co7A5i6iPSTT7wEtkS4LLF.jpg",
-      "/euyNvGjxi9JO621XnsEhdgM3U3v.jpg",
-      "/43508X0evUDHMoyMSecsLxcy7RK.jpg",
-      "/hwNtEmmugU5Yd7hpfprNWI0DGIn.jpg"
+      "/93TcjhnPpJEVk7wEz6gR3aLR8H5.jpg",
+      "/idynOqKtTaAZy0vmtziro9CMC8G.jpg",
+      "/2v0rKccg3s7vWN1ac2YX9j2uUTl.jpg",
+      "/hwNtEmmugU5Yd7hpfprNWI0DGIn.jpg",
+      "/bPnPsyo09tLRnTOb7AlsBsgnbhP.jpg",
+      "/1Jpkm9qZcsT0mSyVXgs4VlGjPNI.jpg"
     ]
   },
   {
@@ -2087,12 +2025,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Some memories are best forgotten.",
     "overview": "Leonard Shelby is tracking down the man who raped and murdered his wife. The difficulty of locating his wife's killer, however, is compounded by the fact that he suffers from a rare, untreatable form of short-term memory loss. Although he can recall details of life before his accident, Leonard cannot remember what happened fifteen minutes ago, where he's going, or why.",
     "frames": [
-      "/i3y3cpQIzeetDjIcUVcMOfR6lO6.jpg",
-      "/t4o41cbCiBvB5uMTpzBbdKGQAaL.jpg",
-      "/k5EgZwbA6xdq7XGbIzhJQQtauJ2.jpg",
-      "/xdLtHTPj0zKSqVI2M9UaRm3KGV9.jpg",
-      "/epS46vDl8yeLDReM1LDFJJLj2yL.jpg",
-      "/7Wev9JMo6R5XAfz2KDvXb7oPMmy.jpg"
+      "/6QWLbvBllqz2hgU3KwC41eStt3n.jpg",
+      "/h9zQtXZkZb84dj4LnsIClRghnH4.jpg",
+      "/3bRDtzaP8JFYckwukD3Zp3nNsva.jpg",
+      "/qGG1N5nVzeXh46FDaF4iLGzTOpj.jpg",
+      "/8pwCb7amg8Tvr9FZZJGt7J4OwLV.jpg",
+      "/v4u9FnSOpLEjPIAhbKClM45LJoJ.jpg"
     ]
   },
   {
@@ -2118,12 +2056,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "15 years of imprisonment, five days of vengeance.",
     "overview": "With no clue how he came to be imprisoned, drugged and tortured for 15 years, a desperate man seeks revenge on his captors.",
     "frames": [
-      "/ikxAw718zePSxVzTj0P7HsqIKTe.jpg",
-      "/pPC4DLRyshQTjch4JMrbSOcXgCU.jpg",
-      "/5EAHTGf3JWAA7mY05XSPXUXPkyT.jpg",
-      "/ofMvTRG6W6mNOiEBGBSBjyTgTwU.jpg",
-      "/3Q6I3r7iBNsvbFzNiprb11LNoZG.jpg",
-      "/rwf5SUTiEsmfkXAgy15R0UtJUtv.jpg"
+      "/zhlKOqfzJtpwzZoJQ5sUVIDlIyk.jpg",
+      "/l74cSTq4fnqTR2RmyO7tJ0r684o.jpg",
+      "/e5Ne6dVafi3GDzK8jfWNwYJZ9nO.jpg",
+      "/hlY3opi1i5VShmpcrgpLks7UqnY.jpg",
+      "/67xBWuwPVRi3AqrcFlC50sQN6A2.jpg",
+      "/sdwjQEM869JFwMytTmvr6ggvaUl.jpg"
     ]
   },
   {
@@ -2152,12 +2090,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Say hola to his little friends.",
     "overview": "Puss in Boots discovers that his passion for adventure has taken its toll: He has burned through eight of his nine lives, leaving him with only one life left. Puss sets out on an epic journey to find the mythical Last Wish and restore his nine lives.",
     "frames": [
-      "/rW2BcWdnpviEBmE3plHBJtlBZ1b.jpg",
-      "/jH0baEVyIoAcEpH17Qk7WKCy7ng.jpg",
-      "/erkJ7OxJWFdLBOcn2MvIdhTLHTu.jpg",
+      "/7zmu3iPGzeBpGFrhvft2Aa2TAGT.jpg",
+      "/iwObYxqnCEG4WfoxDwBDRRwOR2q.jpg",
+      "/4D3UkGsoS1Kuq3mUdNkFfntkR1i.jpg",
       "/x1g8s2y7hndNnsayVXkhzxWoSFI.jpg",
-      "/iyxvxEQIfQjzJJTfszZxmH5UV35.jpg",
-      "/5BvXyvZYSLmlfZZSAKcj9UD8yl9.jpg"
+      "/pdrlEaknhta2wvE2dcD8XDEbAI4.jpg",
+      "/tGwO4xcBjhXC0p5qlkw37TrH6S6.jpg"
     ]
   },
   {
@@ -2184,12 +2122,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The mission is a man.",
     "overview": "As U.S. troops storm the beaches of Normandy, three brothers lie dead on the battlefield, with a fourth trapped behind enemy lines. Ranger captain John Miller and seven men are tasked with penetrating German-held territory and bringing the boy home.",
     "frames": [
-      "/j9u074CJXK7qJeXTti1B0sYVyKS.jpg",
-      "/st6CfruGWZR3IRnwVmXA6Z8ZvFu.jpg",
-      "/9oguZXYDMH6X4LOOLiXFf1EtQzP.jpg",
-      "/pwgLs6Nx3mk4AENQOijgPl5eMHp.jpg",
-      "/dXR2MqPWZNgB0qNNJPNCpfw51U.jpg",
-      "/rW2xRFlJRbTnBJlQTSjQmjevIwb.jpg"
+      "/y433MouVAnR2opSA4yXA6ztOhWH.jpg",
+      "/gn7IB2DU3bNFZr71nkmBjMr6Jxw.jpg",
+      "/5c7V7FPiDHHAh9yN5wL43KzS5fm.jpg",
+      "/jo75BQi7iIogZASnXNkMVQy2ye1.jpg",
+      "/hjQp148VjWF4KjzhsD90OCMr11h.jpg",
+      "/pNHv41t8Im8wlwgdzMK9I8WpuBZ.jpg"
     ]
   },
   {
@@ -2216,12 +2154,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "He loved the American Dream. With a vengeance.",
     "overview": "After getting a green card in exchange for assassinating a Cuban government official, Tony Montana stakes a claim on the drug trade in Miami. Viciously murdering anyone who stands in his way, Tony eventually becomes the biggest drug lord in the state, controlling nearly all the cocaine that comes through Miami. But increased pressure from the police, wars with Colombian drug cartels and his own drug-fueled paranoia serve to fuel the flames of his eventual downfall.",
     "frames": [
-      "/4PC9Mt93atZCf7Hamsn50b820uc.jpg",
-      "/wHReP5uscI7daXyGJrweQjxHR4M.jpg",
-      "/7wJWU6lrNWIfxd5W7Eu9Rmb2s5L.jpg",
-      "/ulrM7v3rmcOE0WYWF48vResVemc.jpg",
-      "/bLS0s1r5jpQ07Bvq8bfRx2rQdeQ.jpg",
-      "/sctvs9cUwJD15qlTlrsh2BXsK75.jpg"
+      "/az8n4ty1MklkjIX23I0qig4BZcp.jpg",
+      "/7dAGeHU2p9r0sBNUGr495xZ0i1l.jpg",
+      "/h7qsa7LeZyhi3PofoXa5LtcmKVY.jpg",
+      "/AlAUa5zFyCMdsTBPwCoBegHMY52.jpg",
+      "/w2E0iKujBxiUtVH3u71sgzUPdyB.jpg",
+      "/cCvp5Sni75agCtyJkNOMapORUQV.jpg"
     ]
   },
   {
@@ -2248,12 +2186,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Someone is missing.",
     "overview": "World War II soldier-turned-U.S. Marshal Teddy Daniels investigates the disappearance of a patient from a hospital for the criminally insane, but his efforts are compromised by troubling visions and a mysterious doctor.",
     "frames": [
-      "/kUlADNz6S4LFIY4cbZIWzKy0og.jpg",
+      "/34o93zchaG3HCtLDphahKBF9rTe.jpg",
       "/pgne5QjvhFdlOYguvBRUuAmUm22.jpg",
-      "/1A6Cn1tCz3g9jYgVR3VDyulwKmw.jpg",
-      "/n9eeQTNHY6Ry80QbDGygIupL0Z9.jpg",
-      "/A9lezV9kggHeRlIFkQZXnDFpUUA.jpg",
-      "/U8QRD7jvTXEYsUXq74IFKaSiL5.jpg"
+      "/iZDnaE7DtL2MvgwqwHS8jy4Px6o.jpg",
+      "/jCAtxJHGWZkVaBPhxc8XuR5YgJp.jpg",
+      "/ecvy2kMxsJ60ej52beZ0F8EOGkL.jpg",
+      "/8xt8AMb1OKC63AdhNSaYBWxB4Iq.jpg"
     ]
   },
   {
@@ -2280,11 +2218,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A long time ago in a galaxy far, far away...",
     "overview": "Princess Leia is captured and held hostage by the evil Imperial forces in their effort to take over the galactic Empire. Venturesome Luke Skywalker and dashing captain Han Solo team together with the loveable robot duo R2-D2 and C-3PO to rescue the beautiful princess and restore peace and justice in the Empire.",
     "frames": [
-      "/2cHNcPhgsDfVFn9qaoflUa8MSvp.jpg",
-      "/Sn42527LOtZPR8ZETI2k3dCRje.jpg",
-      "/7ypZ5ZhW7Nrnjf9YzPekdCg3h8U.jpg",
-      "/vJaOv2T0dQhPar5CdutiWnsq6wG.jpg",
-      "/iAtHVsplU9TG08wEPfwZPYhK0A5.jpg",
+      "/ck5UKK7sC2wkRaC6TAewzq3JDYS.jpg",
+      "/zSQmMg4FGu9LrmAoeZ8E5ziLtuC.jpg",
+      "/iSR9iix8tPiTFMPe6WUo8f02iNA.jpg",
+      "/p3RbMsaH2963x6f0uo6GbDqupN9.jpg",
+      "/xV7Kfz4TW3hN6q4xtZgu5vduBHA.jpg",
       "/zqkmTXzjkAgXmEWLRsY4UpTWCeo.jpg"
     ]
   },
@@ -2312,12 +2250,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It's nothing personal.",
     "overview": "Ten years after the events of the original, a reprogrammed T-800 is sent back in time to protect young John Connor from the shape-shifting T-1000. Together with his mother Sarah, he fights to stop Skynet from triggering a nuclear apocalypse.",
     "frames": [
-      "/5MFLnFxrg8xwgboGfuiykkpfygR.jpg",
-      "/preTH7BuPCe3tV8vDpQyo10lhyP.jpg",
+      "/atqGXMcS3FqREEjfxGCAoxVKZnV.jpg",
+      "/e9uNTjMYSDwGgK4IcjmUZtvruGN.jpg",
       "/D5KqmLBdypCWIO0SJIuZw3v6DH.jpg",
-      "/ss35BgzhbjNdxFF34e2VtUVlAyF.jpg",
-      "/diynPY0YqR4NDVvy3vBliTEaDVC.jpg",
-      "/izkMjmhauFx9DjoBQqM5sM5WAwE.jpg"
+      "/3kCmpjL4cYCuN95RtQBOmUh71Ri.jpg",
+      "/vINgGecnz95iDL6fjQMARDsocgG.jpg",
+      "/xKb6mtdfI5Qsggc44Hr9CCUDvaj.jpg"
     ]
   },
   {
@@ -2344,11 +2282,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Cops or criminals. When you’re facing a loaded gun, what’s the difference?",
     "overview": "To take down South Boston's Irish Mafia, the police send in one of their own to infiltrate the underworld, not realizing the syndicate has done likewise. While an undercover cop curries favor with the mob kingpin, a career criminal rises through the police ranks. But both sides soon discover there's a mole among them.",
     "frames": [
-      "/wCHp8NCJ96rcPI3QJLGDn1Q3ZQS.jpg",
-      "/o4oZMx9hBRlxIWv3iwdlhoab9Cf.jpg",
-      "/vh3QOgqyjUtvPuROwHknGSDAPx0.jpg",
-      "/stqttCNEqkZAkBOjH7ihF7MKjgh.jpg",
-      "/j0stmN6ktCpqoWE5nT6xHCyDpwP.jpg",
+      "/yCKKNKlsaWSfyciZG9pEmkYAH4R.jpg",
+      "/iYMgmAZ5t91DBDQZOVAEn7J859K.jpg",
+      "/6Qgx5Sfsir5FKPz2NY5QfBCuWyn.jpg",
+      "/jQuB3uu5sUoprPLGIr4rzvRCset.jpg",
+      "/zPMxVVfMP1ISG7OqdV8iEZsMBAi.jpg",
       "/6WRrGYalXXveItfpnipYdayFkQB.jpg"
     ]
   },
@@ -2374,12 +2312,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Change begins with a whisper.",
     "overview": "Aibileen Clark is a middle-aged African-American maid who has spent her life raising white children and has recently lost her only son; Minny Jackson is an African-American maid who has often offended her employers despite her family's struggles with money and her desperate need for jobs; and Eugenia \"Skeeter\" Phelan is a young white woman who has recently moved back home after graduating college to find out her childhood maid has mysteriously disappeared. These three stories intertwine to explain how life in Jackson, Mississippi revolves around \"the help\"; yet they are always kept at a certain distance because of racial lines.",
     "frames": [
-      "/9BeGY82pIaV8uEQgGcJRDPtkXOx.jpg",
-      "/nm5HABBk0ifSiwI0t1DBtYY1mpp.jpg",
-      "/gzYs5BYwEDHoy9jqJVq5wy0J2q9.jpg",
-      "/613KDiKfRhTWIfrS4aDQf06Ftie.jpg",
-      "/5jHqGt1BAjYCvf5uIfi6Z3fy5Bj.jpg",
-      "/yNDtUGvWVf6hAZeZowWOJTD65z4.jpg"
+      "/nlKyI4AnviNa865SX0HFv0Ns4NY.jpg",
+      "/pdPl0ZF6HS4i9hymrTOkRuCBJZq.jpg",
+      "/p8GfqwKYFcwSVMKMp3tD3gMZ4pS.jpg",
+      "/8hocQ2MFwCsN4W8pRhJNA9F5R9z.jpg",
+      "/1adMMIIpDy14hfT8nUGTjqg8Gd0.jpg",
+      "/yDwL5qAHeSyaozgXXcYnAOp4AUF.jpg"
     ]
   },
   {
@@ -2406,12 +2344,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Are you watching closely?",
     "overview": "A mysterious story of two magicians whose intense rivalry leads them on a life-long battle for supremacy -- full of obsession, deceit and jealousy with dangerous and deadly consequences.",
     "frames": [
-      "/bCF5M7cW4UmEhyIEs6rtHR3XC9B.jpg",
-      "/fYr5lff9ghIK5RxQHx6We6RFlRQ.jpg",
+      "/n5U6ukb0Yga0VRLFOw2re6qxFW8.jpg",
+      "/wvoNDWDJfCY2XtrJBLGSAIT1MX9.jpg",
       "/zMcYbuFeNjKJuJsbEMNb4vip7HP.jpg",
-      "/bnWi7vlYraS27yry7I6bgcHKmrs.jpg",
-      "/gN83NdMguoz7Lhlx0jaX4XouhAf.jpg",
-      "/qc9zR02j2apoEwMdptMYBoAFYUC.jpg"
+      "/nlqYna8K075J2j5E13Rs1Gzq2HJ.jpg",
+      "/xEP8YuUoZ4rcbaio7fdF254O8KN.jpg",
+      "/yCnJT53HMXAK87xzPAdjdYhZ3JE.jpg"
     ]
   },
   {
@@ -2437,11 +2375,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A masterpiece of modern horror.",
     "overview": "Jack Torrance accepts a caretaker job at the Overlook Hotel, where he, along with his wife Wendy and their son Danny, must live isolated from the rest of the world for the winter. But they aren't prepared for the madness that lurks within.",
     "frames": [
-      "/vQcfOFhNXamO4URsYSzTphw5VGL.jpg",
-      "/knFDYrQYswMdpQPSaqfS3QkeBiV.jpg",
-      "/qblsPmpTGzY2IwVxeqBUHL2B77O.jpg",
-      "/jWHagVuSoWOluZwPyFctAyU6NHd.jpg",
-      "/k3X59vwEnyTk0EqR1kKONuVx9xk.jpg",
+      "/5jJInPggNEoBSsZ8JxNRpc5oDOA.jpg",
+      "/dR0cTGnElOXz3X3yLnHdSvWeF11.jpg",
+      "/7IQis0k2rxuVqORuKj1U8tFLyx6.jpg",
+      "/uwP1nM9luk8tl7IcIlXTnwYrcqI.jpg",
+      "/ntRt1eZkfN7YRPtuSCUYkWxXHzk.jpg",
       "/AdKA2F1SzYPhSZdEbjH1Zh75UVQ.jpg"
     ]
   },
@@ -2468,12 +2406,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "On the air. Unaware.",
     "overview": "In a picture-perfect seaside town, an insurance salesman begins to realize that his entire existence may be staged and observed by a vast unseen audience as part of a long-running real-time reality TV show.",
     "frames": [
-      "/yrDgiC3TKZJbNYOCyB5FGoXQ4nC.jpg",
-      "/wzkfuS9Vm0hyD2awtgoUaLkmBTc.jpg",
-      "/i46vDK4GYKfLak02YRTcE1x3rJV.jpg",
-      "/wyy1xz8iSqSPkbnqBjzGCgCv5ys.jpg",
+      "/3aJV6ieMhidAZtxLJ8yAFxeBtOS.jpg",
+      "/nrs5swZXOOeWAyKy99oFvahgyo6.jpg",
       "/nAWrt7agnSoXKmvwqDmoHUtuW4F.jpg",
-      "/rmiG2uwcNoGFmBKMoa1pIcf514L.jpg"
+      "/1YEt6cml1x4V1sJDq74L5WplgaL.jpg",
+      "/1xWHfZH4Fapu6Yrkv4oOk2rEUTx.jpg",
+      "/aCHn2TXYJfzPXQKA6r9mKPbMlUB.jpg"
     ]
   },
   {
@@ -2501,11 +2439,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Held in an L.A. interrogation room, Verbal Kint attempts to convince the feds that a mythic crime lord, Keyser Soze, not only exists, but was also responsible for drawing him and his four partners into a multi-million dollar heist that ended with an explosion in San Pedro harbor – leaving few survivors. Verbal lures his interrogators with an incredible story of the crime lord's almost supernatural prowess.",
     "frames": [
       "/kb6RVMGQbXnOs1LvX0MjABT4mGa.jpg",
-      "/7NfHxCaYqgCADpy4e7yx6rS0S0J.jpg",
-      "/dP82DpTdK3u7JYK6p7IpfixWVEc.jpg",
-      "/y7VFt9Arm0umyjbaanYN4lR0pEG.jpg",
-      "/kLzTYwbZ3b54Uun3k7ShlJwsgys.jpg",
-      "/hy0Hx9fMPk2fmw26Li60z1S2giU.jpg"
+      "/pWsstFPdgswx4mTVuRSefuLyQH0.jpg",
+      "/2PzvMFcrWKD3IpQXEGqqa38IbZR.jpg",
+      "/63fUh2fA2iswlmlc5Unr1Y4Oajs.jpg",
+      "/hy0Hx9fMPk2fmw26Li60z1S2giU.jpg",
+      "/7S7PE3vK9Eh5uzCYBDGk5qTJeYW.jpg"
     ]
   },
   {
@@ -2532,11 +2470,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "After more than thirty years of service as one of the Navy’s top aviators, and dodging the advancement in rank that would ground him, Pete “Maverick” Mitchell finds himself training a detachment of TOP GUN graduates for a specialized mission the likes of which no living pilot has ever seen.",
     "frames": [
       "/5n2lq9FCI7J8tFUMSnayAElvgLt.jpg",
-      "/eKfPbwFBSA55DaLma5mYBclXAyy.jpg",
-      "/i2IQBEoJKCBNFdDI74mrn4psMLD.jpg",
-      "/d3zYsQohyrxd8xnPerdLfndCBWT.jpg",
-      "/5qnRHCjIYU3SEPd74py8l33f57O.jpg",
-      "/AaV1YIdWKnjAIAOe8UUKBFm327v.jpg"
+      "/qxjr3mcDWKGMdvF97SkVp8sX3Xd.jpg",
+      "/6xt4YDDAoZYahHcqOddNx1825oO.jpg",
+      "/nth5nfb1c9vFJk9J1FFWt1MxOQf.jpg",
+      "/f7X4OWv3V4f9okq7YqvMgtwn11d.jpg",
+      "/odJ4hx6g6vBt4lBWKFD1tI8WS4x.jpg"
     ]
   },
   {
@@ -2562,12 +2500,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Is it better to speak or die?",
     "overview": "In the summer of 1983, a 17-year-old Elio spends his days in his family's villa in Italy. One day Oliver, a graduate student, arrives to assist Elio's father, a professor of Greco-Roman culture. Soon, Elio and Oliver discover a summer that will alter their lives forever.",
     "frames": [
-      "/yWqPrXbTFJi6QkmJAYEqI4dn9nl.jpg",
-      "/bQMbdw9EpCzHsNZ4BF0RjyVaKm7.jpg",
-      "/t4X4449K0UMD0WLX9qeCxI7xcNU.jpg",
-      "/ssowCFz1rvHIe6jP0uGHIjQHz7T.jpg",
-      "/qXKvx2naVOs3kcrvDBXVGVvzP9h.jpg",
-      "/zvOJawrnmgK0sL293mOXOdLvTXQ.jpg"
+      "/lYWKmurtQCe3dcKMCnZRLiNSRb3.jpg",
+      "/degDRXi5f2gwx6jdWwVoULUXXIE.jpg",
+      "/slCISA7hVjCr1ZJdz9TvT0eeqCY.jpg",
+      "/cRDJFNKatstX1YsjZgaSa2W1507.jpg",
+      "/hrMbAi9fPTmc6EtpyyAgDKznptu.jpg",
+      "/64OtTrXNyLwbqWBcd9JBsJmZb7w.jpg"
     ]
   },
   {
@@ -2593,12 +2531,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Long live the fighters.",
     "overview": "Follow the mythic journey of Paul Atreides as he unites with Chani and the Fremen while on a path of revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the known universe, Paul endeavors to prevent a terrible future only he can foresee.",
     "frames": [
-      "/2dS5bMwSrkeAWpGNrfa8wzGU9Ts.jpg",
-      "/iLYkwQMQbxTR6GUSSV7toIn7pfN.jpg",
-      "/93YSyic1EahCGMdkqPla1jcqpJy.jpg",
-      "/1fkinFdA5gPNZ6ieIA9Zexi6Q0B.jpg",
-      "/zNm7F2vhgmuyu928nN3rbf1UCK4.jpg",
-      "/eZ239CUp1d6OryZEBPnO2n87gMG.jpg"
+      "/5ZhEJV4AZwD7ZB4HnvFAKJKdT72.jpg",
+      "/xfa2bWuY6aHNp0hr4vKADqiO2TX.jpg",
+      "/7bBBIBtWkHItzTmacaZ9XioeS3e.jpg",
+      "/beJK9Fpw9XZh2uaUmBnQT0zGH1l.jpg",
+      "/uUVQCwBsWdQDMssXv1TRvYKnXgS.jpg",
+      "/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg"
     ]
   },
   {
@@ -2625,12 +2563,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "You can erase someone from your mind. Getting them out of your heart is another story.",
     "overview": "Joel Barish, heartbroken that his girlfriend underwent a procedure to erase him from her memory, decides to do the same. However, as he watches his memories of her fade away, he realises that he still loves her, and may be too late to correct his mistake.",
     "frames": [
-      "/yXEtZBJJJyFRSeqq2F3EBAJPqh2.jpg",
-      "/kdQhNomrPtnWEfqn2ujafIRsgRg.jpg",
-      "/qpRa922agNxrP1NYq7VPYrzhaSk.jpg",
-      "/bViUQBHLCoy8RI162oOIXjzCoZj.jpg",
-      "/5VRvACdYlxCeeKiWnN1iSIUoja9.jpg",
-      "/95qi5TJMIBI5VzWHia88Pbrye7Z.jpg"
+      "/usP7jSOHtjiPtajapDrew1xidR2.jpg",
+      "/ny9cxGMN2ySUjYQUhMYsgUJtKbc.jpg",
+      "/khRrZAi3WS4562gol3MeW3XtM1A.jpg",
+      "/bpT0ledIzTa1iPcI8CrxMQJKIvi.jpg",
+      "/jz9Kep0xWjiA6QDHSsd43ASxNfj.jpg",
+      "/W1ffLQGHoxfAOq0ZYdPtJlvAdb.jpg"
     ]
   },
   {
@@ -2656,12 +2594,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "In Vietnam, the wind doesn't blow. It sucks.",
     "overview": "A pragmatic U.S. Marine observes the dehumanizing effects the U.S.-Vietnam War has on his fellow recruits from their brutal boot camp training to the bloody street fighting in Hue.",
     "frames": [
-      "/rypgxuV4hecQXR3GKAhN9UX3O5U.jpg",
-      "/pNWXEI5oSVNJV89RvDY58zgALR2.jpg",
-      "/hzwj5xNAnqqGKqbm4ps2acWTvUB.jpg",
-      "/iLliRT7oZLkJOlArSdd5utYnVnF.jpg",
-      "/7GdKMuiypkhQqOOGtlj9l6NFD0N.jpg",
-      "/3k2TRmqMjgt7tcwkYwZQdctnty3.jpg"
+      "/9snq9xTV8gr2FjNBOLgDTLZhTwL.jpg",
+      "/fQsf7GydDU1TLWLOezWEbuFT5Ti.jpg",
+      "/8sGveSeOboM5h43zOfV46yzT7nl.jpg",
+      "/8yx7brKItfL2b6r3x1s6cTLutNZ.jpg",
+      "/lBoAunjlyZ6YhQn2wqar5e1EeKq.jpg",
+      "/yozBWKbyeXtPGN75PlHurOaVvEz.jpg"
     ]
   },
   {
@@ -2687,12 +2625,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It all ends.",
     "overview": "Harry, Ron and Hermione continue their quest to vanquish the evil Voldemort once and for all. Just as things begin to look hopeless for the young wizards, Harry discovers a trio of magical objects that endow him with powers to rival Voldemort's formidable skills.",
     "frames": [
-      "/mzFLSXp7qvISISTFNNRfKCBt0VN.jpg",
-      "/1coyE89rpaFhZW5AuAU5hOis6KP.jpg",
-      "/qOcUkCuQH0wMefYHyFSCxFf3k1t.jpg",
-      "/zxyVE9BGPgwWNGtOFpSC9oBVk91.jpg",
-      "/eCITdWmibgsGLZO0ty9MS6k69sr.jpg",
-      "/eKUk4oN4ucwnLJml7wRnjuB9AQH.jpg"
+      "/lqpyitz7az2K8we5JlDWXkI3Hfe.jpg",
+      "/hIJs52MZFwDQ8WshyTKydFo2gW7.jpg",
+      "/jYk0rfLUyFskdky6m68fImaC8dd.jpg",
+      "/lKSoIIuP2wbmeaXXD9iaLsRQyN8.jpg",
+      "/4Wr3rvZuZmnj93amaXK1qB5JHWl.jpg",
+      "/cbcpDn6XJaIGoOil1bKuskU8ds4.jpg"
     ]
   },
   {
@@ -2718,9 +2656,9 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Meet the women you don't know, behind the mission you do.",
     "overview": "The untold story of Katherine G. Johnson, Dorothy Vaughan and Mary Jackson – brilliant African-American women working at NASA and serving as the brains behind one of the greatest operations in history – the launch of astronaut John Glenn into orbit. The visionary trio crossed all gender and race lines to inspire generations to dream big.",
     "frames": [
-      "/jTcWND1LUp35noVSmPTepSVuvdA.jpg",
-      "/g3noTFl7cjZClaNEwKrbl40W3Oo.jpg",
-      "/rpg31Qs1LhYT8gxt7bNriYtuPQO.jpg",
+      "/dyIzejV3vQY4UaSbTmxBWVHCpP.jpg",
+      "/4fugIbGkzJj3ochKw8KCHleZGvc.jpg",
+      "/6nYCOqapMPHWzsS77EsOSqXYiNq.jpg",
       "/mIJF6pbIen2lRtspe1Hp0Kujp4H.jpg",
       "/3Bp5Df08xmBKoMbbdsKawS7zpzo.jpg",
       "/rfkIeCaIHhN3K5wjJJqKmfUjYp8.jpg"
@@ -2750,12 +2688,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Put on a happy face.",
     "overview": "During the 1980s, a failed stand-up comedian is driven insane and turns to a life of crime and chaos in Gotham City while becoming an infamous psychopathic crime figure.",
     "frames": [
-      "/3Q1fLJeaLlEZOLeYvIClP2JQKlR.jpg",
-      "/cMRu4eeOycNRBeEUx3YTWRwkrF6.jpg",
-      "/propZZVK3IA3EuyZwmUXRPJ9xIs.jpg",
-      "/rNqVp7C3ajnxxe6n2151mG8Ttck.jpg",
-      "/j03CiUq845wzR22Gjf4Jj2JCTGD.jpg",
-      "/rlay2M5QYvi6igbGcFjq8jxeusY.jpg"
+      "/xACONLXObPIXjBSQwaDANG3bKze.jpg",
+      "/dY3SrbCxBS5BCpgebrL44WLa7Nv.jpg",
+      "/7vdezAsRLeUA59ppoPhsm3DxLQ6.jpg",
+      "/1WTKTtptVajbpuVplZAMliZeTCh.jpg",
+      "/rlay2M5QYvi6igbGcFjq8jxeusY.jpg",
+      "/n6bUvigpRFqSwmPp1m2YADdbRBc.jpg"
     ]
   },
   {
@@ -2782,12 +2720,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "He's your friendly neighbourhood forest spirit!",
     "overview": "Two sisters move to the country with their father in order to be closer to their hospitalized mother, and discover the surrounding trees are inhabited by Totoros, magical spirits of the forest. When the youngest runs away from home, the older sister seeks help from the spirits to find her.",
     "frames": [
-      "/6bOGbS28WUJGRgb4ZXjQCxYwMp4.jpg",
-      "/ArRiOqY2w3oF19b6DnWqY0FiZ8j.jpg",
-      "/1Nx6ASV2UZB2ciAAJTz4eRf9a6r.jpg",
-      "/mvpPslST6buOd5UmVE8lPkfqTk3.jpg",
-      "/19SRdYFaxTbqG8rc9CpXmfLpPoM.jpg",
-      "/zkThiZAaAie8Lw7RAc5yPTOewBV.jpg"
+      "/Aqtg3Jg2LbCkxDIODboo3GiAQPY.jpg",
+      "/mWuoyI6chgK79cLyPutd0bshJBo.jpg",
+      "/inRbXqp3ksGBHB86vd0Yhm86Ta0.jpg",
+      "/h7Wua6zW5IHAes1XRRggao8LUMa.jpg",
+      "/n8lyQkgnWICIEC1DYkwhN6b7Mzk.jpg",
+      "/fxYazFVeOCHpHwuqGuiqcCTw162.jpg"
     ]
   },
   {
@@ -2813,12 +2751,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Sometimes the last person on earth you want to be with is the one person you can't be without.",
     "overview": "A story of love and life among the landed English gentry during the Georgian era. Mr. Bennet is a gentleman living in Hertfordshire with his overbearing wife and five daughters, but if he dies their house will be inherited by a distant cousin whom they have never met, so the family's future happiness and security is dependent on the daughters making good marriages.",
     "frames": [
-      "/eOPB1yFLdPgoxAMDxXqq4CzSzfz.jpg",
-      "/6Xozacw1tpjdGfSnlb0HNJoYZC9.jpg",
-      "/qBrAqACzLI31JoEIrOqcfItZWRz.jpg",
-      "/3B4S13oFbNqXGahRqUwy4jBQBF6.jpg",
-      "/mzOuHLe4x4ppnNGg7KBJAZiPdZd.jpg",
-      "/1Onam6oWyFAUCcoxtdWkACtEiNr.jpg"
+      "/vAUDDXwjunvwxxNKWmEtWBoRfA7.jpg",
+      "/54uNKDNj90ho5CEptBDzx7fu0gD.jpg",
+      "/lG2LpNqySIVrtvmbey8GufoeOup.jpg",
+      "/7rGXK7C6KXKX3CgpwzxVOZFlEDC.jpg",
+      "/ySM9j7okE7lJ8oWNkNzHOJCxonN.jpg",
+      "/x4OYcZVHggyZHOrvkCo2HH9kLkF.jpg"
     ]
   },
   {
@@ -2845,11 +2783,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "How far would you go to protect your child?",
     "overview": "After his six-year-old daughter is abducted, a desperate father takes justice into his own hands when he loses faith in the detective leading the investigation, setting both men on a collision course as the search descends into obsession and moral compromise.",
     "frames": [
-      "/261dtzOQwGRudkUNrlk6wY7Ok5p.jpg",
-      "/cFRK3hdO8fspJWJFOLoYZEI1OrW.jpg",
-      "/24xIrQsn2nh3eZIn2wkpP2Yy71E.jpg",
-      "/7SFOyRMeTjeV43YIL5ReVTjFqNU.jpg",
-      "/vMvVgPMV9FextF1MS8EFlrinyvX.jpg",
+      "/f3erxFojZGr7NOHofYhBkARowaY.jpg",
+      "/nBHkThjt2HIT7MVLIxVvcxPjfMG.jpg",
+      "/jifpB5HQ6svDJXEibDQPpXlcp6u.jpg",
+      "/gPOWJ4Ps4wqY6zW4pCOWPzglueA.jpg",
+      "/fdNEpwCdfitiGHIwYDLjqAHpVHV.jpg",
       "/3RFmTz5h2UuFWEV4oH00XICBR9y.jpg"
     ]
   },
@@ -2876,12 +2814,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Every dog has his day.",
     "overview": "A botched robbery indicates a police informant, and the pressure mounts in the aftermath at a warehouse. Crime begets violence as the survivors -- veteran Mr. White, newcomer Mr. Orange, psychopathic parolee Mr. Blonde, bickering weasel Mr. Pink and Nice Guy Eddie -- unravel.",
     "frames": [
-      "/bxUeAQ15xwdZTSNmGWY5N6VGzV9.jpg",
-      "/qxP7mbeRPfkCy766eAyAuKmXCud.jpg",
-      "/e11zysPUafNo9VydNRftlR1fYrZ.jpg",
-      "/tKtf9jKTDpcwxvjyQOxHpM0wG69.jpg",
-      "/oRZEfasPxG6vzI2jfSOjpUzS8Ig.jpg",
-      "/jwt159hXWA9Q5xpBo8hWb3zwLi7.jpg"
+      "/rawrhVC6t8HCGG0MOQGnehxq2mf.jpg",
+      "/2ZAjyesSogizlzzRXxUAgNnvd19.jpg",
+      "/mH9OT4dIwnXdSt4YZNrNXMF5pJS.jpg",
+      "/iSVKQ0aIpGQ0ikOs5l30i3k0J4O.jpg",
+      "/t4FHFL6hckU9vohbqO2k7rYGWhF.jpg",
+      "/jqFjgNnxpXIXWuPsyfqmcLXRo9p.jpg"
     ]
   },
   {
@@ -2910,12 +2848,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Everybody has a soul. Joe Gardner is about to find his.",
     "overview": "Joe Gardner is a middle school teacher with a love for jazz music. After a successful audition at the Half Note Club, he suddenly gets into an accident that separates his soul from his body and is transported to the You Seminar, a center in which souls develop and gain passions before being transported to a newborn child. Joe must enlist help from the other souls-in-training, like 22, a soul who has spent eons in the You Seminar, in order to get back to Earth.",
     "frames": [
-      "/6030y33vGnmTLvhdFOzRE8olstQ.jpg",
-      "/6qitslHlug3XFMw4T7edvRcEb8Q.jpg",
-      "/2FHxjY1SMrYGVHeHWhB05HlQs4X.jpg",
-      "/7EslmAX1Pz0HGwpa8hnVAqiOWf9.jpg",
-      "/vChYiHfTd8gDPP7vANJRxdXbbm4.jpg",
-      "/rQaHA74pevnGsxcKGaoZVGWe9TC.jpg"
+      "/6DlotS1ZMtWwpDQ7uULYbrT9Yz2.jpg",
+      "/7NeWQeLfpeE2DKh60eeSpfEZISl.jpg",
+      "/jjZLBKswgYBKnB7tMTk4aUbVmdh.jpg",
+      "/q2E325E7Y4D4C25S4SIwRCgnvRz.jpg",
+      "/ijnaE8IU7XC5kA8uZbTxq6SmSnH.jpg",
+      "/kf456ZqeC45XTvo6W9pW5clYKfQ.jpg"
     ]
   },
   {
@@ -2941,12 +2879,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "On every street in every city in this country, there's a nobody who dreams of being somebody. He's a lonely forgotten man desperate to prove that he's alive.",
     "overview": "Suffering from insomnia, disturbed loner Travis Bickle takes a job as a New York City cabbie, haunting the streets nightly, growing increasingly detached from reality as he dreams of cleaning up the filthy city.",
     "frames": [
-      "/so1YvXll6iy6MantVJseFf3aywv.jpg",
-      "/wiRqHLi2sAesD5Fkrtd3jYOwLUE.jpg",
-      "/rS2WeQbgY73MVbs4fX3w7XfqQUT.jpg",
-      "/4gMqpdluJhQOI3tMxBrtK11HxTj.jpg",
+      "/fEVD5nZXZSdrqiQkAXaHrBHTiHn.jpg",
+      "/m9FiNISsnUU1lRrCybXKmjxZRSw.jpg",
+      "/f2EmbL0r131xY1durldemwMOlyO.jpg",
       "/fvS9jFJzVbGWPdO0O8ixiyu0FMW.jpg",
-      "/9uddYYTNcLWpzUkl5iw1RUYhLhY.jpg"
+      "/byTvHqQIonluZT76enrwsehb9NW.jpg",
+      "/orjyEE9ZcMefTsN8zT5ryQTdkIz.jpg"
     ]
   },
   {
@@ -2973,12 +2911,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Some assembly required.",
     "overview": "When an unexpected enemy emerges and threatens global safety and security, Nick Fury, director of the international peacekeeping agency known as S.H.I.E.L.D., finds himself in need of a team to pull the world back from the brink of disaster. Spanning the globe, a daring recruitment effort begins!",
     "frames": [
-      "/3WyhWzl3FIvv7Ef2wAwfvO1VzEK.jpg",
-      "/wHWQrXCp2WlQzJ2XSeeEBrVOMEZ.jpg",
-      "/vW6nrkNv2HV8aVEeNGOyyiNPaDb.jpg",
-      "/ytpVc6WACByG7t372IBFOVxdR15.jpg",
-      "/agE0zlMnY7fFwH7SXD5zDXhwLhu.jpg",
-      "/86IbFy98QjRIqg6WanKYb9tXNbJ.jpg"
+      "/mckaxPzJMnj4aRMCWLj3JLRO9Jv.jpg",
+      "/vL6lNfbSZsGANqJ0vuCbpyQZPjV.jpg",
+      "/kETOj8fWpwAN2Mw8u33lpLjO0wb.jpg",
+      "/AcPvwyYOopP2jJAC5VYs2Y7xhWQ.jpg",
+      "/7QTdhc1OoYItyQFFf6qNmFG6ro6.jpg",
+      "/9BBTo63ANSmhC4e6r62OJFuK2GL.jpg"
     ]
   },
   {
@@ -3004,12 +2942,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A mother personally challenges the local authorities to solve her daughter's murder when they fail to catch the culprit.",
     "overview": "After seven months have passed without a culprit in her daughter's murder case, Mildred Hayes makes a bold move, painting three signs leading into her town with a controversial message directed at Bill Willoughby, the town's revered chief of police. When his second-in-command Officer Jason Dixon, an immature mother's boy with a penchant for violence, gets involved, the battle between Mildred and Ebbing's law enforcement is only exacerbated.",
     "frames": [
-      "/4HQP3DZ1onJD4eaCjQSNSH20COU.jpg",
+      "/5RMqyMKMcJuoFM6igkOZbcdXb0F.jpg",
+      "/tZv9DfITzBDpwUEAeCr6B4g4xMP.jpg",
+      "/v9HPsK3iAriKevDCugAMIIjKysQ.jpg",
       "/scshacEaOI5hF6gyr6tmVOCcP8I.jpg",
-      "/mihv3ws8CCFJ6AiieHslGIYlRBg.jpg",
-      "/kXCMcGmaHu8ecp15PWvz5r8yD4j.jpg",
-      "/53z7hUGbewyb69cWAii0jfMQLgE.jpg",
-      "/oQHF0Y4gCw6VdPmapjsbZoxY2ht.jpg"
+      "/9oRdMkQ6ysUuF7Ufb1oMH5NMDY2.jpg",
+      "/huz4SOpcd2XjJiLVX6xmQZYiiDA.jpg"
     ]
   },
   {
@@ -3036,12 +2974,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "After 700 years of doing what he was built for, he'll discover what he was meant for.",
     "overview": "After hundreds of years doing what he was built for, WALL•E— a robot designed to clean up the earth—discovers a new purpose in life when he meets a sleek search robot named EVE. EVE comes to realize that WALL•E has inadvertently stumbled upon the key to the planet's future, and races back to space to report to the humans. Meanwhile, WALL•E chases EVE across the galaxy and sets into motion one of the most imaginative adventures ever brought to the big screen.",
     "frames": [
-      "/bJZf9SixgPrmrsWLbSxdL3sKYIy.jpg",
-      "/5NaHDn5rPRFocqgIh4n3BbF6XXu.jpg",
-      "/rRLYiHtT5sOEF10nIIm6YNMVOp1.jpg",
-      "/mzwP8hkj5NBrqwBdjc76DZT36Rx.jpg",
-      "/7Q3sZgkSgpBDMJvevQNnMar83Af.jpg",
-      "/nYs4ZwnJBK4AgljhvzwNz7fpr3E.jpg"
+      "/yLILFGTe5glgOybQhPoPg7F0wix.jpg",
+      "/iEvoEubFLKhUZpi0MaUiBYpQT3X.jpg",
+      "/1El7KKCDYtrHBD1m3ZaolnLijjr.jpg",
+      "/3fycb4TETdZ0mleBqQQYzrMiCGS.jpg",
+      "/3CvNc04vTwTir5q3LBDuvUb8Ng6.jpg",
+      "/ai2FicMUxLCurVkjtYdSvVDWRmS.jpg"
     ]
   },
   {
@@ -3068,12 +3006,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Us united.",
     "overview": "Determined to ensure Superman's ultimate sacrifice was not in vain, Bruce Wayne aligns forces with Diana Prince with plans to recruit a team of metahumans to protect the world from an approaching threat of catastrophic proportions.",
     "frames": [
-      "/iGe0gaU5nZTKowHX17UeXvzw5tv.jpg",
-      "/8f1pPxiH4F0qjuVBcEmaQAKKHZV.jpg",
-      "/7DHGegHt4wKa7ZaafqDmL9qJper.jpg",
-      "/zcuCmL1BpvcpTClQ79Oked5wm8Y.jpg",
-      "/pxgXCPLyiyBKp82YeE0BvD4I19K.jpg",
-      "/9WoLTsRgrupkvCgs3bhsl2EjLhs.jpg"
+      "/5wWLeXJAr4GWPcuhkyizM2e402G.jpg",
+      "/45xAsbtYgKFzI3jZ0Cs7Y9iT7Ef.jpg",
+      "/4Umea7XQnbZYSbj52MCooigMx0c.jpg",
+      "/ebl50buX9rp2gJlQm4yBt3TXJiU.jpg",
+      "/tbItEdcMst5ZHpCdueaKDxbVQ3d.jpg",
+      "/pcDc2WJAYGJTTvRSEIpRZwM3Ola.jpg"
     ]
   },
   {
@@ -3100,12 +3038,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Time is the enemy.",
     "overview": "At the height of the First World War, two young British soldiers must cross enemy territory and deliver a message that will stop a deadly attack on hundreds of soldiers.",
     "frames": [
-      "/5dDb08BIFZ3K1oCLcgxlQjKP1Qf.jpg",
-      "/kseJbPqKbKTKac8yFjQXZMibWDY.jpg",
-      "/sERhH9ANDpAE6WaFX0n7JZXKAXC.jpg",
+      "/4D282SO6L5tr6gWW7qtqbhub8Ss.jpg",
+      "/gBKCdL2KuBAp8LN8zmXWhREOIZx.jpg",
+      "/ds9GKAMhxv5AbprmZ2xCpK8FiEG.jpg",
       "/tUWivz05fcY14K6RzicRm7IHkUD.jpg",
-      "/t3VZPH4VS0LkpJjMR6T0ppsdavA.jpg",
-      "/tJgmraUAmVlJPlq72yC76tKDyC4.jpg"
+      "/3RarN70b6lohFJFVUdudXRQF6zi.jpg",
+      "/2lBOQK06tltt8SQaswgb8d657Mv.jpg"
     ]
   },
   {
@@ -3132,12 +3070,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An epic drama of adventure and exploration.",
     "overview": "Humanity finds a mysterious object buried beneath the lunar surface and sets off to find its origins with the help of HAL 9000, the world's most advanced super computer.",
     "frames": [
-      "/fFW0r4SwTUGSSVvedHvftwnVrQz.jpg",
-      "/oJEWUtlIXQu54KltLCaickkmNp1.jpg",
-      "/iGE7ide28EwSGeCmAC1Xzqc7K0V.jpg",
-      "/551LfmaBsIt9BG324lqRmQ4CJQj.jpg",
-      "/eOMqlXIPqIbDxWqDDNYNN37AvJw.jpg",
-      "/9yTOU2SvTfAEHDPEG5qraLoe4MI.jpg"
+      "/xb4Pq8ymzVHt8rGTQVFLCffAqxm.jpg",
+      "/8wER7Kfat9hxq3kFdgEQnawYkB0.jpg",
+      "/p2YLKDdmDYF0lMckIxYL9GgUupy.jpg",
+      "/wADQcV8kDjgAzldTxZaLGHqUt1N.jpg",
+      "/hohbBdcL2w48TQCGMZBqm1xze1S.jpg",
+      "/6gyZF4SeifiUUYDELkCS8nOqsu2.jpg"
     ]
   },
   {
@@ -3164,12 +3102,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "This time it's war.",
     "overview": "Ripley, the sole survivor of the Nostromo's deadly encounter with the monstrous Alien, returns to Earth after drifting through space in hypersleep for 57 years. Although her story is initially met with skepticism, she agrees to accompany a team of Colonial Marines back to LV-426.",
     "frames": [
-      "/35sc3STJnzj4aUyEOCCaX7qfbsl.jpg",
-      "/zJ0GcJtGDCqn3GHcky8SfmcDMk7.jpg",
-      "/za6CgguSOPQpNLWYIGTdiFgMn8B.jpg",
-      "/tMnJEVCOn8wuD95afeBSdeZqWfg.jpg",
-      "/6hO8zMz7Goce9gNUIxp9qbVg5ne.jpg",
-      "/4kix6fAblJIH6eMs0Ku2loyZJXK.jpg"
+      "/jGM0o0k0dfKPNvT8F6vElSzLlB.jpg",
+      "/gUw4vIPIbzjskuvoewSLOw9iUkI.jpg",
+      "/hYIzGYc9RVvX3YA4tRrWFbkpZhv.jpg",
+      "/9iMchZfwLkVQDQsEwp9kmxnMFrZ.jpg",
+      "/4NuKXwivH4Kct6qz33Xl0EFCdcd.jpg",
+      "/3NZ5y4oLwvm1KF99m0DPQoqpEAP.jpg"
     ]
   },
   {
@@ -3194,12 +3132,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "... look closer",
     "overview": "Lester Burnham, a depressed suburban father in a mid-life crisis, decides to turn his hectic life around after developing an infatuation with his daughter's attractive friend.",
     "frames": [
-      "/78iDitOuBtpePkmBwdqFXGsIMvt.jpg",
-      "/2mHeBVTIT25Guxludid7PaLhlQZ.jpg",
-      "/yKU6MtyiXqoE7mockHfvoLknYaa.jpg",
-      "/7bOSIoXi9uGLLl25EIE8onubL01.jpg",
+      "/70HxD7aK3grHAzTdGId5V4xHGW2.jpg",
+      "/rwl3Ev4K3kKgq8BcZ8JfpZQWHJ8.jpg",
+      "/e7UlVCyiBQ16em6DXr0CVSV9BV9.jpg",
+      "/thjFSgbFzDufh9AgFHZV4qkSq2Y.jpg",
       "/vimaZK2bkJlePnZ1yV5eKYpQkzF.jpg",
-      "/2ndw55F40IkALzWyjCCza3M6nqM.jpg"
+      "/DztBnZaqmla2sGUW9s8AyOmskT.jpg"
     ]
   },
   {
@@ -3225,12 +3163,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The true story of a real fake.",
     "overview": "A true story about Frank Abagnale Jr. who, before his 19th birthday, successfully conned millions of dollars worth of checks as a Pan Am pilot, doctor, and legal prosecutor. An FBI agent makes it his mission to put him behind bars. But Frank not only eludes capture, he revels in the pursuit.",
     "frames": [
-      "/mmZK439bEgyyZNbYTJSstxocZCp.jpg",
-      "/1nUeNGwX1dn42FGeLYvFkgisjlg.jpg",
-      "/wZapcrDQtlWWcFQH52AeAwmtl83.jpg",
-      "/ojyRoO4ZHeV5C7grTLeNyi4hZPl.jpg",
-      "/lRwhM8SlCOOybcfTOScAqekymu3.jpg",
-      "/eS3xZQ1C8lt6mm4K5lTmjbYn2HE.jpg"
+      "/hBAZCzHZgrqan6eT90NPE5h7eFP.jpg",
+      "/p4PEyrXxN3Cesn28eR7aQh97KSG.jpg",
+      "/eNGfh7YEu2fcyWMITS12qnuMxrw.jpg",
+      "/cMywb6ayGpTbKgCgZ0RORxPDsrA.jpg",
+      "/ggC3Brchf4RqPitEh7cROFoeAWn.jpg",
+      "/Ag6qhzsJd3k1NKuNrG9RmhZDMh7.jpg"
     ]
   },
   {
@@ -3256,12 +3194,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Hello cruel world.",
     "overview": "In 1970s London amidst the punk rock revolution, a young grifter named Estella is determined to make a name for herself with her designs. She befriends a pair of young thieves who appreciate her appetite for mischief, and together they are able to build a life for themselves on the London streets. One day, Estella’s flair for fashion catches the eye of the Baroness von Hellman, a fashion legend who is devastatingly chic and terrifyingly haute. But their relationship sets in motion a course of events and revelations that will cause Estella to embrace her wicked side and become the raucous, fashionable and revenge-bent Cruella.",
     "frames": [
-      "/e0xGJzzzGhiQey9kt102t40Zvt5.jpg",
-      "/zpRGksvSs4PjNQw1lGroVWYOzaM.jpg",
-      "/lonqe6vUhPCCYNOkCD3jHnczgIg.jpg",
-      "/9AA7uRi4FkjAXu7ENwKRQFOrzGT.jpg",
-      "/sgHmoqF97bjM1HUyw43FzjzXtEr.jpg",
-      "/6MKr3KgOLmzOP6MSuZERO41Lpkt.jpg"
+      "/cWHBoaHk6GX6hH5DO0WxPu5VhJh.jpg",
+      "/qOSNgvgOmWYVxHs0h7GHTceWSAr.jpg",
+      "/eN9T0sQOZZQXwE1nRsxwRWirwsb.jpg",
+      "/5tZkPgnRIT0sRYzMDyzYZx5ZFrZ.jpg",
+      "/huzHIuaWRMDIAB8jIXYAwE7CJzS.jpg",
+      "/8ChCpCYxh9YXusmHwcE9YzP0TSG.jpg"
     ]
   },
   {
@@ -3288,12 +3226,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "They took the American dream for a ride.",
     "overview": "American car designer Carroll Shelby and the British-born driver Ken Miles work together to battle corporate interference, the laws of physics, and their own personal demons to build a revolutionary race car for Ford Motor Company and take on the dominating race cars of Enzo Ferrari at the 24 Hours of Le Mans in France in 1966.",
     "frames": [
-      "/lwmgX5XzWpTIFegMLCPUqVCL8Xw.jpg",
+      "/yGWRKvOnuehU2nDfROmGKAxq4F8.jpg",
       "/tFEoMSO3jhFobjcxxMCd2BWghqB.jpg",
-      "/zsF6WAhxwUeaJx70FNIqPVFOTjM.jpg",
-      "/fkh775KJfxo9DqEJiS1s4ReQDJt.jpg",
-      "/tDcOCk35w1nSn3x6TRbIyuqVdcE.jpg",
-      "/2vq5GTJOahE03mNYZGxIynlHcWr.jpg"
+      "/6zc0L6FECNd1vDuGWdXGdJB5KMK.jpg",
+      "/pxOrpfJ9FsNmwoHE8DVWwBuqRda.jpg",
+      "/kPqfO4pkGPlCJRMcTCx0XD29m6R.jpg",
+      "/n3UanIvmnBlH531pykuzNs4LbH6.jpg"
     ]
   },
   {
@@ -3319,11 +3257,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Disgruntled Korean War veteran Walt Kowalski sets out to reform his neighbor, Thao Lor, a Hmong teenager who tried to steal Kowalski's prized possession: a 1972 Gran Torino.",
     "frames": [
       "/5GEQYHJ6hPvDxYIdoZ4mplWeMaG.jpg",
-      "/c7vJGWliajNshvGTDkPBEv0vWGJ.jpg",
-      "/sP4vNXFhPviUJevrD7X8fJV1OD1.jpg",
+      "/1yZrfQEnHVIZXtSvVcHUpauMmtm.jpg",
       "/s7WYJDBWdjyVH6AsVyD0oJZx2Fx.jpg",
-      "/8lbfUm5Q199RC6ugCv67ZRAzUrC.jpg",
-      "/sO2coXOiWWZL0sr6RsWTS3tu0J9.jpg"
+      "/ewrZkI4BG033TjzPUYqmgaKzyrd.jpg",
+      "/sO2coXOiWWZL0sr6RsWTS3tu0J9.jpg",
+      "/ArqV9diuIfxOBrWepxGv16zJfBC.jpg"
     ]
   },
   {
@@ -3349,12 +3287,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Something wicked this way comes.",
     "overview": "Year three at Hogwarts means new fun and new challenges as Harry learns the delicate art of approaching a Hippogriff, transforming shape-shifting Boggarts into hilarity and even turning back time. But the term also brings danger: soul-sucking Dementors hover over the school, an ally of the accursed He-Who-Cannot-Be-Named lurks within the castle walls, and fearsome wizard Sirius Black escapes Azkaban. And Harry will confront them all.",
     "frames": [
-      "/ywz3ifC2c9BwGiadePF9z5Cn216.jpg",
-      "/bq5tFxdTBJP4YW7JLy16uE1i9gp.jpg",
-      "/kqk5lYIPmukFxne3zQMUuNSANPL.jpg",
-      "/s2PAxYRkXnsepfysDdbnxv8x3Nh.jpg",
-      "/cp8n8UCIQEc8bGmB0DbnGxkGE2t.jpg",
-      "/ktj07Eajol5Y2aTQpvTADiQZXJV.jpg"
+      "/xQr68UrSXTfR8fopJC9t8e8yUPH.jpg",
+      "/lzO2FkZIhfTNWs8WTwsIeyQUhQS.jpg",
+      "/pWtIlNDEMyAVxVn7mAWqhrHofea.jpg",
+      "/8WFr720KpT3K2MFbs3o8vgmuXt4.jpg",
+      "/uAudcbnq0NKvxejrjXvmsw1JwCT.jpg",
+      "/vbk5CfaAHOjQPSAcYm6AoRRz2Af.jpg"
     ]
   },
   {
@@ -3381,12 +3319,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An anti-hate satire.",
     "overview": "Jojo, a lonely German boy during World War II has his world shaken when he learns that his single mother is hiding a Jewish girl in their home. Influenced by a buffoonish imaginary version of Adolf Hitler, he begins to question his beliefs and confront the conflict between propaganda and his own humanity.",
     "frames": [
-      "/8SYjnyQkVLrl8uztxLXkoSCP9Z.jpg",
-      "/saHJpE4aFogf4gs3KwsRC5ztXYU.jpg",
-      "/fby8IlpqIAxFsyk4oReNyyefuui.jpg",
-      "/2bHw6tDFWKuwBjmTh3AOWqNMWRs.jpg",
-      "/nxytR2iIQErGgAjrsy5ZrBB06WH.jpg",
-      "/qtgkNOIsFjbqdikd5npGO2Cqsqb.jpg"
+      "/q0uGR0vMQOMXNGdEUQEyi5DVWmh.jpg",
+      "/goj6XdyyHJish3DWkSH9HACTNNy.jpg",
+      "/lO9IjIALw2y30E8QPYjPZh5OEnb.jpg",
+      "/zbvh9qjyfXGGa0SqKqLkCn0CniE.jpg",
+      "/yiblPli3rTHBGVCFdaFebPYvWrt.jpg",
+      "/lTyikzfGgRX5ZqIfVeT26APYfRL.jpg"
     ]
   },
   {
@@ -3412,12 +3350,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "An adventure 65 million years in the making.",
     "overview": "A wealthy entrepreneur secretly creates a theme park featuring living dinosaurs drawn from prehistoric DNA. Before opening day, he invites a team of experts and his two eager grandchildren to experience the park and help calm anxious investors. However, the park is anything but amusing as the security systems go off-line and the dinosaurs escape.",
     "frames": [
-      "/7w8ddPOT5XgNhysWFzEkz8cfR7u.jpg",
-      "/6FwJxoWOFcxlGcYxDzx2oIstFdC.jpg",
-      "/1GbEJ8nYcd6QibFDFqphDTe5ZPB.jpg",
-      "/5hQX6M40M0HmMEUBuNZmngTvt5N.jpg",
-      "/oJwNdpeKyOxyaBJ8WEOsDVH5FIq.jpg",
-      "/mlolzwV6VrKOZJ1SfYbPHXXDD4p.jpg"
+      "/A6TDieDeaHyK35hJNBLDfefMvPx.jpg",
+      "/t0KtqgUtLdNrMG51qpSFs4gRYgz.jpg",
+      "/ahXaHe4bducvT4Z7ZwrqFNPnQEJ.jpg",
+      "/hic6OdbVa2cN9NZQvLUT7glzTfW.jpg",
+      "/yDouuYvRwt1Z8oAyi2ZplngPDrZ.jpg",
+      "/o7LzVmlOSYc3EspyVMC9bsTTARc.jpg"
     ]
   },
   {
@@ -3443,12 +3381,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Here comes the bride.",
     "overview": "An assassin is shot by her ruthless employer, Bill, and other members of their assassination circle – but she lives to plot her vengeance.",
     "frames": [
-      "/jJzSLB7G3jrZx9ZFJwjfcpi70wR.jpg",
-      "/g00oPVxfzgVtJe9AyMOWXQBaMSp.jpg",
+      "/lmuMeqa0N8w0wvdH08KqzkZ4IuS.jpg",
+      "/uB1FUB861n9k21nm7TaIzChWAME.jpg",
       "/rYnXhU4jsVd90QS9uTwSC9ChPNi.jpg",
-      "/hnlQG0ZPFdLagItF2XquT1yynEl.jpg",
-      "/cJvzsnvYxjTX3prpH5hCxbRxzx6.jpg",
-      "/iffzIhuLAO38Po6sh1s6ZEVwlNL.jpg"
+      "/pN7tIX7O0Z4DMHaoHrizeBLyJAG.jpg",
+      "/7qbiAq6ISLp6dWCQ7pxsTMs9Gfn.jpg",
+      "/lVy5Zqcty2NfemqKYbVJfdg44rK.jpg"
     ]
   },
   {
@@ -3473,11 +3411,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Beyond his silence, there is a past. Beyond her dreams, there is a feeling. Beyond hope, there is a memory. Beyond their journey, there is a love.",
     "overview": "Despondent over a painful estrangement from his daughter, trainer Frankie Dunn isn't prepared for boxer Maggie Fitzgerald to enter his life. But Maggie's determined to go pro and to convince Dunn and his cohort to help her.",
     "frames": [
-      "/5go3KeFlABoUUPbpwejG4PRfjBt.jpg",
-      "/efXetskp2hnswIIYHFXaHS0UlME.jpg",
-      "/9gvVLh5VnHUMaT8Vj16FdlbbiUV.jpg",
-      "/jK0SZSsPpk38sWQgG8Qgmzr6QTj.jpg",
-      "/7c86ZBrODp4oHoJ3qBllZRcWDCj.jpg",
+      "/t0Tr03cXeDA1y1qvuXw1KbmO2qn.jpg",
+      "/vfRSeOs11txad7ve15A83TFTQOw.jpg",
+      "/3rSEhIjfjh7xMq1BnNtAF2nbXCi.jpg",
+      "/p2O2NvYEEnBEAmZ7qtH5o1KDKrt.jpg",
+      "/jruBJZOJCQAWWhJ20UbxPUpbXXT.jpg",
       "/oGMomeS7bE43eN8SGJUaKvQnmud.jpg"
     ]
   },
@@ -3505,12 +3443,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "There are no clean getaways.",
     "overview": "Llewelyn Moss stumbles upon dead bodies, $2 million and a hoard of heroin in a Texas desert, but methodical killer Anton Chigurh comes looking for it, with local sheriff Ed Tom Bell hot on his trail. The roles of prey and predator blur as the violent pursuit of money and justice collide.",
     "frames": [
-      "/7VjD2TlwvIuasOPWGHNKPsh5xXn.jpg",
-      "/dZuFW3UFYMm5obrq2SbRzwn1WBk.jpg",
+      "/gdUVg9jcPcgYmMCkz385wDOXXi0.jpg",
+      "/usYcNeRyAOqBuAmvNkL7fz7TTyG.jpg",
       "/pr0RZ0s5PyHGMLZ34xNiO7F2UID.jpg",
-      "/fCCvn3xsG29TGKJPvZgTRppsDgk.jpg",
-      "/kd9jFTTabg4xJpHDgxY0h8F9BzG.jpg",
-      "/7T9e6yS8SQ0EAWLQHrhLSyCtTz7.jpg"
+      "/sGYqpLXCpqM0ryI5GX3MQVhKBiI.jpg",
+      "/gddUsvfyySrM5k8B8wwJy2VRlBx.jpg",
+      "/kd9jFTTabg4xJpHDgxY0h8F9BzG.jpg"
     ]
   },
   {
@@ -3537,12 +3475,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The world forever changes.",
     "overview": "The story of J. Robert Oppenheimer's role in the development of the atomic bomb during World War II.",
     "frames": [
-      "/uTFjXvxIEENPuxV2XZqDU2tK6Mc.jpg",
-      "/vq26aD9vqbvfFVCMCAszRg0Rkc8.jpg",
-      "/2fNDNEzGrzcWaaKgsHEVHlEGlrC.jpg",
-      "/bBvlI3Vmh0tcqyAUfKKRNHHA07V.jpg",
-      "/9dZ52zOs91RMgjjORoMIi6VGNLr.jpg",
-      "/cUIqZd6jJCbO94Txt1CkTs7MSeP.jpg"
+      "/ubqIz82TH106FCYl6pyB35yXOeY.jpg",
+      "/cg4dcK2WO7Ap59i0PerPizEscx9.jpg",
+      "/ce9r4S56O6XCTSUY2IMGZsBen6.jpg",
+      "/47lswMzoziNsRmqJkItb6IblwpD.jpg",
+      "/kMa1TSDj76zTSleXE7xsuZ4s3i0.jpg",
+      "/fm6KqXpk3M2HVveHwCrBSSBaO0V.jpg"
     ]
   },
   {
@@ -3567,12 +3505,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A look into addiction and how it overcomes the mind and body.",
     "overview": "The drug-induced utopias of four Coney Island residents are shattered when their addictions run deep.",
     "frames": [
-      "/jHBr4LncbkZdi7Yc8HbjzEIOdYN.jpg",
-      "/1UhNDL50KjNRnwXZSsbmInrrHAg.jpg",
-      "/7NMbhfii0hYBR4pAhFkCn5B3M3P.jpg",
-      "/bHhwwpurWAch5aGIy4F68VYlkqv.jpg",
-      "/4TSZHY0j6qDWxXT1cozejbauz04.jpg",
-      "/fAGYRJCujRBMw7TCuTp893eSG8e.jpg"
+      "/cN6u5pq2sE1oFcEeQZVyeshHmZh.jpg",
+      "/4lKEK1lpDORS6ySMZx95o6tTGFj.jpg",
+      "/m5kDmjLO1VhkVxHlRSKMI6mzuC5.jpg",
+      "/AbIbkLgXnpgKv8y7GdYVnuctTdW.jpg",
+      "/fAGYRJCujRBMw7TCuTp893eSG8e.jpg",
+      "/peZI7LOBmZ75swPRdmpwsUsJCf0.jpg"
     ]
   },
   {
@@ -3598,12 +3536,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Love knows no boundaries.",
     "overview": "Held captive for 7 years in an enclosed space, a woman and her young son finally gain their freedom, allowing the boy to experience the outside world for the first time.",
     "frames": [
-      "/ylTyE2auInDzCeXFUsHy278iAcA.jpg",
-      "/fFLoq02zonWHxSUntCAnkF7uoMx.jpg",
-      "/rd6PPMWzmO9oKzI8ofK6p7BqmC4.jpg",
+      "/5nu1I6O2Jm9eaWehYTPMqJmYid6.jpg",
       "/2yKI7IAR6np2XHv0rcvKFVjwHWW.jpg",
-      "/l6iBe09MAKJEq3KiajHifaylvee.jpg",
-      "/cGV6R2vzT4TYIabf3JgmrOISQ0y.jpg"
+      "/twC7rz9YXgtS9d4AZwAqJeGEfZT.jpg",
+      "/cGV6R2vzT4TYIabf3JgmrOISQ0y.jpg",
+      "/i8aK8cGt5iYfMmUJiAe5AKIqYE5.jpg",
+      "/pUKIUdLMHvPkCs5pQeB2TFhPSYM.jpg"
     ]
   },
   {
@@ -3629,12 +3567,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A murder case of Madam D. with enormous wealth and the most outrageous events surrounding her sudden death!",
     "overview": "The Grand Budapest Hotel tells of a legendary concierge at a famous European hotel between the wars and his friendship with a young employee who becomes his trusted protégé. The story involves the theft and recovery of a priceless Renaissance painting, the battle for an enormous family fortune and the slow and then sudden upheavals that transformed Europe during the first half of the 20th century.",
     "frames": [
-      "/2f17BUEBxv8Ic9qX39id7hly4Qy.jpg",
-      "/nmYv7C6ZPSdM99fWpgR9xkoCPS9.jpg",
-      "/szWUDYr9XdSzorkLF9tx7uPeCZC.jpg",
-      "/grRQDKXUgxr8BZC4xu3r2QWyXQP.jpg",
-      "/rgebWoup9cSigSd34pLhnF7cuFL.jpg",
-      "/jK65srQczOKTpW62wPxwwKztGgE.jpg"
+      "/oEsucEIxv2KxPuoZDr6Wo3tT6qi.jpg",
+      "/q5HhMxxijgOoMGOiqEpyNwfZDMb.jpg",
+      "/jjuyEgY6nktCO8LdnHHqZgPJmiy.jpg",
+      "/cIH7Yhml7hTweIB0RwOziURMubR.jpg",
+      "/on8gz9RKl24iLsWpoVx1XQmxJwm.jpg",
+      "/9udCLTxTFl28RxnK8Q05E154ZGa.jpg"
     ]
   },
   {
@@ -3662,12 +3600,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The true enigma was the man who cracked the code.",
     "overview": "Based on the real life story of legendary cryptanalyst Alan Turing, the film portrays the nail-biting race against time by Turing and his brilliant team of code-breakers at Britain's top-secret Government Code and Cypher School at Bletchley Park, during the darkest days of World War II.",
     "frames": [
-      "/5nbQuwA6GG17WlrUwdOo0tFR2qh.jpg",
-      "/mGeJLQuoP7ppP2ZMtMUrH4ThyAJ.jpg",
-      "/pzWkJimQ41Uwo7r95plYcbce7sK.jpg",
-      "/caQp2MhwfrTYGqVr7d9ayn8tqQ7.jpg",
-      "/4vf5Fv6OVXXrNqEXqiJnWxnNSyV.jpg",
-      "/s2KjOFcjwDD6nd3O4vkaQsyW2Hy.jpg"
+      "/5pHHQsYkaCV0VvNPJG5SX5LRnwh.jpg",
+      "/v4cuiqqOwyq3s85JTGx1ipQmWpF.jpg",
+      "/kfWWVTNIs4BQ79DtN732CHde3IX.jpg",
+      "/sixfWYfNegaGGHKdXrNNUHaMiAC.jpg",
+      "/jFp5aAlGQ1H3gwdORL2urr8dnoN.jpg",
+      "/caQp2MhwfrTYGqVr7d9ayn8tqQ7.jpg"
     ]
   },
   {
@@ -3694,11 +3632,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Not every gift is a blessing.",
     "overview": "Following an unexpected tragedy, child psychologist Malcolm Crowe meets a nine year old boy named Cole Sear, who is hiding a dark secret.",
     "frames": [
-      "/dyzxWfrS5ZCB6ifjqVoP0k4hg7t.jpg",
-      "/pppaQhBIW2CJHteDrtUP2PX2Ha5.jpg",
-      "/hMPiomqJRLhX9FNkkqQNYffbWM0.jpg",
-      "/dvXDzj3vc9hZLTP5b9K8bM2lEU7.jpg",
-      "/fsdB4yMwqIUg6zqYtbUBFYC38lo.jpg",
+      "/vBarab07G1VECdhxOakdY6YNp7L.jpg",
+      "/3IRzFlFGfAqB9S3ZbDhcF6QNX6g.jpg",
+      "/qVHTu26diWLmdj9aocaJVM57oTu.jpg",
+      "/4l4tYHgABoc1xby86uJP36HdUiM.jpg",
+      "/qiE177JJAyRUoqLPa1yGipGq2AZ.jpg",
       "/6TjllWT3cGrPFyqDXurVZ3L8bBi.jpg"
     ]
   },
@@ -3726,11 +3664,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Earn. Spend. Party.",
     "overview": "A New York stockbroker refuses to cooperate in a large securities fraud case involving corruption on Wall Street, corporate banking world and mob infiltration. Based on Jordan Belfort's autobiography.",
     "frames": [
-      "/dRFzQ8QyP4uhnvVIMpCiQtY1jST.jpg",
-      "/7HuCGywfHwdYGqK5peranxnNsVd.jpg",
-      "/nhf4gIOsj2BSOP5EvNNoDhPP5uu.jpg",
-      "/irbqknM6ZUUk3JxtKn0fxH4zjCL.jpg",
-      "/tVQfDuKXb4GBiTccEiNdweZndkc.jpg",
+      "/hpjyrL49eY4UZPlitCEIZ3MUcMJ.jpg",
+      "/39PooZqkk5rtA9PuEJ8bEDyo8Fr.jpg",
+      "/bJwjS1syMOVfOmm2FWRms0Rm1gU.jpg",
+      "/2DZjKCPnwBKHz5VRX46rKJ9VXnz.jpg",
+      "/3L1Lx9tlHS60gkERKK5xOcbzTVA.jpg",
       "/7Nwnmyzrtd0FkcRyPqmdzTPppQa.jpg"
     ]
   },
@@ -3760,11 +3698,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Led by Woody, Andy's toys live happily in his room until Andy's birthday brings Buzz Lightyear onto the scene. Afraid of losing his place in Andy's heart, Woody plots against Buzz. But when circumstances separate Buzz and Woody from their owner, the duo eventually learns to put aside their differences.",
     "frames": [
       "/hOtJzmG0r5WN1Xlz15hJMoKHvgp.jpg",
-      "/ey8p7FDxdBeO1YL33yBfujI8okT.jpg",
-      "/9VVc3m12U4w2YW8NEZ9zDXITCiC.jpg",
-      "/XLwjO1NSCIaLznh58OQtmSFl0N.jpg",
-      "/wXTMod0lcLMtQy6Tz9yBP2wF4F1.jpg",
-      "/HAL8AHcfFB8QRcRpFi5DCyR0i8.jpg"
+      "/c1oOCXKVJPnzwuzWaKqZ6WIly62.jpg",
+      "/pAtB7bT1L903dLwoAPiBK07QTjw.jpg",
+      "/w1xMRxUVDQ4tklyqPdXLf53rcsq.jpg",
+      "/8AqWECiUHnz1Crj69uB9vhiK9Le.jpg",
+      "/3Rfvhy1Nl6sSGJwyjb0QiZzZYlB.jpg"
     ]
   },
   {
@@ -3790,12 +3728,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Choose life.",
     "overview": "Heroin addict Mark Renton stumbles through bad ideas and sobriety attempts with his unreliable friends --Sick Boy, Begbie, Spud and Tommy. He also has an underage girlfriend, Diane, along for the ride. After cleaning up and moving from Edinburgh to London, Mark finds he can't escape the life he left behind as Begbie and Sick Boy come knocking.",
     "frames": [
-      "/nGDCdzmCOxNHnieVUNnjZMfFAyG.jpg",
+      "/qCJCywUZHweMg2Rexm5sx5oyUy0.jpg",
       "/xq57AZ70CLHN0j6yHRYHsodJhgG.jpg",
-      "/yAdgGQLouqK1LK6NVjDmqJeXEd4.jpg",
-      "/Ar2amyqQFXpek0rp4SD9y2UEMKH.jpg",
-      "/k2xZrsxRlNiF1sI0xM5toN5N6kl.jpg",
-      "/dkfBKDUIWP1peEszdqK10MkMZCP.jpg"
+      "/q5efQpdzHJOXcx89gFCEYc1LJZ1.jpg",
+      "/6QmT4rKAIKgNbI8JRgwI7QSbf51.jpg",
+      "/cdbjlFEW1slS3QHMQ2e1g6zgw7N.jpg",
+      "/Aw0z8bUhGljT0ots6udf1MTLEMi.jpg"
     ]
   },
   {
@@ -3823,12 +3761,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Change is in the air.",
     "overview": "Carl Fredricksen spent his entire life dreaming of exploring the globe and experiencing life to its fullest. But at age 78, life seems to have passed him by, until a twist of fate (and a persistent 8-year old Wilderness Explorer named Russell) gives him a new lease on life.",
     "frames": [
-      "/zNpAqgf41GYxBUKy5LRkfAvhP0V.jpg",
+      "/eihQ0jD18YMFF9Fs7ebyjOLjKOT.jpg",
       "/3PhI4aS60H0ZUCcpF1rCPA6whPj.jpg",
       "/4Rpo8uPs96fneUZV8jXwX6zqntm.jpg",
-      "/a3S78O1nDdNmf1beGsmxlEzoezI.jpg",
-      "/cyVZKnP64VTrnRPXduFwmCZkxLi.jpg",
-      "/hGGC9gKo7CFE3fW07RA587e5kol.jpg"
+      "/jtiU3DFOX9vYtKbIzsVdytebvg.jpg",
+      "/yly1VJRuGYLZur1IdvRHb8nCwPy.jpg",
+      "/h8C7KZwCJO5DN7jPifc7AoIjx7k.jpg"
     ]
   },
   {
@@ -3854,11 +3792,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The extraordinary true story of Solomon Northup.",
     "overview": "In the pre-Civil War United States, Solomon Northup, a free black man from upstate New York, is abducted and sold into slavery. Facing cruelty as well as unexpected kindnesses Solomon struggles not only to stay alive, but to retain his dignity. In the twelfth year of his unforgettable odyssey, Solomon’s chance meeting with a Canadian abolitionist will forever alter his life.",
     "frames": [
-      "/gDtHyByYq4xwyc5gJzoz671Mtnz.jpg",
-      "/mqjdAlBJdBS91CBLXMyPtELddp3.jpg",
-      "/jZYrgJNSxhHLFxtSeIZb34lh7FJ.jpg",
-      "/1lvV7vRBvlYoS3O9gw0exny70vQ.jpg",
-      "/kEdo0hbuguo7OvLBT8omQRJDW7V.jpg",
+      "/3oX8rKPpdh3aZRRJYtZ9v4lkvOd.jpg",
+      "/hffoYAoZ846nqG4Bpy2dx66UIuZ.jpg",
+      "/dnLFHAF4Hv6GqADc68WP4bdDM4M.jpg",
+      "/wd9v938GFmhe7MOAbERBlXQicXO.jpg",
+      "/sTy1s98D1qOPk3v4wF8jCaOle3c.jpg",
       "/4Bb1kMIfrT2tYRZ9M6Jhqy6gkeF.jpg"
     ]
   },
@@ -3885,12 +3823,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "He saw the world in a way no one could have imagined.",
     "overview": "From the heights of notoriety to the depths of depravity, John Forbes Nash Jr. experiences it all. As a brilliant but socially awkward mathematician, he made a groundbreaking discovery early in his career and stands on the brink of international acclaim. But as the handsome and arrogant Nash accepts secret work in cryptography, he becomes entangled in a mysterious conspiracy. His life takes a nightmarish turn and he soon finds himself on a painful and harrowing journey of self-discovery.",
     "frames": [
-      "/8bh3crnfmaZFdTZFXu3nMhgyrEK.jpg",
-      "/8N7X1hrhCwOGzEXzTc5Esj2iEl4.jpg",
-      "/8S8Q0TZYDe4GsV8vaAVeZWCqRwc.jpg",
-      "/qZrsfw5nd4fjakWH7dQr9shOpfE.jpg",
-      "/54SwFPllztr4HwlU4s5g5tqNjKl.jpg",
-      "/hCJFWTPghXCwwSpvPpAoIB8318Q.jpg"
+      "/aqoHnIbJG3izkXC4jij2I9Wf73w.jpg",
+      "/zUm2n5NvUlb55Mx8QiDpE5Bm8sH.jpg",
+      "/lP8BRzL4uEFk2Ag6FlhySAllIJ3.jpg",
+      "/3Pm3wFux0qdUeh3sJPG0gCSTL1u.jpg",
+      "/zbpZOYrRCxEF8lFT5JC8XodEggC.jpg",
+      "/9PwUQZDHGPKsgbnoBl1Ah9zXWjk.jpg"
     ]
   },
   {
@@ -3917,12 +3855,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "What if every moment in life came with a second chance?",
     "overview": "The night after another unsatisfactory New Year's party, Tim's father reveals to him that the men in their family have the ability to travel through time. They can't change history, but they can change what happens and has happened in their own lives. Thus begins the start of a lesson in learning to appreciate life itself as it is, as it comes, and most importantly, the people living alongside us.",
     "frames": [
-      "/oU8aPgcx1l6CPN5sM3ZzBRxbYfT.jpg",
-      "/crojWTS0v0OWY5NvLGHen9BArIV.jpg",
-      "/e1ObK9DrpXxqlpTWGKhGdAUuljd.jpg",
-      "/erXaqSKECENEr9yBYXEF4zJ43RU.jpg",
+      "/aBZMu0U1M4pywNH0OUCOMz2PZEc.jpg",
+      "/kSkaesL7avumPWMb664oMLseMCQ.jpg",
+      "/6ASfLUVXRyXct9xlyExpuXIDULX.jpg",
+      "/ppWSi3evUtz9YGNcmsnjmH3FARy.jpg",
       "/q5XSPlyWEd7k1JVcb6uij5e8f9G.jpg",
-      "/5ZoFGrFCKP0QrcfVwOIHiAwunBg.jpg"
+      "/rc1IUET1dg6GUAwyhcjBIpZtzGW.jpg"
     ]
   },
   {
@@ -3948,12 +3886,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "She’ll change your life.",
     "overview": "At a tiny Parisian café, the adorable yet painfully shy Amélie accidentally discovers a gift for helping others. Soon Amelie is spending her days as a matchmaker, guardian angel, and all-around do-gooder. But when she bumps into a handsome stranger, will she find the courage to become the star of her very own love story?",
     "frames": [
-      "/2YTbwuOp0a13wXNWDUKKzlOH31v.jpg",
-      "/8pIh0fgRAgWJhd2vZES5uNMbMPP.jpg",
-      "/yAFumR1uWKcQ7iuBIewdE5OUrFQ.jpg",
-      "/tPFIYNGdWzTFZiyoI5gVM7K5TIh.jpg",
-      "/hIyZ5xcmXKZlvNwbKVQc8iHfPkB.jpg",
-      "/6n53UI4mX9QMfe2S0Pgt8mGebY1.jpg"
+      "/oPWxpq5ps4oAV0EUjoZm2z66b9w.jpg",
+      "/1doA6Hqx0WPvvtWErVYCl3Pmosn.jpg",
+      "/sbLdoq4Sm366woVYTEzODeEHPHP.jpg",
+      "/r4asVk6HW5z4e7SYPjLnamnXHFi.jpg",
+      "/2WyjkKudTkDgtZo9CIN8NoPGHRB.jpg",
+      "/sylBlnpwqI9LAcyw7jH3oqazbAx.jpg"
     ]
   },
   {
@@ -3980,12 +3918,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Man has made his match ...now it's his problem.",
     "overview": "In the smog-choked dystopian Los Angeles of 2019, blade runner Rick Deckard is called out of retirement to terminate a quartet of replicants who have escaped to Earth seeking their creator for a way to extend their short life spans.",
     "frames": [
-      "/g6NwIiAR4kDBLzf0ogo2CAp7zzr.jpg",
-      "/csOsESFq5miTVDfAWn7006u0W0i.jpg",
-      "/fqHcaLlpoCzKPzNxW72oKtsdhiJ.jpg",
-      "/s2zFcsLxnsu94T3iPq16Wv0i7Nz.jpg",
-      "/tExIq4dEKaEskhnaauuDwN9HR0u.jpg",
-      "/qOs4m2w92GZtuTykfBkqm5W5sDJ.jpg"
+      "/sr8jbiwV18YnmFA5V5Q9PngL1Nu.jpg",
+      "/uMSoVZiU1eq7zsIJR0RtDYvkezE.jpg",
+      "/nQnhhE2Uodm9nQBj98K5CKoWJKx.jpg",
+      "/42pGHomAszivyq9tzz6Ea7f8ouH.jpg",
+      "/2spEHYDcyE9r9mS7AFEscfKVDzO.jpg",
+      "/eIi3klFf7mp3oL5EEF4mLIDs26r.jpg"
     ]
   },
   {
@@ -4011,12 +3949,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Fearless lives forever.",
     "overview": "Singer Freddie Mercury, guitarist Brian May, drummer Roger Taylor and bass guitarist John Deacon take the music world by storm when they form the rock 'n' roll band Queen in 1970. Hit songs become instant classics. When Mercury's increasingly wild lifestyle starts to spiral out of control, Queen soon faces its greatest challenge yet – finding a way to keep the band together amid the success and excess.",
     "frames": [
-      "/gQ2b1NoZbXsxoBXOtwH1Gsgqc2u.jpg",
-      "/iDETz0hejj5GoLm9Vtd2i8XNPBf.jpg",
-      "/xGzz9pQY6Q33hs3fEOyw7afrFQh.jpg",
-      "/1djmMIZkObSVJYttzFFKdQUxMJm.jpg",
-      "/7mmXWuBeNJiBO0NIOUWOuFve4Tb.jpg",
-      "/dcvbs8z0GEXslC1kCT77x19XDeR.jpg"
+      "/lz8MxdsjrzsWAwOJAmYaD0epClw.jpg",
+      "/q2smU8jc0X7Zti48ueexsbdiGXl.jpg",
+      "/bORKgryWrZ8q8PUBsMqgJGrbhkp.jpg",
+      "/fBv8MhUCI0oc3BvqCnFTtYOrnWJ.jpg",
+      "/jNUpYq2jRSwQM89vST9yQZelMSu.jpg",
+      "/93xA62uLd5CwMOAs37eQ7vPc1iV.jpg"
     ]
   },
   {
@@ -4043,12 +3981,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Every man dies, not every man really lives.",
     "overview": "Enraged at the slaughter of Murron, his new bride and childhood love, Scottish warrior William Wallace slays a platoon of the local English lord's soldiers. This leads the village to revolt and, eventually, the entire country to rise up against English rule.",
     "frames": [
-      "/5MWAHl2JQ2WfRzRCZTdbor7nefV.jpg",
-      "/vwYb8qYWOoNALFfEyD29SULssfT.jpg",
-      "/jaVqb2C8ZJBqcDvAzELL2JbgJlH.jpg",
-      "/1aHQFfMaLiFVmsBR0KECE4eRWtP.jpg",
-      "/euMvaGgwXm57HRP2koKCrU7g51I.jpg",
-      "/AwxGsMKIBFXA5AOdBjsuirzK9Zg.jpg"
+      "/qHoWtiA7pYq7ryRPw5JbpGSG7i7.jpg",
+      "/mrMUR5EiOPKEgel4wuVqOxVMMij.jpg",
+      "/cMAc8PY9wvQSO7XxO4G7FHsVv07.jpg",
+      "/wKvqm95qJTgI5y5mhohqC6EMnsA.jpg",
+      "/vXhTr0cN54R0TbSD9iG5cuAEWcT.jpg",
+      "/1m1c5gIWWkb1FEC9lzsoXHhhs7b.jpg"
     ]
   },
   {
@@ -4076,11 +4014,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Be careful what you wish for.",
     "overview": "Wandering her rambling old house in her boring new town, 11-year-old Coraline discovers a hidden door to a strangely idealized version of her life. In order to stay in the fantasy, she must make a frighteningly real sacrifice.",
     "frames": [
-      "/fCaznugYaqVSF1gTVVWFh7GTGIu.jpg",
+      "/3oCpdq7o2X79mvwJEHKF5pisdfd.jpg",
       "/atKP35Y6eHMhgm9DZMod8d05R5k.jpg",
-      "/ovW6CQkaN0d7G4rV8ZQ8KuhR6iX.jpg",
-      "/ckJqD7FxusiqqqCeq268BrjwkTn.jpg",
-      "/p5ixxu4V6VYBvr26xBKsaPrElu6.jpg",
+      "/rISuaf4ESwmPyYgho6aXWs9kd5K.jpg",
+      "/t87UMe4ngvkCexFnzNSGM8ZyhNs.jpg",
+      "/ss7ti6NTB2kqyO9G69UCH39E194.jpg",
       "/hofnlIyF6bePkgQOpcuRWLvzf15.jpg"
     ]
   },
@@ -4107,11 +4045,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Dare to live.",
     "overview": "Loosely based on the true-life tale of Ron Woodroof, a drug-taking, women-loving, homophobic man who in 1986 was diagnosed with HIV/AIDS and given thirty days to live.",
     "frames": [
-      "/yWKj9VQbo4Eydug49eRl9AFBsSb.jpg",
-      "/nRqWWvk9dmyPDf3LjQiKBSS38bK.jpg",
-      "/yPtHIQ3v0ZBMrl4WM12u7HZmnQi.jpg",
-      "/1sL0agBlr3lmfqPRCuWjIHO2UyK.jpg",
-      "/j4B40hp0GC2mCLEIiBi9PSe2gEq.jpg",
+      "/u0WuaG4rniFJN3yIJc4dS0sR1Lm.jpg",
+      "/vRRQYvfbbl8Xjfxv7g9e2TnzndS.jpg",
+      "/bbCVxO7J6P6saVqSv0RbXBxBIE1.jpg",
+      "/fX766ur9juYOUJ76PDDMF61QuH7.jpg",
+      "/l44aUpuHMyp0NctwUdTh2ztVL8X.jpg",
       "/sbVKj98cq0FztCukzu47bu0H8o7.jpg"
     ]
   },
@@ -4139,12 +4077,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "You don't know what you've got 'til it's...",
     "overview": "With his wife's disappearance having become the focus of an intense media circus, a man sees the spotlight turned on him when it's suspected that he may not be innocent.",
     "frames": [
-      "/kpzAR0GyWqnhgsTYCtV893qO4fn.jpg",
-      "/sGea3jULLHyF00NzHru3GmuOzJU.jpg",
-      "/1JkbdvNliIJ2lvlTIS9EP8LY2M.jpg",
-      "/s9MgNgbVw8YaLl4BASH6MAz7Mmo.jpg",
-      "/6WUC6yVzfyZmlWPSgj0yB3WvrG3.jpg",
-      "/iWak7wT0j6ycCc8lKr4NBz9c7n5.jpg"
+      "/41xmYld2Bqx2T4Py8sMzHP0Zhwt.jpg",
+      "/1564XJlMMBkfSLAuPBWA0230EqY.jpg",
+      "/9xSzBBH4t9mOvsjHL58f8kG98oT.jpg",
+      "/r5O5qtyjWfF7ybOHL4UmMFGrlQb.jpg",
+      "/1mzisKntcKHEG3RoTGXIIHgmJV7.jpg",
+      "/h2JaQWLKhapm7AuSViJwGiv8ngC.jpg"
     ]
   },
   {
@@ -4172,11 +4110,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Light years from Earth, 26 years after being abducted, Peter Quill finds himself the prime target of a manhunt after discovering an orb wanted by Ronan the Accuser.",
     "frames": [
       "/wNcn758XUVASJkm7OLFnGFYDtyN.jpg",
-      "/axRb8HNkfgO42F7tV0hnPT6hrIb.jpg",
-      "/apwqtTaxIUn4x6sgxdf3DYcVvea.jpg",
-      "/hSv3W67DzTdL89iKD4r1j9RhaGr.jpg",
-      "/t244ZkPgSkwQPu8ealFMhiM1n4V.jpg",
-      "/uLtVbjvS1O7gXL8lUOwsFOH4man.jpg"
+      "/2YU4VZLUxSXIaMx8anqDGq0AXus.jpg",
+      "/r6l4w40Ky5VsoeCvFABBxjCBIKX.jpg",
+      "/zJMEtMRlWCjPvump8TPU8II3Mxy.jpg",
+      "/mZSAu5acXueGC4Z3S5iLSWx8AEp.jpg",
+      "/i34ijHY5hr52uYcKZ48wq7K6yUs.jpg"
     ]
   },
   {
@@ -4203,11 +4141,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Once more with feeling.",
     "overview": "Peter Quill, still reeling from the loss of Gamora, must rally his team around him to defend the universe along with protecting one of their own. A mission that, if not completed successfully, could quite possibly lead to the end of the Guardians as we know them.",
     "frames": [
-      "/juj3eZsAfpKQTEKKq9UbleAuhS4.jpg",
-      "/uzxWRsCLnyGMzMc7Jprtj5FumwB.jpg",
-      "/udEV8Dt5DqkYNFcsVDMkBvEac3B.jpg",
-      "/3GkMYBUiN70qtXc47TDgKzGfvRl.jpg",
-      "/rJTkx8NNCms8vyhwH3GfblSOv3W.jpg",
+      "/utRNuD7FANTRH3YdvXsGFWCjqh4.jpg",
+      "/kK191emC6JXtrBAIzAzPqfr7lBm.jpg",
+      "/1iJN7HhIDdqYTcLhI0pph8TKXnY.jpg",
+      "/h7bwxR823kEwQ8RzXAlyMCNU54t.jpg",
+      "/hoVj2lYW3i7oMd1o7bPQRZd1lk1.jpg",
       "/5YZbUmjbMa3ClvSW1Wj3D6XGolb.jpg"
     ]
   },
@@ -4234,12 +4172,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Let the magic begin.",
     "overview": "Harry Potter has lived under the stairs at his aunt and uncle's house his whole life. But on his 11th birthday, he learns he's a powerful wizard—with a place waiting for him at the Hogwarts School of Witchcraft and Wizardry. As he learns to harness his newfound powers with the help of the school's kindly headmaster, Harry uncovers the truth about his parents' deaths—and about the villain who's to blame.",
     "frames": [
-      "/nBdSj4qgU5oR9C3t3NZ2c8KRHbh.jpg",
-      "/4RoospkNHW1pyuDdx770GmLsmJF.jpg",
-      "/717FBPc7xQjr4Owi1Kha55aPC7E.jpg",
-      "/cvNvWh3vpZHCCmuZ1g75H8iXuxi.jpg",
-      "/nLMNOKzKzSRWhHfZzUzFmvoXc0w.jpg",
-      "/qrKcg4CbBm3165QNT3kQWQnqlTM.jpg"
+      "/mNRvImSd7DgOaVZGFJzLtFyo7qo.jpg",
+      "/24T4BE4Ls57ONEqMNcMW75aBDNe.jpg",
+      "/dheweOqEqfXi0ythjWt9ClzChnm.jpg",
+      "/em8ivISEcBv50ZnLIkK9PNmpxoX.jpg",
+      "/5jkE2SzR5uR2egEb1rRhF22JyWN.jpg",
+      "/hziiv14OpD73u9gAak4XDDfBKa2.jpg"
     ]
   },
   {
@@ -4266,12 +4204,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A Los Angeles crime saga.",
     "overview": "Obsessive master thief Neil McCauley leads a top-notch crew on various daring heists throughout Los Angeles while determined detective Vincent Hanna pursues him without rest. Each man recognizes and respects the ability and the dedication of the other even though they are aware their cat-and-mouse game may end in violence.",
     "frames": [
-      "/2iouk1RMOCczd7nVUmn6dvHyfmg.jpg",
-      "/fUr5NTHqAbyzOqE0BxHf3ydCVi6.jpg",
-      "/44tS393ybVNcDrK3kdm3gHirI92.jpg",
-      "/ncCSpPpyS07U0sL7Z5WgKMt4TSw.jpg",
-      "/1E76rzz4QqIWAKb8vEZI34fHbS1.jpg",
-      "/uI22JkEMediWyiRqhllNqeeGtW0.jpg"
+      "/ifOwgKQCJIy3zXIPjT3Egsb2J2O.jpg",
+      "/7MNFxiV4DovY25YIPqkdef4Xxta.jpg",
+      "/tiQsnPvd1NNt1EnbLQGgN1lb6nS.jpg",
+      "/5diPii2DvfgCsVeYAct8rkMIWCh.jpg",
+      "/pUpT5mFiNYRPd49eI3B8tbL99os.jpg",
+      "/kMRdsjSHifqGZPfHdZIS8YfNMk0.jpg"
     ]
   },
   {
@@ -4299,12 +4237,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "What started as fire and fury will become friendship.",
     "overview": "As the son of a Viking leader on the cusp of manhood, shy Hiccup Horrendous Haddock III faces a rite of passage: he must kill a dragon to prove his warrior mettle. But after downing a feared dragon, he realizes that he no longer wants to destroy it, and instead befriends the beast – which he names Toothless – much to the chagrin of his warrior father.",
     "frames": [
-      "/ybVoPawPPFn14YA4y9R0R4fpbzo.jpg",
-      "/5AGffTv7p4NkgLxQmt7bC8bEOZJ.jpg",
-      "/7PAE4KKlMZbPmcHrzkpdZ5FI1RL.jpg",
-      "/5aeppsA9qPKlIs6nt6JRkFk72fN.jpg",
-      "/pcW1HqkxW7JlC4lhmgciOF31Qlx.jpg",
-      "/59vDC1BuEQvti24OMr0ZvtAK6R1.jpg"
+      "/ssvehrXM3jf26l1hnS81uyZYf1D.jpg",
+      "/dJoQSdRYu3MDuczrxHniBHHziwd.jpg",
+      "/1NPqPCb5Vc0S4QwSaLMLwHbnph8.jpg",
+      "/jxAa7ahiHc6La1txH3GqKrULfi3.jpg",
+      "/m7r1aqoLym8dGpcluAe6LM2ut19.jpg",
+      "/kxklJL1v8MYEU5xdU6W5VvmBwVz.jpg"
     ]
   },
   {
@@ -4330,12 +4268,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Have the adventure of your life keeping up with the Joneses.",
     "overview": "In 1938, an art collector appeals to eminent archaeologist Dr. Indiana Jones to embark on a search for the Holy Grail. Indy learns that a medieval historian has vanished while searching for it, and the missing man is his own father, Dr. Henry Jones Sr.. He sets out to rescue his father by following clues in the old man's notebook, which his father had mailed to him before he went missing. Indy arrives in Venice, where he enlists the help of a beautiful academic, Dr. Elsa Schneider, along with Marcus Brody and Sallah. Together they must stop the Nazis from recovering the power of eternal life and taking over the world!",
     "frames": [
-      "/qErcHdNskMQ8CNxqUR6S4meRHsV.jpg",
-      "/nnrHqtmaVcWZ1NxThpgvcshPynq.jpg",
-      "/ijzwa0U48R3Fd6Wm0DnhhFGQa2a.jpg",
-      "/4RY0BaKkheBmO4Kf4vMDuXEHbl2.jpg",
-      "/1qDDd7jImpuu0vQcYpXNYl18Rcw.jpg",
-      "/7KGdTzKux4fp5sW7hUM33NWqBU1.jpg"
+      "/xBpnI7d0SvfY7iuKA7Z1c10FQ9a.jpg",
+      "/srjRzBxpNuJnKaEOx44nmVhQhhE.jpg",
+      "/xqQjDq6e9cYpQwi58jnFXSmcHMl.jpg",
+      "/2NZ8KhFfltzdI7TDFIztu41LolN.jpg",
+      "/2Y7nbXrDtHwAfcTX7KBN0z40OAy.jpg",
+      "/je2QsgBLEy4lzsvWprwfoZKmIX1.jpg"
     ]
   },
   {
@@ -4364,12 +4302,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Meet the little voices inside your head.",
     "overview": "When 11-year-old Riley moves to a new city, her Emotions team up to help her through the transition. Joy, Fear, Anger, Disgust and Sadness work together, but when Joy and Sadness get lost, they must journey through unfamiliar places to get back home.",
     "frames": [
-      "/yeaIJlAxDjRflTLb23p756Kj71t.jpg",
-      "/cRnCRahKMCzapklE591axIbR35K.jpg",
+      "/7FlKAgquZpBtc2ypKZs7ESCFhN.jpg",
+      "/atu4WuqSwKgGIu0vyEW45NyMqAT.jpg",
+      "/k1q5BoFcJyE43kNwBXvmltG5vr9.jpg",
       "/w5FgTeg1BKWyhPJ5C9B1UnmPYa0.jpg",
-      "/jmbBkSHeTxPhTrc7JgreieZ96PM.jpg",
-      "/5qbAnrBTGAvABcqGjXCgA567ETd.jpg",
-      "/jJKZaTBNenlFclQyjrnvzkRmvWE.jpg"
+      "/j29ekbcLpBvxnGk6LjdTc2EI5SA.jpg",
+      "/okJXzeIpbdx7q8rQjJwBNr8VTEk.jpg"
     ]
   },
   {
@@ -4396,12 +4334,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The bride is back for the final cut.",
     "overview": "The Bride unwaveringly continues on her roaring rampage of revenge against the band of assassins who had tried to kill her and her unborn child. She visits each of her former associates one-by-one, checking off the victims on her Death List Five until there's nothing left to do … but kill Bill.",
     "frames": [
-      "/l7kpDMt7bfnHkYQhZHDkYZ5RiCr.jpg",
-      "/40zPJ8cyG3un9ktXBQNHFNrZ8pW.jpg",
-      "/f5ll3shCuJ4U3lmOegKEYSm13Uj.jpg",
-      "/rVjZ2v0tvzYlyqOGDPJKu74GGX8.jpg",
-      "/g6BaULlnwbHMXtWWPizWywpD5O4.jpg",
-      "/pgG6tzJzC8mjGqhaT8IWwEk00xf.jpg"
+      "/9Qe98ayH9qT9ZV7KGXAmzR9aVtj.jpg",
+      "/f8AqznYDaWNARDX3YlVx2YWEY0a.jpg",
+      "/xEJxAMcOIwBgyLsnx3ClNS43Ots.jpg",
+      "/sOlXBhOAReJ60e0FtnmIP4QRiFe.jpg",
+      "/e5BEz8Jq7xR2kzWab1GllAlLUf7.jpg",
+      "/70EtzaGfO2d8X5n8SLI4s61KuJh.jpg"
     ]
   },
   {
@@ -4428,12 +4366,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Here's to the fools who dream.",
     "overview": "Mia, an aspiring actress, serves lattes to movie stars in between auditions and Sebastian, a jazz musician, scrapes by playing cocktail party gigs in dingy bars, but as success mounts they are faced with decisions that begin to fray the fragile fabric of their love affair, and the dreams they worked so hard to maintain in each other threaten to rip them apart.",
     "frames": [
-      "/zzuu61W3Wn9hyAHbTri7aPHWhgk.jpg",
-      "/x2STmWTekfeuzXrJKYoDc79TSVI.jpg",
-      "/dUunq8Yhn3lteVIuq0NH6bS8vL9.jpg",
-      "/nxsqOOMFfz7mWW8JLmpcLjNz7E2.jpg",
-      "/9MLJtvpIgQbysM8ZYV3Qfux8gP7.jpg",
-      "/nlPCdZlHtRNcF6C9hzUH4ebmV1w.jpg"
+      "/AiC7MdMSPeuH6ByLzo3SuFQHeoE.jpg",
+      "/k3mCm7pKFCPVnq81X66GJzSV0AK.jpg",
+      "/o52zPKYFUP62MBosb4aRwDQwHyf.jpg",
+      "/iUD6Zp8WjbJ2QOcEk81aSwOqfrc.jpg",
+      "/7P7NLNX3Rin41PMOAqvhfcFDTNQ.jpg",
+      "/qJeU7KM4nT2C1WpOrwPcSDGFUWE.jpg"
     ]
   },
   {
@@ -4459,12 +4397,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Live boldly.",
     "overview": "Lou Clark, a directionless 26-year-old from the English countryside, takes a job at the local castle as a caregiver and companion to a wealthy young banker, Will Traynor. Wheelchair-bound from an accident two years prior, the once adventurous Will has all but given up — that is until Lou determines to show him that life is worth living.",
     "frames": [
-      "/p6bOuCbKn7ffuDWDdR0QHOUkfD6.jpg",
-      "/xiZ58Jpi8H5O08ZciWOhrSjI4MM.jpg",
-      "/iSR27TPEylaWpGJY6m8utE9JEaQ.jpg",
+      "/781m8otx1tB3EHv3k7POCyj9bXM.jpg",
+      "/cZZTXTJIFITyInpZRwTMMzvpvc.jpg",
+      "/srXOKg7n3PUt6SdrbQGX9XNP2JW.jpg",
       "/6aQSqZspTjxqPA50KhH956uB21H.jpg",
-      "/l4VQBchY4Sx968RCfH9Orm2VEZW.jpg",
-      "/dY4Lyzw8WclKg77rz90MBtGqo1e.jpg"
+      "/iSR27TPEylaWpGJY6m8utE9JEaQ.jpg",
+      "/7jjwdoIVPJp7gcDo9uE1sVZi2Rs.jpg"
     ]
   },
   {
@@ -4492,11 +4430,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It's nothing personal. It's just their job.",
     "overview": "Lovable Sulley and his wisecracking sidekick Mike Wazowski are the top scare team at Monsters, Inc., the scream-processing factory in Monstropolis. When a little girl named Boo wanders into their world, it's the monsters who are scared silly, and it's up to Sulley and Mike to keep her out of sight and get her back home.",
     "frames": [
-      "/3Ac3IIvKkP8dYQsaB3y184OeMZK.jpg",
-      "/2A6iup0175C8nsopOsciK0lnAQQ.jpg",
-      "/laOsj7O8JKsYYzhPlFvtxHJL98r.jpg",
-      "/rQn60wP2QecK40sHU4vfNKF4liv.jpg",
-      "/hVxPPgSL72qS18jIB3eWXoAsoWu.jpg",
+      "/3wpN0p2bPHHuQtvben6ym1SUtrX.jpg",
+      "/xgO4zrbRCy2u8LCXqfI0E8MwFt0.jpg",
+      "/cGXjXwzn2irMcdaB3F2ETzvgYBS.jpg",
+      "/dbCbexfNY1P1z0InxKA6EC0nrMg.jpg",
+      "/vUTVUdfbsY4DePCYzxxDMXKp6v6.jpg",
       "/c7VbRPlev1bRfKvTxr98erw5T7B.jpg"
     ]
   },
@@ -4524,12 +4462,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The flower that blooms in adversity is the most rare and beautiful of all.",
     "overview": "When Imperial China calls one man from every family to defend the empire from invading Huns, a young woman disguises herself as a soldier to take her ailing father’s place. Facing ruthless invaders, brutal training, and the risk of execution if discovered, she must decide who she truly is—and what she’s willing to fight for.",
     "frames": [
-      "/fxDKV6CWgbUHXiQG5eKelgupoCK.jpg",
-      "/gvr3PkKgw36KScwMOfnPzXuAHTU.jpg",
-      "/lnwEkhVP0kdyIhbEqXT0bzodNOU.jpg",
+      "/741PWZuwx880FV2olUlLOpSXKS2.jpg",
+      "/gYHhnGbPqbu5KsHd2MCz1d49PS.jpg",
+      "/r7pDxrHqpnAbMMtbKrafi3o727n.jpg",
+      "/oZlt4uEnIu2q2GUttSV6zkAgIp1.jpg",
       "/jnkN4yeakGTZuSKvJyjxfPhCyyV.jpg",
-      "/9CjTfmkd43XNxqZxKB3qnb91D3K.jpg",
-      "/mUYV0ZdsDEliGaQahcQH1F3grsP.jpg"
+      "/cTQiSrWhTDJPW8p56CUCoVNJZYl.jpg"
     ]
   },
   {
@@ -4555,12 +4493,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Never underestimate a nobody.",
     "overview": "Hutch Mansell, a suburban dad, overlooked husband, nothing neighbor — a \"nobody.\" When two thieves break into his home one night, Hutch's unknown long-simmering rage is ignited and propels him on a brutal path that will uncover dark secrets he fought to leave behind.",
     "frames": [
-      "/mlZ5ai3LEIE1Dh9SELYc2AJPauc.jpg",
-      "/rAfemAbGESCFhpyjHWz7LK6JhpH.jpg",
-      "/un2OAAWMHTxYGD5o6eLaKrzNEz9.jpg",
-      "/jfzQouXBEDHDTNLuEaC60Pz8BXN.jpg",
-      "/9libTUBvKJxE6TT84ZvpRJZZ0mr.jpg",
-      "/61MrK5U4w4MVL1vfwoG12zYPJ8B.jpg"
+      "/6N98GXJaXvyKLZuKvbF9KhW8JaP.jpg",
+      "/pbqu0nEIURTuzQ20ooppUGYY6ZC.jpg",
+      "/f1OBw4PbCEKTXLgg9SG7bJQT2Vb.jpg",
+      "/bbsj4F5ioUD49eIut1uMpU8cyeR.jpg",
+      "/afExiUhpbY3FVR4W5QNROgWdHXt.jpg",
+      "/6zbKgwgaaCyyBXE4Sun4oWQfQmi.jpg"
     ]
   },
   {
@@ -4586,12 +4524,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The return of the great adventure.",
     "overview": "When Dr. Indiana Jones – the tweed-suited professor who just happens to be a celebrated archaeologist – is hired by the government to locate the legendary Ark of the Covenant, he finds himself up against the entire Nazi regime.",
     "frames": [
-      "/fAdYdPJjTDbm839YDHQtzrCm2cN.jpg",
-      "/yJhW4Ctxw0WcyWpFvYlsaUK91Gu.jpg",
-      "/2AR2RDfioLONRbaH3dG2rajCd4Q.jpg",
-      "/57z1bDm524ymE4ize0xK6Px8N9m.jpg",
-      "/eFTyrhoLUQinahhKu36r1HI49Xr.jpg",
-      "/zPACwR32amTNvzId9qyapCWXYDJ.jpg"
+      "/nI6RbDRZIrRqYth5hvXjnD1QIN0.jpg",
+      "/jOGAV1ETVp0XGDRXWvy7Hc7txwy.jpg",
+      "/2dx2WZGfJSnNIB842eLVMmlrWc8.jpg",
+      "/xvKgVY5Ho26qWzCnPrUPnfC4agE.jpg",
+      "/zJkyo2WNqEIXf5hwbIQJlWZ8mTl.jpg",
+      "/c7Mjuip0jfHLY7x8ZSEriRj45cu.jpg"
     ]
   },
   {
@@ -4618,11 +4556,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Return to a galaxy far far away.",
     "overview": "Luke Skywalker leads a mission to rescue his friend Han Solo from the clutches of Jabba the Hutt, the Emperor prepares to crush the Rebellion with a more powerful Death Star, and the Rebel fleet mounts a massive attack on the space station. Luke Skywalker confronts Darth Vader in a final climactic duel before the evil Emperor.",
     "frames": [
-      "/mSGzpFMsPS0234HlewCs1nmZ1ek.jpg",
-      "/bhKXwNn9Jkb0RIXUiBgvho4kP4d.jpg",
-      "/mPFiTa8U2r4I14JZUvKWe18AZc3.jpg",
-      "/oglqzBsY0XhLpsQioo4P0CqiOLp.jpg",
-      "/A1KU4LuzvXoX3URWiuKZrnF4Jz3.jpg",
+      "/5QF54qw2zMfqdsRsm5KtyFUfZOB.jpg",
+      "/rwrytVKVni27ByslaMycEvk4geA.jpg",
+      "/6u0Rn4a7iwcrGzyfNfCILwuJu0Q.jpg",
+      "/nYBl4aluWwvBO08zZHdpM4deM3W.jpg",
+      "/9gUSDkTQxj129xLPtQPEWCeVgsB.jpg",
       "/ziECpBRIyclmBNaFSWlvCfsKbMD.jpg"
     ]
   },
@@ -4650,12 +4588,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Enter the Multiverse.",
     "overview": "Peter Parker is unmasked and no longer able to separate his normal life from the high-stakes of being a super-hero. When he asks for help from Doctor Strange the stakes become even more dangerous, forcing him to discover what it truly means to be Spider-Man.",
     "frames": [
-      "/lmjHfEb99pILmkOUnPgzonDr0tC.jpg",
-      "/h22eEPJpdS47JisaEPevdj48fVT.jpg",
-      "/5BszbFQYcXRzZvPMTbpibOR5B3d.jpg",
-      "/bWGl9wpjJvQhnO4Vfnw4vcTZZ4.jpg",
-      "/1Rr5SrvHxMXHu5RjKpaMba8VTzi.jpg",
-      "/iQFcwSGbZXMkeyKrxbPnwnRo5fl.jpg"
+      "/zqaKU6U7NtDkp5UvJSTwTdq3kJX.jpg",
+      "/piVD7pUDMXG4j0nBY6DywkL11Wy.jpg",
+      "/jv2TYSSh74C7xToMAzmcbOqOvQu.jpg",
+      "/uhYpkLSnlOXTQDmNnu1X4MHMt1S.jpg",
+      "/vq4Wjw77JdACKVg3tWCzegbL4Uz.jpg",
+      "/14QbnygCuTO0vl7CAFmPf1fgZfV.jpg"
     ]
   },
   {
@@ -4681,11 +4619,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Times like these call for a Big Lebowski.",
     "overview": "Jeffrey 'The Dude' Lebowski, a Los Angeles slacker who only wants to bowl and drink White Russians, is mistaken for another Jeffrey Lebowski, a wheelchair-bound millionaire, and finds himself dragged into a strange series of events involving nihilists, adult film producers, ferrets, errant toes, and large sums of money.",
     "frames": [
-      "/xBtLHsz6wxompayEikQrzeuyw7W.jpg",
-      "/dnaWSjREcw9Vh1qlFZkbthp1zwr.jpg",
-      "/qemtsdwQpeIRTlGiClSvvzZWuzn.jpg",
-      "/bibKEDLdJzFxKpn9dpAUVVhrWiz.jpg",
+      "/rrscRVvkhFTUAdhj8mdpe0SRKmp.jpg",
+      "/mpsWfXXtd8RnHI7628wNvs6kNlZ.jpg",
+      "/kkbdWZhvAx9bqL7eBKvY6d3EAn3.jpg",
       "/gJHaZv4T25LyS714mBvIEYW3vg1.jpg",
+      "/rYIySejPHVlRKhcXCL75Omhwkag.jpg",
       "/77ElMccPnTMPouRxSdbJ4nEjf69.jpg"
     ]
   },
@@ -4711,12 +4649,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "The impossible comes true.",
     "overview": "The story of American showman P.T. Barnum, founder of the circus that became the famous traveling Ringling Bros. and Barnum & Bailey Circus.",
     "frames": [
-      "/n1HnwiE8R7lNA5nHwbw1Q0Wwxdr.jpg",
-      "/42gvmhXoms54JkSeVhQC53en30J.jpg",
-      "/vyiBDGqXFnK4vQDpeMfVMX6RUOR.jpg",
-      "/kz8Sx9OJpkrLufGjJTq7KOjt3d1.jpg",
-      "/qauVEWscHgiPjA2opDbw1n6cRTF.jpg",
-      "/lrNKm3HNvGdZoAfiBKu7b04FLHN.jpg"
+      "/2ZeaDirHjKiupFQS56Qc7Um8L9k.jpg",
+      "/beQCEYeRH1KEcsApG6eJuuUVMqX.jpg",
+      "/bDlUbSPFkT8FleJOnDj0nZkHFS2.jpg",
+      "/jcUydMlANDerI1jRsCfpCDtFmki.jpg",
+      "/7sB3wxdSxx8j1BVC1Te5OQwc0ZG.jpg",
+      "/zpq404Sk7qQ7N4x3xOeNgp74GtU.jpg"
     ]
   },
   {
@@ -4743,12 +4681,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A holiday film for the whole family... except yours.",
     "overview": "Tired of scaring humans every October 31 with the same old bag of tricks, Jack Skellington, the spindly king of Halloween Town, kidnaps Santa Claus and plans to deliver shrunken heads and other ghoulish gifts to children on Christmas morning. But as Christmas approaches, Jack's rag-doll girlfriend, Sally, tries to foil his misguided plans.",
     "frames": [
-      "/cGp1bE6SwNkndQHBfJJLBVXYRZV.jpg",
-      "/3iWsy7eQpGSVlCrRMvzWhasNnOM.jpg",
-      "/jpXXDwPnd85g3G1tJCZ1zP742uo.jpg",
-      "/6KpVGfJW1fdGaYAnY8gtvkj4uIQ.jpg",
-      "/yilxuNhxnxnxLvbVyJYzGT8ySso.jpg",
-      "/dSfrsjhqC6lYe7LYDYnzWeXZmEl.jpg"
+      "/hVGvzqrbNEC8JtEzUZ29meeU3ok.jpg",
+      "/qx9Q4UTvuxn0Twaq5pa2pRicp1a.jpg",
+      "/a65zR6wXd8eOfMeuftm4pYP3QqF.jpg",
+      "/3ppew0HxarZ5DQpG7wP5EkMT3zE.jpg",
+      "/b1Rfr2zHXoHlFlDrGUNfkmKwSsb.jpg",
+      "/xWT5F1DNxciNLEMXRl49iq8zvN7.jpg"
     ]
   },
   {
@@ -4774,12 +4712,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Behind every great love is a great story.",
     "overview": "An epic love story centered around an older man who reads aloud to a woman with Alzheimer's. From a faded notebook, the old man's words bring to life the story about a couple who is separated by World War II, and is then passionately reunited, seven years later, after they have taken different paths.",
     "frames": [
-      "/bVsidT15njnk4jGbvqarikIAxZC.jpg",
-      "/lxFj5W2AKX00fcKyCTR5nVUQvXx.jpg",
+      "/3NPVO4ZllCev1gHl6WHY2WtOplY.jpg",
+      "/4PUS9eV0Q88GTvyHL2lOa5a0P6V.jpg",
       "/iJQ5wpoXpINEGivEcwPZpWDnXFh.jpg",
-      "/bC0hrgwF7D0M0O9w0OU2rtCKrV.jpg",
-      "/lJxdDxhj7en1Cz2neE17urbQtQJ.jpg",
-      "/zdXnJqBaGFVtLoPNuMeKfEYUViZ.jpg"
+      "/rUC3AZsyBTbxgIsdf41Sg4CY81J.jpg",
+      "/j0Ce4AsZi34NKYUZr61lh0PBQ7G.jpg",
+      "/qom1SZSENdmHFNZBXbtJAU0WTlC.jpg"
     ]
   },
   {
@@ -4804,11 +4742,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "For his son, one man will reach for the impossible.",
     "overview": "A struggling salesman takes custody of his son as he's poised to begin a life-changing professional career.",
     "frames": [
-      "/641l6kgZRosqli637i1Jnwe26Gg.jpg",
-      "/lw79nuBm1QbBVzDQN6ivJrg5wew.jpg",
+      "/r8ZwyACfFfDW6S89BQ0y5VJCrGF.jpg",
+      "/q73LHXP62LFgS2BpeWsLMtaJ0MZ.jpg",
       "/A9aXktnnsOdVtpryO3AwtwOuEd4.jpg",
       "/1tZkdH65OjTIvDFaJu3BtXpFJbg.jpg",
-      "/A9sbTT0CQL9AwCY8eHMNauLP1Gy.jpg",
+      "/nKOQiWjhv6LXXSR3PiIab3LrKtU.jpg",
       "/5jhG1lTgV0MS6tDkBMQSSitttTT.jpg"
     ]
   },
@@ -4835,12 +4773,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Nothing on earth could come between them.",
     "overview": "101-year-old Rose DeWitt Bukater tells the story of her life aboard the Titanic, 84 years later. A young Rose boards the ship with her mother and fiancé. Meanwhile, Jack Dawson and Fabrizio De Rossi win third-class tickets aboard the ship. Rose tells the whole story from Titanic's departure through to its death—on its first and last voyage—on April 15, 1912.",
     "frames": [
-      "/hDLM3G6MlELzLGpe6TpkC9jncAx.jpg",
-      "/p60lgELmYhsmGdxCQtAdzOAp1jl.jpg",
-      "/f7uiYhM92k2qttFhg7qHZgv1Wva.jpg",
-      "/8WexK4y5zoU84vjtCvJG9Z6IKLg.jpg",
-      "/evlyzRYiVUZJmbjal3zkjBmyH6i.jpg",
-      "/sCzcYW9h55WcesOqA12cgEr9Exw.jpg"
+      "/bX9ZcfJdxJkVJQ0Q8BB0BF8uYAL.jpg",
+      "/qCUhdOVlmYQtw2KqC1De3BNphMs.jpg",
+      "/9qGYNCBtxrUGT38b4uGT3ZSPjiB.jpg",
+      "/okc9M6whMEElmN9lZOxZOLJlnFj.jpg",
+      "/2Fv2OILXyZVGirfXdKhZA8mYYyv.jpg",
+      "/rzdPqYx7Um4FUZeD8wpXqjAUcEm.jpg"
     ]
   },
   {
@@ -4867,11 +4805,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "People should not be afraid of their governments. Governments should be afraid of their people.",
     "overview": "In a world in which Great Britain has become a fascist state, a masked vigilante known only as “V” conducts guerrilla warfare against the oppressive British government. When V rescues a young woman from the secret police, he finds in her an ally with whom he can continue his fight to free the people of Britain.",
     "frames": [
-      "/tM8rDQgi1aqCI3PDkwQy1RuGa0i.jpg",
-      "/b8x3sTom98rjJLzhEcW9d41qMzq.jpg",
-      "/truFqrTTcZlezeSYmTi5IDk9zon.jpg",
-      "/jpxsGG6lX5wY8jUL2ZrHQkUGF7J.jpg",
+      "/61UdTeUoexlf85nLGYSamlq9rQs.jpg",
+      "/h3O3peJByVG5ufR9OAkk2FqT6jh.jpg",
+      "/wz6IF9RNz6gjPWUSutvKVsHnLPd.jpg",
       "/5EKplo61HbA5sMGAN0XAvzdo1MX.jpg",
+      "/7pFgSoKuq3INFBlNUYoK5cx9n9P.jpg",
       "/sFEYsEfzTx7hhjetlNrme8B5OUo.jpg"
     ]
   },
@@ -4899,12 +4837,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Getting back was only the beginning.",
     "overview": "Marty and Doc are at it again as the time-traveling duo head to 2015 to nip some McFly family woes in the bud. But things go awry thanks to bully Biff Tannen and a pesky sports almanac. In a last-ditch attempt to set things straight, Marty finds himself bound for 1955 and face to face with his teenage parents -- again.",
     "frames": [
-      "/ipHcof5pABFOipnB1vntaOyJapC.jpg",
-      "/4VYh5jdcmOC63nmYioaFhLHAK7R.jpg",
-      "/k1mnR3zViKinSX0KaR8DYKJDdMc.jpg",
-      "/c2vPSBE8nrvMl56WE705SEKx21x.jpg",
-      "/78Z6EBX10bHHExK2sxncDUUJ0zX.jpg",
-      "/w6tPctxWAsHoQXeKxxNOT6lYKpx.jpg"
+      "/zpldib4OtEwgRD9nEILIuInxLm5.jpg",
+      "/mei4qHDYcytbZkmOQlF8015naF0.jpg",
+      "/kYlWk1k3C4Vioa3gvTjabATAW3X.jpg",
+      "/yzAzFSdGN1J9ayd1o8aLiIU8qOe.jpg",
+      "/su0cmtK55eKXq0QjW68LQslUhUY.jpg",
+      "/skQN2UMQKQnOTmwplcYMx6ZF4jS.jpg"
     ]
   },
   {
@@ -4930,12 +4868,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "40 stories of sheer adventure!",
     "overview": "High above the city of L.A. a team of terrorists has seized a building, taken hostages, and declared war. One man has manages to escape... An off-duty cop hiding somewhere inside. He's alone, tired... and the only chance anyone has got.",
     "frames": [
-      "/54gbpTkWp67vt2OlXolS4lM0xR7.jpg",
-      "/vkSACvFhTRPykfLgiPkS3BMV0KK.jpg",
+      "/xwlGKne8J7wbDqkFUGv4XzEFPm1.jpg",
+      "/An1eXlyi7WwkYaGFQwUntWDVSlM.jpg",
       "/cnt1uNJmdKDMPtOPTJHkjveFmPD.jpg",
-      "/fNXKGO6CBmbhXM6qdUAdtOBEptd.jpg",
-      "/2xugnbEpfSAll5MZque8H9hr7VE.jpg",
-      "/yl7T3riL71VTcO7SaalSJM0C328.jpg"
+      "/iqQ4dQBOWX9kxTAGRQL7qBdIpEo.jpg",
+      "/hQ0k6RJwcWLJEHfP5vxrDpMiRdk.jpg",
+      "/oIwfoUFfWfESn0Y8u8jv9lc8li1.jpg"
     ]
   },
   {
@@ -4962,11 +4900,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "28 days, 6 hours, 42 minutes, 12 seconds... that is when the world will end.",
     "overview": "After narrowly escaping a bizarre accident, a troubled teenager is plagued by visions of a large bunny rabbit that manipulates him to commit a series of crimes.",
     "frames": [
-      "/44KOX8ETz84PMtK4WWLIMuSrYwL.jpg",
-      "/7IYggmhPpNfXL5uvHoec0NPsleE.jpg",
-      "/5z6xhmKsLJHH805qZ26M2tm4REy.jpg",
-      "/ibmZySSOOtsPffsew1vzDy60wtX.jpg",
-      "/6Pcvjdrqm7igfL5xgtGFHj7Ek8w.jpg",
+      "/joIdxesVAAqJOUQPXn4pM17wLAf.jpg",
+      "/kF1YVc9oZNG2qcFiaiN1S69NZ7k.jpg",
+      "/9hPiE30pHrE79MncU1rJbVAKfSp.jpg",
+      "/rNs15HKRasROKBLNhWqkRolV54g.jpg",
+      "/z6m11QWUc0sELLbGRuidfE5Fchi.jpg",
       "/msCHK5Kh1YbdZ0zPJ2nzPUhhSN9.jpg"
     ]
   },
@@ -4993,12 +4931,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "It begins.",
     "overview": "Paul Atreides, a brilliant and gifted young man born into a great destiny beyond his understanding, must travel to the most dangerous planet in the universe to ensure the future of his family and his people. As malevolent forces explode into conflict over the planet's exclusive supply of the most precious resource in existence - a commodity capable of unlocking humanity's greatest potential - only those who can conquer their fear will survive.",
     "frames": [
-      "/ucs7GDBJy1B5EjQ8xk5VaUfu1OM.jpg",
-      "/ryLbio2fDw1SCdRU1LdH9oP1Q8H.jpg",
-      "/tMfVxjefWwV0vsi9fWzr4zQ2HOu.jpg",
-      "/iVnPBDtsZmrwY0R38H1aLsXKXZ7.jpg",
-      "/1am1E69hz5UbbnQaXl7KTD50dzW.jpg",
-      "/h61Kc0NC7d90jNwXfBx5js7DnSQ.jpg"
+      "/bE75q9tpfTIHHJ9L2E1oRfHEpC5.jpg",
+      "/vCobp2YOAclztTYlgToIiq54kKy.jpg",
+      "/9uJIpdTJYlHS1MwdjdhRFymyOhf.jpg",
+      "/kByx0kTIq0qDJkf582fEJ3j3p7S.jpg",
+      "/sfjqJDmNqMIImO5khiddb9TARvO.jpg",
+      "/jYEW5xZkZk2WTrdbMGAPFuBqbDc.jpg"
     ]
   },
   {
@@ -5025,11 +4963,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A lot can happen in the middle of nowhere.",
     "overview": "Jerry Lundegaard is a small-town Minnesota car salesman deeply in debt and willing to do almost anything to get out. Police chief Marge Gunderson discovers a string of violent crimes as Jerry's schemes spiral out of control.",
     "frames": [
-      "/tFxLN2SO5hZu7IWYInNLsTI7Oby.jpg",
-      "/4DiJpm6t20kySn3ua4GhzSbQOxr.jpg",
-      "/kKiEj3qyz4FdaBLrVudhnByhOvN.jpg",
-      "/kHHfUmhkJUouqDPd27qcpBdSewC.jpg",
-      "/qVzo6X7lQn4y3hdrSm7l7nmNkj6.jpg",
+      "/j2YbZWIGCLU2bQRkHgtl5LpfthW.jpg",
+      "/jkxWQqWGyQ0qKNFGYk1IXaA8Ev9.jpg",
+      "/ql07KHTUAqRTo0czO37IUr6bdUr.jpg",
+      "/vLhRkMOjdRIA6tdcQrGr8jyvtkf.jpg",
+      "/nxi9xfm28MtQZOYpTONKsT0o0wD.jpg",
       "/747dgDfL5d8esobk7h4odaOFhUq.jpg"
     ]
   },
@@ -5057,12 +4995,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "There are 3.7 trillion fish in the ocean. They're looking for one.",
     "overview": "Nemo, an adventurous young clownfish, is unexpectedly taken from his Great Barrier Reef home to a dentist's office aquarium. It's up to his worrisome father Marlin and a friendly but forgetful fish Dory to bring Nemo home -- meeting vegetarian sharks, surfer dude turtles, hypnotic jellyfish, hungry seagulls, and more along the way.",
     "frames": [
-      "/AoPx8zAZ9Uae61La6qlHvYbk4ZS.jpg",
-      "/cbBptRta1rMTOrwZHPZlvbC92YR.jpg",
-      "/jWWmQkXvaNuP4hKcrrVFySL8nHC.jpg",
-      "/3VaQUP1O7CbCjeha7VH7ICpyWKT.jpg",
-      "/vzUeIsffwWBdrvjGuTreqXWSrgS.jpg",
-      "/eCynaAOgYYiw5yN5lBwz3IxqvaW.jpg"
+      "/21PRjBo7ma7m4EtCkolEVve6wHT.jpg",
+      "/reVZ0XP0H48oJ2aZQt5dD2Q6AkR.jpg",
+      "/dA9uKIrqQ5Qjamm9Z0ljE2bDJ9K.jpg",
+      "/vhgLdzlHkBuS9dBjI4JZWAEWy6m.jpg",
+      "/h3uqFk7sZRJvLZDdLiFB9qwbL07.jpg",
+      "/dFYguAfeVt19qAbzJ5mArn7DEJw.jpg"
     ]
   },
   {
@@ -5088,12 +5026,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Dark and difficult times lie ahead.",
     "overview": "After his name emerges from the Goblet of Fire, Harry Potter becomes a competitor in a grueling battle for glory among three wizarding schools in the Triwizard Tournament. But if Harry never submitted his name for the Tournament, then who did? Nevertheless, Harry must confront a deadly dragon, fierce water monsters, and an enchanted maze—only to find himself in the cruel grasp of He Who Must Not Be Named.",
     "frames": [
-      "/7Y4LuBdD4QKpJbGln4X4uWM5Evx.jpg",
-      "/4jmSUWbw63Of6eA1T53vE91IPH0.jpg",
-      "/uOIrPQxNN0dFrPBZMIJsB4hUO8I.jpg",
-      "/9n6Cw2wl5ISOLxHhBVwZQfSN94D.jpg",
-      "/bajvWSGLTNA0h0505cQaAExWztx.jpg",
-      "/a5ARIgJrqDnxjyYRJaH7x9RrpKi.jpg"
+      "/hOFL8LpjYpF5LCSTLjE9WIleSDR.jpg",
+      "/uBgZjBA7S2jztsB2ZSEfjxdkCL1.jpg",
+      "/z7YGERHdKznaUv47UiuZRrtHjok.jpg",
+      "/3akjyNQ7Bch4WQzUx4enPxlAONT.jpg",
+      "/7Q2yjFQEaLCPA0AX5BdLKotmR2Y.jpg",
+      "/8f9dnOtpArDrOMEylpSN9Sc6fuz.jpg"
     ]
   },
   {
@@ -5120,12 +5058,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "A Spike Jonze love story.",
     "overview": "In the not so distant future, Theodore, a lonely writer, purchases a newly developed operating system designed to meet the user's every need. To Theodore's surprise, a romantic relationship develops between him and his operating system. This unconventional love story blends science fiction and romance in a sweet tale that explores the nature of love and the ways that technology isolates and connects us all.",
     "frames": [
-      "/reErixsyg0xHxI8j9si6r0o0U6z.jpg",
-      "/6CiBi6mrYmUYCc8KcBEagE5MT64.jpg",
-      "/saYzX612Fl4QH1oQRSnlUXK6867.jpg",
-      "/7f5ZLubNU6FejUdORfeZaMEqbnu.jpg",
+      "/jfrzB6bHWGocZjUGMzXrmwuqEZ4.jpg",
+      "/4Wih77kPJJPYvmdXOVxZILDaqry.jpg",
+      "/lipT8Nw4Rclmu3X2YFT3z9vdPbr.jpg",
+      "/kBwSMNOlSONN24gESs3sAdrS5Js.jpg",
       "/pkAvtcRjk0oNzXmAY3ZcpsMSkbV.jpg",
-      "/1YnZchmaGc8dchgRPDpR1KGrixA.jpg"
+      "/sPPsR9f4K0movWVQ99u4uMqFzEL.jpg"
     ]
   },
   {
@@ -5151,12 +5089,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Into the heart. Into the soul.",
     "overview": "After graduating from Emory University in 1992, top student and athlete Christopher McCandless abandons his possessions, gives his entire $24,000 savings account to charity, and hitchhikes to Alaska to live in the wilderness.",
     "frames": [
-      "/qVCausZo8ulMC3ZpQdPuKRJmnyy.jpg",
-      "/mvyERNa0oNsBjbHqn5qSGMHk2FM.jpg",
-      "/dQ4tknP1CHRBGB6y44Lt4N207a2.jpg",
-      "/pKKO1ADI5VXTH2qmJqWBjm8qUkJ.jpg",
-      "/nIagfTPH5EopbdSxs5mbVUEsVqJ.jpg",
-      "/87tmTU1NSR5EUGTKsF5rhLwZtZc.jpg"
+      "/nam38ABLsdmw9MRzsOBMUNwE7hy.jpg",
+      "/zaZmZsX6boNWaYsJVlpAD21v61b.jpg",
+      "/1IsKnlLCQPqMlHik2hg8BxvKcST.jpg",
+      "/kICku0JW85n9Ffh1jkzSETA9z8q.jpg",
+      "/87tmTU1NSR5EUGTKsF5rhLwZtZc.jpg",
+      "/mvyERNa0oNsBjbHqn5qSGMHk2FM.jpg"
     ]
   },
   {
@@ -5183,12 +5121,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Hell, any of them could have done it.",
     "overview": "When renowned crime novelist Harlan Thrombey is found dead at his estate just after his 85th birthday, the inquisitive and debonair Detective Benoit Blanc is mysteriously enlisted to investigate. From Harlan's dysfunctional family to his devoted staff, Blanc sifts through a web of red herrings and self-serving lies to uncover the truth behind Harlan's untimely death.",
     "frames": [
-      "/7I1hL2e2HT6xuHxAxEqhrU3Xe28.jpg",
-      "/5m7l00ZsYFXWUuFFmaWzlQCUZ7v.jpg",
-      "/hreC9aaO5Dq7Dm3usK3fRTmD3ad.jpg",
-      "/uh24QG1eD4m4XT07fXXpHE1UPDY.jpg",
-      "/yuVKB6uxYPfORzMikjsjum7NBPQ.jpg",
-      "/4HWAQu28e2yaWrtupFPGFkdNU7V.jpg"
+      "/xVtulZLEU7r1OgRaFnxCPbp3dMy.jpg",
+      "/qM5X2UIZgSdWik9xm7kdWb0WNff.jpg",
+      "/7xN7KfcKNfwUC2YATzos1Fp4xTb.jpg",
+      "/gYRWqS3BS9W4FIALWyEmmhHZiE9.jpg",
+      "/8doAnqaj7PxvJdqFGHdCkfdLywq.jpg",
+      "/AbRYlvwAKHs0YuyNO6NX9ofq4l6.jpg"
     ]
   },
   {
@@ -5215,12 +5153,12 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Someone has come along.",
     "overview": "In the near future, a weary Logan cares for an ailing Professor X in a hideout on the Mexican border. But Logan's attempts to hide from the world and his legacy are upended when a young mutant arrives, pursued by dark forces.",
     "frames": [
-      "/qFTqUvQH17oRqp7oPix5koWOVPX.jpg",
-      "/yOJDI4WrXnu1rBJxKa98qvun0QC.jpg",
-      "/4WH3cyHX8J9hOfmD1TVPNhv5w79.jpg",
-      "/aCxTSTb2ujpkkX8xAX2nCzSKNwI.jpg",
-      "/nD4p0ZsiQAXgcOf9ybQW6cfQUWY.jpg",
-      "/4DZxWNSAyksN6N3JkvpJ53Yq6zU.jpg"
+      "/ttwe4lkjHVbvyqyAxIMFTLXs5F4.jpg",
+      "/fTdnw3B8muHqKBuGSnrDledgYCB.jpg",
+      "/eKfwmKYM0OQDuTLjaYHqpOvIdyk.jpg",
+      "/mFjiaaSpw1mmqGj2uakCHvgeoMf.jpg",
+      "/4x4BLaX5WgKVf7VLuNEOIkEKCIR.jpg",
+      "/qTdCfGyDisY9e8BLycszlyTsPWx.jpg"
     ]
   },
   {
@@ -5250,11 +5188,11 @@ export const FRAME_SLEUTH_MOVIES = [
     "overview": "Luca and his best friend Alberto experience an unforgettable summer on the Italian Riviera. But all the fun is threatened by a deeply-held secret: they are sea monsters from another world just below the water’s surface.",
     "frames": [
       "/qTkAG0D9jrp1Fy5lWsZPS6oMNP2.jpg",
-      "/4GDKMpxtAIoDZpGQXpEVyI3Jcwe.jpg",
-      "/dbMOKbogz8Go6w3dUh9CrOt1AFH.jpg",
-      "/7Y1na0DhXN0cXjovae19cn3zU8z.jpg",
-      "/64WWaMwPbXKUCYHB90dmLOHcDKE.jpg",
-      "/620hnMVLu6RSZW6a5rwO8gqpt0t.jpg"
+      "/3OXxMIMzS3hsO7PIOu2bhXyUht8.jpg",
+      "/sbpQEk9H7PAlXClIvDZjsb9EXb2.jpg",
+      "/3uJ2vpUMRl7WaGJsDAJJT5UYQ8k.jpg",
+      "/uAQrHntCccFpvxp75XdQgqexlJd.jpg",
+      "/PGSknIQZ96l7MG8nyQ76MuYnfY.jpg"
     ]
   },
   {
@@ -5281,12 +5219,267 @@ export const FRAME_SLEUTH_MOVIES = [
     "tagline": "Innocence has a power evil cannot imagine.",
     "overview": "In post–civil war Spain, 10-year-old Ofelia moves with her pregnant mother to live under the control of her cruel stepfather. Drawn into a mysterious labyrinth, she meets a faun who reveals that she may be a lost princess from an underground kingdom. To return to her true father, she must complete a series of surreal and perilous tasks that blur the line between reality and fantasy.",
     "frames": [
-      "/sxp3RD9yEwPqChFSs5YoTtxXo87.jpg",
-      "/1h1EKWsZvhUhFcVs5nZTYZfML40.jpg",
-      "/vfXNHq9YeLQ6gikWnXXPn2LAkBr.jpg",
-      "/qZkzhoYmX58b4xjew7hvsN1swul.jpg",
-      "/l6FRVyO12DAWYAGA83LOec0j1xs.jpg",
-      "/6G6nqSW9S7EHA9HrYl0Z8uo2H7f.jpg"
+      "/tzc5XLZbRspWvIHjgbUo9CBDakB.jpg",
+      "/vNVo8tkm4zB0vBqfF4tCCI4yaHE.jpg",
+      "/7G0nWCYgu3p4kdSShC6vhkMiwO1.jpg",
+      "/npisI1R1KsB2pNYEOt0Kb5N5HDj.jpg",
+      "/2Ojw5dRcFZ6XeMNGl6TXZ9DHCjK.jpg",
+      "/o0IWa75BXyXryNDVqw0xoXZzy1J.jpg"
+    ]
+  },
+  {
+    "id": "tt0325980",
+    "tmdbId": 22,
+    "title": "Pirates of the Caribbean: The Curse of the Black Pearl",
+    "year": 2003,
+    "director": "Gore Verbinski",
+    "genres": [
+      "Adventure",
+      "Fantasy",
+      "Action"
+    ],
+    "cast": [
+      "Johnny Depp",
+      "Geoffrey Rush",
+      "Orlando Bloom",
+      "Keira Knightley",
+      "Jack Davenport"
+    ],
+    "rating": 7.8,
+    "runtime": 143,
+    "posterPath": "/poHwCZeWzJCShH7tOjg8RIoyjcw.jpg",
+    "tagline": "Prepare to be blown out of the water.",
+    "overview": "When wily pirate Captain Barbossa seizes Jack Sparrow’s beloved ship, the Black Pearl, and kidnaps the governor’s daughter, Elizabeth Swann, blacksmith Will Turner reluctantly teams up with the unpredictable pirate Jack to rescue her—only to uncover a terrifying curse that turns Barbossa’s crew into the undead.",
+    "frames": [
+      "/16FT0cxxBK9qQSvZf7F8i0ITQPm.jpg",
+      "/w1hQlA8VYeAgrPNujAYcnm7mdIT.jpg",
+      "/36cyKErhu0r6fDUJC21T3gMi5pT.jpg",
+      "/jySUVUpTwi3hMNXSKbNj7XXElPy.jpg",
+      "/fSz7xCJGGqHT7uCdTR6ziefNKqm.jpg",
+      "/uRNgkJSkNBFbbn9fPsEjDIy8Sh3.jpg"
+    ]
+  },
+  {
+    "id": "tt0382932",
+    "tmdbId": 2062,
+    "title": "Ratatouille",
+    "year": 2007,
+    "director": "Brad Bird",
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Family",
+      "Fantasy"
+    ],
+    "cast": [
+      "Patton Oswalt",
+      "Lou Romano",
+      "Ian Holm",
+      "Brian Dennehy",
+      "Peter Sohn"
+    ],
+    "rating": 7.8,
+    "runtime": 111,
+    "posterPath": "/t3vaWRPSf6WjDSamIkKDs1iQWna.jpg",
+    "tagline": "He's dying to become a chef.",
+    "overview": "In one of Paris's finest restaurants, Remy, a determined young rat, dreams of becoming a renowned French chef. Torn between his family's wishes and his true calling, Remy and his pal Linguini set in motion a hilarious chain of events that turns the City of Lights upside down.",
+    "frames": [
+      "/jiO82GMKI2j5FXFFtkVOOWO70E1.jpg",
+      "/9E0vCgASNRVuhGAk7xlxkzMcNXp.jpg",
+      "/fvAYvfxSRGqopC8utmFqWi6DrzM.jpg",
+      "/4H3BBZLUGpAm9MsIc2p5uSN5MZC.jpg",
+      "/1EHlmBrXUPr7gwoPukL33EnvCPg.jpg",
+      "/xgDj56UWyeWQcxQ44f5A3RTWuSs.jpg"
+    ]
+  },
+  {
+    "id": "tt0075148",
+    "tmdbId": 1366,
+    "title": "Rocky",
+    "year": 1976,
+    "director": "John G. Avildsen",
+    "genres": [
+      "Drama"
+    ],
+    "cast": [
+      "Sylvester Stallone",
+      "Talia Shire",
+      "Burt Young",
+      "Carl Weathers",
+      "Burgess Meredith"
+    ],
+    "rating": 7.8,
+    "runtime": 120,
+    "posterPath": "/raayaQ9WTUGolsYHPWc2bGonu58.jpg",
+    "tagline": "His whole life was a million-to-one shot.",
+    "overview": "Rocky Balboa is a Philadelphia club fighter who seems to be going nowhere. But when a stroke of fate puts him in the ring with a world heavyweight champion, Rocky knows that it's his one shot at the big time — a once-in-a-lifetime opportunity to go the distance and come out a winner!",
+    "frames": [
+      "/p1f5tBruHPwUHXNUqVNpn4pAlut.jpg",
+      "/1HD0VEkykxvPC7lmkKtu0UjC3eC.jpg",
+      "/tGIIHNiLDBwK8fDQZ9Cb2mDOzLK.jpg",
+      "/14YmXr5ojtOFcABW3CPP5gKjgNU.jpg",
+      "/yPgAHVzCF0yJGhxupwVwknOHdJj.jpg",
+      "/wC36tEU7AqP5llAvjXkZhZ248tX.jpg"
+    ]
+  },
+  {
+    "id": "tt0126029",
+    "tmdbId": 808,
+    "title": "Shrek",
+    "year": 2001,
+    "director": "Andrew Adamson",
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Fantasy",
+      "Adventure",
+      "Family"
+    ],
+    "cast": [
+      "Mike Myers",
+      "Eddie Murphy",
+      "Cameron Diaz",
+      "John Lithgow",
+      "Vincent Cassel"
+    ],
+    "rating": 7.8,
+    "runtime": 90,
+    "posterPath": "/iB64vpL3dIObOtMZgX3RqdVdQDc.jpg",
+    "tagline": "The greatest fairy tale never told.",
+    "overview": "It ain't easy bein' green -- especially if you're a likable (albeit smelly) ogre named Shrek. On a mission to retrieve a gorgeous princess from the clutches of a fire-breathing dragon, Shrek teams up with an unlikely compatriot -- a wisecracking donkey.",
+    "frames": [
+      "/hbG9UmCv8ByI1ozZSZmibplYGc4.jpg",
+      "/hosgEYM8EDvKGJRx3rUX1Zh4VDj.jpg",
+      "/ohGFczCHUGEQSkOnfgDxqw3Nkgj.jpg",
+      "/2Biv1mSzaaxWOqvcnDZn4GcYEAb.jpg",
+      "/bNTHSd3UqqLzIVwbDOGPnx3ScfF.jpg",
+      "/sRvXNDItGlWCqtO3j6wks52FmbD.jpg"
+    ]
+  },
+  {
+    "id": "tt0208092",
+    "tmdbId": 107,
+    "title": "Snatch",
+    "year": 2000,
+    "director": "Guy Ritchie",
+    "genres": [
+      "Crime",
+      "Comedy"
+    ],
+    "cast": [
+      "Jason Statham",
+      "Alan Ford",
+      "Stephen Graham",
+      "Brad Pitt",
+      "Dennis Farina"
+    ],
+    "rating": 7.8,
+    "runtime": 103,
+    "posterPath": "/kIBMvdZ3qLUycHLbT6IFs7UtaCq.jpg",
+    "tagline": "Stealin' stones and breakin' bones.",
+    "overview": "Unscrupulous boxing promoters, violent bookies, a Russian gangster, incompetent amateur robbers, and supposedly Jewish jewellers fight to track down a priceless stolen diamond.",
+    "frames": [
+      "/hQqvrjjBWini0Au8N92SJmPp7xU.jpg",
+      "/ylreOAlR55VPGOcbgXyjl5rl3xy.jpg",
+      "/mRVD3EN6AxYJGqvtN7sBH2OYLZU.jpg",
+      "/kg6Dl2ldqG9CrtqH8OBViM3dvTU.jpg",
+      "/jFKM4cMVeoXKy8Vez3RcV60WgNJ.jpg",
+      "/32V4uHVRU2fbDsQl1dsYsZm3uba.jpg"
+    ]
+  },
+  {
+    "id": "tt1895587",
+    "tmdbId": 314365,
+    "title": "Spotlight",
+    "year": 2015,
+    "director": "Tom McCarthy",
+    "genres": [
+      "Drama",
+      "History"
+    ],
+    "cast": [
+      "Mark Ruffalo",
+      "Michael Keaton",
+      "Rachel McAdams",
+      "Liev Schreiber",
+      "John Slattery"
+    ],
+    "rating": 7.8,
+    "runtime": 129,
+    "posterPath": "/8DPGG400FgaFWaqcv11n8mRd2NG.jpg",
+    "tagline": "Break the story. Break the silence.",
+    "overview": "The true story of how the Boston Globe uncovered the massive scandal of child molestation and cover-up within the local Catholic Archdiocese, shaking the entire Catholic Church to its core.",
+    "frames": [
+      "/jS8hRNPKZUSCJOLmbmVD5BI0OkR.jpg",
+      "/2Gm3guKIg92gFBmEgNiM4qAgQo7.jpg",
+      "/gpm8ly1slenk8eJsrCuoKMHVVDO.jpg",
+      "/jf7QcvAcS0aHB5dZdY4oer0og1t.jpg",
+      "/bF8GCJ3ZLlS5nLwDlL3CTljdXzN.jpg",
+      "/hTYZ9tPvRZrL3rSf0tB38r53IG.jpg"
+    ]
+  },
+  {
+    "id": "tt1345836",
+    "tmdbId": 49026,
+    "title": "The Dark Knight Rises",
+    "year": 2012,
+    "director": "Christopher Nolan",
+    "genres": [
+      "Action",
+      "Crime",
+      "Thriller"
+    ],
+    "cast": [
+      "Christian Bale",
+      "Gary Oldman",
+      "Tom Hardy",
+      "Joseph Gordon-Levitt",
+      "Anne Hathaway"
+    ],
+    "rating": 7.8,
+    "runtime": 165,
+    "posterPath": "/hr0L2aueqlP2BYUblTTjmtn0hw4.jpg",
+    "tagline": "The legend ends.",
+    "overview": "Following the death of District Attorney Harvey Dent, Batman assumes responsibility for Dent's crimes to protect the late attorney's reputation and is subsequently hunted by the Gotham City Police Department. Eight years later, Batman encounters the mysterious Selina Kyle and the villainous Bane, a new terrorist leader who overwhelms Gotham's finest. The Dark Knight resurfaces to protect a city that has branded him an enemy.",
+    "frames": [
+      "/pExQiQBz20pZzzdNRZ1YCVUDoUe.jpg",
+      "/56QNIVLLMvF58CStjIUW791Gd2F.jpg",
+      "/uxXD8yCgPlhlIHZ4XZXfVasM4uP.jpg",
+      "/in0cWzS541drrJPy5KwWZ6tKJPR.jpg",
+      "/6eC6FqD3euWODJkOkaMdDm3yNMf.jpg",
+      "/c3OHQncTAnKFhdOTX7D3LTW6son.jpg"
+    ]
+  },
+  {
+    "id": "tt3460252",
+    "tmdbId": 273248,
+    "title": "The Hateful Eight",
+    "year": 2015,
+    "director": "Quentin Tarantino",
+    "genres": [
+      "Drama",
+      "Mystery",
+      "Western"
+    ],
+    "cast": [
+      "Samuel L. Jackson",
+      "Kurt Russell",
+      "Jennifer Jason Leigh",
+      "Walton Goggins",
+      "Demián Bichir"
+    ],
+    "rating": 7.8,
+    "runtime": 188,
+    "posterPath": "/jIywvdPjia2t3eKYbjVTcwBQlG8.jpg",
+    "tagline": "No one comes up here without a damn good reason.",
+    "overview": "Bounty hunters seek shelter from a raging blizzard and get caught up in a plot of betrayal and deception.",
+    "frames": [
+      "/dmM2QLZQ22WRTX25GPc2Ia6R7tf.jpg",
+      "/fwkeupexp9vS9pt9s4MH2rCfXEr.jpg",
+      "/9jQdllO3v0lZLrmz7W1C9jVT55z.jpg",
+      "/368Qzx69FKm6dQQDN1Zd3rqUP66.jpg",
+      "/7g1zO5t0bd27Iqn5ZUDJmksOGPJ.jpg",
+      "/7gfDVfaw0VaIkUGiEH13o3TIC7A.jpg"
     ]
   }
 ];
