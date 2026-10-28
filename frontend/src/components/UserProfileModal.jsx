@@ -21,7 +21,8 @@ import {
   Calendar,
   Layers,
   ChevronRight,
-  Camera
+  Camera,
+  TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
@@ -45,7 +46,8 @@ const ICON_COMPONENTS = {
   Zap,
   Flame,
   Award,
-  Camera
+  Camera,
+  TrendingUp
 };
 
 export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
@@ -102,6 +104,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
     if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
     if (historyFilter === 'spotle') return m.gameMode === 'spotle';
     if (historyFilter === 'frame-sleuth') return m.gameMode === 'frame-sleuth';
+    if (historyFilter === 'box-office') return m.gameMode === 'box-office';
     if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
     if (historyFilter === 'duels') return m.gameMode === 'duels';
     return m.gameMode === historyFilter;
@@ -502,6 +505,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                     { id: 'daily', label: 'Beat Otara' },
                     { id: 'spotle', label: 'Spotle (Mystery)' },
                     { id: 'frame-sleuth', label: 'Frame Sleuth' },
+                    { id: 'box-office', label: 'Box Office' },
                     { id: 'duels', label: '1v1 Online Duels' },
                     { id: 'archive', label: 'Archive & Custom' }
                   ].map(f => (
@@ -536,6 +540,7 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                     const isCustom = m.subMode === 'custom';
                     const isSpotle = m.gameMode === 'spotle';
                     const isFrameSleuth = m.gameMode === 'frame-sleuth';
+                    const isBoxOffice = m.gameMode === 'box-office';
 
                     return (
                       <div
@@ -549,7 +554,12 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                         {/* Header: Mode Badge + Date + Result */}
                         <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
                           <div className="flex items-center gap-2">
-                            {isFrameSleuth ? (
+                            {isBoxOffice ? (
+                              <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-300 border border-emerald-500/30">
+                                <TrendingUp className="h-3 w-3 text-emerald-400" />
+                                BOX OFFICE {m.subMode === 'streak' ? 'STREAK' : 'DAILY 5-ROUND'}
+                              </span>
+                            ) : isFrameSleuth ? (
                               <span className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-violet-300 border border-violet-500/30">
                                 <Camera className="h-3 w-3 text-violet-400" />
                                 FRAME SLEUTH {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
@@ -594,24 +604,56 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                             ) : isWin ? (
                               <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-400 border border-emerald-500/30">
                                 <Check className="h-3 w-3" />
-                                {isFrameSleuth
-                                  ? `SOLVED (${m.framesUsed || m.hops || 1}/6)`
-                                  : isSpotle
-                                    ? `SOLVED (${m.hops}/10)`
-                                    : m.matchedOtara
-                                      ? 'MATCHED OTARA'
-                                      : 'VICTORY'}
+                                {isBoxOffice
+                                  ? (m.subMode === 'streak' ? `STREAK ${m.hops || 0}` : `SCORE ${m.hops || 0}/5`)
+                                  : isFrameSleuth
+                                    ? `SOLVED (${m.framesUsed || m.hops || 1}/6)`
+                                    : isSpotle
+                                      ? `SOLVED (${m.hops}/10)`
+                                      : m.matchedOtara
+                                        ? 'MATCHED OTARA'
+                                        : 'VICTORY'}
                               </span>
                             ) : (
                               <span className="rounded-full bg-slate-700/60 px-2 py-0.5 text-[10px] font-extrabold text-slate-300">
-                                {isFrameSleuth || isSpotle ? 'UNSOLVED' : 'DEFEAT'}
+                                {isBoxOffice
+                                  ? (m.subMode === 'streak' ? `STREAK ${m.hops || 0}` : `SCORE ${m.hops || 0}/5`)
+                                  : isFrameSleuth || isSpotle
+                                    ? 'UNSOLVED'
+                                    : 'DEFEAT'}
                               </span>
                             )}
                           </div>
                         </div>
 
-                        {/* Middle: Spotle or Frame Sleuth Mystery Movie or Actor Route */}
-                        {(isSpotle || isFrameSleuth) && m.targetMovie ? (
+                        {/* Middle: Box Office Clash OR Spotle/Frame Sleuth */}
+                        {isBoxOffice ? (
+                          <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-2.5 border border-cinema-border/30">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+                                <TrendingUp className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-xs font-bold text-white truncate">
+                                  {m.targetMovie?.title || 'Box Office Clash'}
+                                </h4>
+                                <span className="text-[10px] text-cinema-muted truncate block">
+                                  {m.subMode === 'streak'
+                                    ? `Endless Run • ${m.hops || 0} Consecutive Correct`
+                                    : `Daily 5-Round Challenge • ${m.hops || 0}/5 Correct`}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="text-[9px] uppercase font-bold text-cinema-muted block">
+                                {m.subMode === 'streak' ? 'Streak' : 'Score'}
+                              </span>
+                              <span className="text-xs font-black text-emerald-400 font-mono">
+                                {m.subMode === 'streak' ? `${m.hops || 0} 🔥` : `${m.hops || 0}/5`}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (isSpotle || isFrameSleuth) && m.targetMovie ? (
                           <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-2.5 border border-cinema-border/30">
                             <div className="flex items-center gap-2.5 min-w-0">
                               {m.targetMovie.posterPath ? (

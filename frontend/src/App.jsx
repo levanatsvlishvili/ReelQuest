@@ -21,6 +21,7 @@ import { DuelGameView } from './components/DuelGameView';
 import { OtaraHintModal } from './components/OtaraHintModal';
 import { SpotleGameView } from './components/SpotleGameView';
 import { FrameSleuthGameView } from './components/FrameSleuthGameView';
+import { BoxOfficeClashView } from './components/BoxOfficeClashView';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -138,6 +139,11 @@ export default function App() {
               />
             ) : activeMode === 'frame-sleuth' ? (
               <FrameSleuthGameView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
+              />
+            ) : activeMode === 'box-office' ? (
+              <BoxOfficeClashView
                 onOpenPro={() => setIsProModalOpen(true)}
                 onOpenAuth={() => setIsAuthOpen(true)}
               />

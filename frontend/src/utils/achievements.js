@@ -47,6 +47,7 @@ export const GAME_MODE_FILTERS = [
   { id: 'six-degrees', label: 'Beat Otara' },
   { id: 'spotle', label: 'Spotle' },
   { id: 'frame-sleuth', label: 'Frame Sleuth' },
+  { id: 'box-office', label: 'Box Office' },
   { id: 'duels', label: '1v1 Duels' },
   { id: 'meta', label: 'Streaks & Meta' },
   { id: 'upcoming', label: 'Coming Soon' }
@@ -377,6 +378,94 @@ export const ACHIEVEMENTS = [
   },
 
   // ==========================================
+  // BOX OFFICE CLASH (Higher or Lower)
+  // ==========================================
+  {
+    id: 'bo_first_clash',
+    gameMode: 'box-office',
+    title: 'First Ticket Sold',
+    description: 'Win your first Box Office Clash streak or daily round.',
+    tier: 'bronze',
+    icon: 'TrendingUp',
+    maxProgress: 1,
+    checkProgress: (stats, history) => {
+      const won = history.filter(m => m.gameMode === 'box-office' && (m.won || (m.hops && m.hops > 0))).length;
+      return won >= 1 ? 1 : 0;
+    }
+  },
+  {
+    id: 'bo_streak_5',
+    gameMode: 'box-office',
+    title: 'Rising Producer',
+    description: 'Reach a streak of 5 correct matchups in Endless Streak mode.',
+    tier: 'silver',
+    icon: 'Flame',
+    maxProgress: 5,
+    checkProgress: (stats, history) => {
+      const maxStreak = history
+        .filter(m => m.gameMode === 'box-office' && m.subMode === 'streak')
+        .reduce((max, m) => Math.max(max, m.hops || 0), 0);
+      return Math.min(5, maxStreak);
+    }
+  },
+  {
+    id: 'bo_streak_10',
+    gameMode: 'box-office',
+    title: 'Studio Executive',
+    description: 'Reach a formidable streak of 10 in Endless Streak mode.',
+    tier: 'gold',
+    icon: 'Crown',
+    maxProgress: 10,
+    checkProgress: (stats, history) => {
+      const maxStreak = history
+        .filter(m => m.gameMode === 'box-office' && m.subMode === 'streak')
+        .reduce((max, m) => Math.max(max, m.hops || 0), 0);
+      return Math.min(10, maxStreak);
+    }
+  },
+  {
+    id: 'bo_streak_20',
+    gameMode: 'box-office',
+    title: 'Hollywood Mogul',
+    description: 'Conquer a legendary 20-match streak in Endless Streak mode!',
+    tier: 'diamond',
+    icon: 'Crown',
+    maxProgress: 20,
+    checkProgress: (stats, history) => {
+      const maxStreak = history
+        .filter(m => m.gameMode === 'box-office' && m.subMode === 'streak')
+        .reduce((max, m) => Math.max(max, m.hops || 0), 0);
+      return Math.min(20, maxStreak);
+    }
+  },
+  {
+    id: 'bo_daily_perfect',
+    gameMode: 'box-office',
+    title: 'Flawless Forecast',
+    description: 'Achieve a perfect 5/5 score in any Daily Box Office challenge.',
+    tier: 'gold',
+    icon: 'Target',
+    maxProgress: 1,
+    checkProgress: (stats, history) => {
+      const match = history.find(m => m.gameMode === 'box-office' && m.subMode === 'daily' && m.hops === 5);
+      return match ? 1 : 0;
+    }
+  },
+  {
+    id: 'bo_daily_streak_3',
+    gameMode: 'box-office',
+    title: 'Consistent Investor',
+    description: 'Successfully complete 3 Daily Box Office Challenges.',
+    tier: 'silver',
+    icon: 'Calendar',
+    maxProgress: 3,
+    checkProgress: (stats, history) => {
+      const count = history.filter(m => m.gameMode === 'box-office' && m.subMode === 'daily' && m.won).length;
+      return Math.min(3, count);
+    }
+  },
+
+  // ==========================================
   // STREAKS & META (Global Mastery)
   // ==========================================
   {
@@ -507,7 +596,7 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
   if (totalGamesCount === 0) {
     let pruned = false;
     for (const key of Object.keys(updatedUnlocked)) {
-      if (key.startsWith('otara_') || key.startsWith('duel_') || key.startsWith('spotle_') || key.startsWith('frame_') || key.startsWith('meta_streak') || key.startsWith('meta_veteran')) {
+      if (key.startsWith('otara_') || key.startsWith('duel_') || key.startsWith('spotle_') || key.startsWith('frame_') || key.startsWith('bo_') || key.startsWith('meta_streak') || key.startsWith('meta_veteran')) {
         delete updatedUnlocked[key];
         delete storedUnlocked[key];
         pruned = true;
@@ -536,7 +625,7 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
     }
 
     // A game achievement can ONLY be unlocked if the user has actually played games!
-    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.gameMode === 'frame-sleuth' || ach.id.includes('streak') || ach.id.includes('veteran');
+    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.gameMode === 'frame-sleuth' || ach.gameMode === 'box-office' || ach.id.includes('streak') || ach.id.includes('veteran');
     let isNowUnlocked = false;
 
     if (ach.isComingSoon) {

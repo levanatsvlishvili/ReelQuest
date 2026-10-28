@@ -1,4 +1,4 @@
-import { GitFork, Sparkles, Flame, Film, Camera } from 'lucide-react';
+import { GitFork, Sparkles, Flame, Film, Camera, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const GAME_MODES = [
@@ -34,6 +34,15 @@ export const GAME_MODES = [
     title: 'Frame Sleuth',
     subtitle: '6-Frame Mystery',
     icon: Camera,
+    status: 'ACTIVE',
+    badge: 'NEW',
+    hasStreak: true
+  },
+  {
+    id: 'box-office',
+    title: 'Box Office',
+    subtitle: 'Higher or Lower',
+    icon: TrendingUp,
     status: 'ACTIVE',
     badge: 'NEW',
     hasStreak: true

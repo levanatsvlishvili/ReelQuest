@@ -17,7 +17,8 @@ import {
   X,
   ExternalLink,
   Film,
-  Camera
+  Camera,
+  TrendingUp
 } from 'lucide-react';
 import { fetchGameHistory, fetchUsersList, getTmdbImageUrl } from '../api/adminClient';
 
@@ -151,6 +152,7 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
             <option value="six-degrees">Beat Otara (Six Degrees)</option>
             <option value="spotle">Spotle (Movie Mystery)</option>
             <option value="frame-sleuth">Frame Sleuth (6 Frames)</option>
+            <option value="box-office">Box Office Clash</option>
             <option value="duel">1v1 Live Duel</option>
           </select>
         </div>
@@ -271,7 +273,12 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
 
                       {/* Game Mode */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        {s.gameMode === 'frame-sleuth' ? (
+                        {s.gameMode === 'box-office' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 border border-emerald-500/30 text-emerald-300">
+                            <TrendingUp className="h-3 w-3" />
+                            <span>Box Office</span>
+                          </span>
+                        ) : s.gameMode === 'frame-sleuth' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-violet-500/15 border border-violet-500/30 text-violet-300">
                             <Camera className="h-3 w-3" />
                             <span>Frame Sleuth</span>
@@ -301,7 +308,16 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
 
                       {/* Matchup Route */}
                       <td className="py-4 px-4">
-                        {s.gameMode === 'frame-sleuth' ? (
+                        {s.gameMode === 'box-office' ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-white text-xs">
+                              💰 {s.targetMovie?.title || 'Box Office Versus'}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              ({s.subMode === 'streak' ? `Streak: ${s.hops || s.score || 0}` : `Score: ${s.hops || s.score || 0}/5`})
+                            </span>
+                          </div>
+                        ) : s.gameMode === 'frame-sleuth' ? (
                           <div className="flex items-center gap-2">
                             <span className="font-extrabold text-white text-xs">
                               📷 {s.targetMovie?.title || s.targetMovieTitle || 'Daily Mystery Movie'}
@@ -476,13 +492,15 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400">Game Mode</span>
                 <span className="text-xs font-extrabold text-gold uppercase">
-                  {selectedMatch.gameMode === 'frame-sleuth'
-                    ? 'Frame Sleuth (6 Frames)'
-                    : selectedMatch.gameMode === 'spotle'
-                      ? 'Spotle (Movie Mystery)'
-                      : selectedMatch.gameMode === 'duel'
-                        ? '1v1 Live Duel'
-                        : 'Beat Otara (Six Degrees)'}
+                  {selectedMatch.gameMode === 'box-office'
+                    ? 'Box Office Clash (Higher / Lower)'
+                    : selectedMatch.gameMode === 'frame-sleuth'
+                      ? 'Frame Sleuth (6 Frames)'
+                      : selectedMatch.gameMode === 'spotle'
+                        ? 'Spotle (Movie Mystery)'
+                        : selectedMatch.gameMode === 'duel'
+                          ? '1v1 Live Duel'
+                          : 'Beat Otara (Six Degrees)'}
                 </span>
               </div>
 

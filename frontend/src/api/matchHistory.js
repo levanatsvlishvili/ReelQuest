@@ -27,10 +27,11 @@ export function saveDetailedMatch(userId, matchData) {
     chainLength: matchData.chain?.length || (matchData.hops ? matchData.hops + 1 : 0),
     undos: typeof matchData.undos === 'number' ? matchData.undos : 0,
     usedHint: Boolean(matchData.usedHint),
-    // Spotle & Frame Sleuth attributes
+    // Spotle & Frame Sleuth & Box Office attributes
     targetMovie: matchData.targetMovie || null,
     guesses: matchData.guesses || null,
     framesUsed: matchData.framesUsed || null,
+    boxOfficeScore: typeof matchData.boxOfficeScore === 'number' ? matchData.boxOfficeScore : null,
     // 1v1 Duel specific attributes
     opponentName: matchData.opponentName || null,
     roomCode: matchData.roomCode || null,
