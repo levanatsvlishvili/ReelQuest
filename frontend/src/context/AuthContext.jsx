@@ -20,7 +20,15 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const stored = getStoredAuth();
     if (stored?.user) {
-      setUser(stored.user);
+      let fullUser = stored.user;
+      try {
+        const metaKey = `reelquest_user_meta_${stored.user.id}`;
+        const meta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+        fullUser = { ...stored.user, ...meta };
+      } catch {
+        fullUser = stored.user;
+      }
+      setUser(fullUser);
       setStats(getUserStats(stored.user.id));
 
       fetchUserProfile(stored.user.id)
@@ -59,7 +67,15 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const loggedUser = await signIn(email, password);
-    setUser(loggedUser);
+    let fullUser = loggedUser;
+    try {
+      const metaKey = `reelquest_user_meta_${loggedUser.id}`;
+      const meta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+      fullUser = { ...loggedUser, ...meta };
+    } catch {
+      fullUser = loggedUser;
+    }
+    setUser(fullUser);
     const initialStats = getUserStats(loggedUser.id);
     setStats(initialStats);
 
@@ -106,6 +122,26 @@ export function AuthProvider({ children }) {
     });
   };
 
+  const updateUserProfile = (updates) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      const authData = getStoredAuth();
+      if (authData) {
+        authData.user = updated;
+        localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+      }
+      try {
+        const metaKey = `reelquest_user_meta_${prev.id}`;
+        const existingMeta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+        localStorage.setItem(metaKey, JSON.stringify({ ...existingMeta, ...updates }));
+      } catch (err) {
+        console.error('Failed to persist user profile metadata:', err);
+      }
+      return updated;
+    });
+  };
+
   const logout = () => {
     signOut();
     setUser(null);
@@ -130,7 +166,8 @@ export function AuthProvider({ children }) {
         confirm,
         logout,
         recordGame,
-        setProStatus
+        setProStatus,
+        updateUserProfile
       }}
     >
       {children}

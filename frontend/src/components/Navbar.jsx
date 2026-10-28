@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn, Volume2, VolumeX } from 'lucide-react';
+import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn, LogOut, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEffects';
+import { getAvatarById, calculateCinemaLevel } from '../utils/cinemaLevels';
+import { getDetailedMatchHistory } from '../api/matchHistory';
 
-export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenHowToPlay, onOpenPro, onOpenAuth, onOpenProfile }) {
-  const { user, stats, isAuthenticated } = useAuth();
+export function Navbar({
+  onOpenLeaderboard,
+  isLeaderboardActive = false,
+  onOpenHowToPlay,
+  onOpenPro,
+  onOpenAuth,
+  onOpenProfile,
+  isProfileActive = false
+}) {
+  const { user, stats, isAuthenticated, logout } = useAuth();
   const [muted, setMuted] = useState(isSoundMuted());
 
   useEffect(() => {
@@ -17,6 +27,9 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
   };
 
   const currentStreak = stats?.streak ?? 0;
+  const userAvatar = getAvatarById(user?.avatarId);
+  const matchHistory = user ? getDetailedMatchHistory(user.id) : [];
+  const levelInfo = user ? calculateCinemaLevel(stats, matchHistory) : null;
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">
@@ -45,9 +58,9 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {isAuthenticated && (
-            <div className="flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
               <Flame className="h-4 w-4 fill-orange-400/20" />
               <span>{currentStreak} Day Streak</span>
             </div>
@@ -94,20 +107,45 @@ export function Navbar({ onOpenLeaderboard, isLeaderboardActive = false, onOpenH
           </button>
 
           {isAuthenticated ? (
-            <button
-              onClick={onOpenProfile}
-              className={`flex items-center gap-2 rounded-xl border ${user?.isPro ? 'border-gold/50 shadow-gold-glow/20' : 'border-cinema-border'} bg-cinema-surface py-1 pl-2 pr-3 text-xs font-medium text-slate-200 transition hover:border-gold/60`}
-            >
-              <div className={`flex h-6 w-6 items-center justify-center rounded-lg ${user?.isPro ? 'bg-gold text-cinema-black font-extrabold' : 'bg-gold/20 text-gold font-bold'} text-[10px]`}>
-                {user?.isPro ? <Crown className="h-3 w-3 fill-cinema-black" /> : user.username.substring(0, 2).toUpperCase()}
-              </div>
-              <span className="max-w-[80px] truncate sm:max-w-[110px]">{user.username}</span>
-              {user?.isPro && (
-                <span className="hidden sm:inline-flex rounded-full bg-gold/20 px-1.5 py-0.2 text-[9px] font-bold text-gold border border-gold/30">
-                  PRO
-                </span>
-              )}
-            </button>
+            <>
+              {/* Profile Button with Avatar and Level */}
+              <button
+                onClick={onOpenProfile}
+                className={`flex items-center gap-2 rounded-xl border py-1 pl-1.5 pr-3 text-xs font-medium transition ${
+                  isProfileActive
+                    ? 'border-gold bg-gold/20 text-gold shadow-gold-glow'
+                    : user?.isPro
+                    ? 'border-gold/50 bg-cinema-surface text-slate-200 shadow-gold-glow/20 hover:border-gold'
+                    : 'border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/60'
+                }`}
+                title="View Cinephile Profile"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/40 border border-cinema-border/70 text-sm shadow-inner">
+                  {userAvatar.emoji}
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="max-w-[75px] truncate sm:max-w-[105px] font-bold text-white text-[12px] leading-tight">
+                    {user.username}
+                  </span>
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <span className="font-extrabold text-gold">Lv.{levelInfo?.level || 1}</span>
+                    {user.isPro && (
+                      <span className="text-[9px] text-amber-400 font-black">PRO</span>
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Log Out Button directly in Navbar */}
+              <button
+                onClick={logout}
+                className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 px-2.5 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"
+                title="Log Out"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden lg:inline">Log Out</span>
+              </button>
+            </>
           ) : (
             <button
               onClick={onOpenAuth}

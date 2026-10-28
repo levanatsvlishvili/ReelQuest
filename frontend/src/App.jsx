@@ -9,7 +9,7 @@ import { LeaderboardDrawer } from './components/LeaderboardDrawer';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { ProSubscriptionModal } from './components/ProSubscriptionModal';
 import { AuthModal } from './components/AuthModal';
-import { UserProfileModal } from './components/UserProfileModal';
+import { UserProfileView } from './components/UserProfileView';
 import { GameModeSelector } from './components/GameModeSelector';
 import { UpcomingGamePreview } from './components/UpcomingGamePreview';
 import { DailyDateNavigator } from './components/DailyDateNavigator';
@@ -61,7 +61,8 @@ export default function App() {
     openVictoryModal
   } = useGameSession();
 
-  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
+  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard' | 'profile'
+  const [profileUser, setProfileUser] = useState(null); // null = own profile
   const [activeMode, setActiveMode] = useState('six-degrees');
   const [isDuelMode, setIsDuelMode] = useState(false);
 
@@ -84,23 +85,43 @@ export default function App() {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
-        onOpenLeaderboard={() => setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard')}
+        onOpenLeaderboard={() => {
+          setProfileUser(null);
+          setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard');
+        }}
         isLeaderboardActive={currentView === 'leaderboard'}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenPro={() => setIsProModalOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={() => {
+          if (currentView === 'profile' && !profileUser) {
+            setCurrentView('game');
+          } else {
+            setProfileUser(null);
+            setCurrentView('profile');
+          }
+        }}
+        isProfileActive={currentView === 'profile' && !profileUser}
       />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-        {currentView === 'leaderboard' ? (
+        {currentView === 'profile' ? (
+          <UserProfileView
+            targetUser={profileUser}
+            onBack={() => {
+              const fromLeaderboard = Boolean(profileUser);
+              setProfileUser(null);
+              setCurrentView(fromLeaderboard ? 'leaderboard' : 'game');
+            }}
+            onOpenPro={() => setIsProModalOpen(true)}
+          />
+        ) : currentView === 'leaderboard' ? (
           <LeaderboardView
             onBackToGame={() => setCurrentView('game')}
             activeChallenge={challenge}
@@ -110,6 +131,10 @@ export default function App() {
             onPlayChallenge={(d) => {
               loadDateChallenge(d);
               setCurrentView('game');
+            }}
+            onViewUserProfile={(target) => {
+              setProfileUser(target);
+              setCurrentView('profile');
             }}
           />
         ) : (
@@ -307,6 +332,10 @@ export default function App() {
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
         challengeId={challenge?.challengeId}
+        onViewUserProfile={(target) => {
+          setProfileUser(target);
+          setCurrentView('profile');
+        }}
       />
 
       <HowToPlayModal
@@ -323,12 +352,6 @@ export default function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-      />
-
-      <UserProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onOpenPro={() => setIsProModalOpen(true)}
       />
 
       <DailyArchiveModal

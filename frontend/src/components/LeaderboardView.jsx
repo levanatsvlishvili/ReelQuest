@@ -13,7 +13,8 @@ export function LeaderboardView({
   activeDate,
   onSelectDate,
   onOpenAuth,
-  onPlayChallenge
+  onPlayChallenge,
+  onViewUserProfile
 }) {
   const { user, isAuthenticated } = useAuth();
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' | 'all-time'
@@ -52,7 +53,11 @@ export function LeaderboardView({
   const canGoForward = activeDate < todayStr;
 
   const renderCard1 = (entry, isSolo = false) => (
-    <div className={`flex flex-col justify-between rounded-2xl border-2 border-gold/70 bg-gradient-to-b from-gold/20 via-cinema-card to-cinema-card p-6 shadow-gold-glow ${!isSolo ? 'order-1 md:order-2 md:-translate-y-2' : ''}`}>
+    <div
+      onClick={() => onViewUserProfile?.({ id: entry.userId, username: entry.username, isPro: entry.isPro, score: entry.score, moves: entry.moves, streak: entry.streak })}
+      className={`flex flex-col justify-between rounded-2xl border-2 border-gold/70 bg-gradient-to-b from-gold/20 via-cinema-card to-cinema-card p-6 shadow-gold-glow cursor-pointer transition-transform duration-200 hover:scale-[1.02] ${!isSolo ? 'order-1 md:order-2 md:-translate-y-2' : ''}`}
+      title={`Click to view ${entry.username}'s profile`}
+    >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-amber-600/30 border border-amber-500/50 px-3 py-1.5 text-xs font-black text-amber-400 shadow-sm">
           <Crown className="h-4 w-4 fill-amber-400" />
@@ -66,10 +71,11 @@ export function LeaderboardView({
       </div>
 
       <div className="my-5 text-center">
-        <h4 className="text-lg sm:text-xl font-extrabold text-white truncate">{entry.username}</h4>
+        <h4 className="text-lg sm:text-xl font-extrabold text-white truncate hover:text-gold transition">{entry.username}</h4>
         <span className="text-xs font-semibold text-gold">
           {activeTab === 'daily' ? `${entry.hops} Hops Champion` : 'All-Time Grandmaster'}
         </span>
+        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-gold/30 pt-3 text-xs">
@@ -95,7 +101,11 @@ export function LeaderboardView({
   );
 
   const renderCard2 = (entry) => (
-    <div className="order-2 md:order-1 flex flex-col justify-between rounded-2xl border border-slate-300/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm">
+    <div
+      onClick={() => onViewUserProfile?.({ id: entry.userId, username: entry.username, isPro: entry.isPro, score: entry.score, moves: entry.moves, streak: entry.streak })}
+      className="order-2 md:order-1 flex flex-col justify-between rounded-2xl border border-slate-300/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+      title={`Click to view ${entry.username}'s profile`}
+    >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 rounded-xl bg-slate-300/20 border border-slate-300/40 px-3 py-1 text-xs font-bold text-slate-200 shadow-sm">
           <Medal className="h-4 w-4 text-slate-300" />
@@ -110,8 +120,9 @@ export function LeaderboardView({
       </div>
 
       <div className="my-4 text-center">
-        <h4 className="text-base sm:text-lg font-bold text-white truncate">{entry.username}</h4>
+        <h4 className="text-base sm:text-lg font-bold text-white truncate hover:text-gold transition">{entry.username}</h4>
         <span className="text-[11px] text-cinema-muted">Rank #2 Cinephile</span>
+        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
@@ -137,7 +148,11 @@ export function LeaderboardView({
   );
 
   const renderCard3 = (entry) => (
-    <div className="order-3 flex flex-col justify-between rounded-2xl border border-amber-700/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm">
+    <div
+      onClick={() => onViewUserProfile?.({ id: entry.userId, username: entry.username, isPro: entry.isPro, score: entry.score, moves: entry.moves, streak: entry.streak })}
+      className="order-3 flex flex-col justify-between rounded-2xl border border-amber-700/40 bg-cinema-surface/80 p-5 shadow-lg backdrop-blur-sm cursor-pointer transition-transform duration-200 hover:scale-[1.02]"
+      title={`Click to view ${entry.username}'s profile`}
+    >
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 rounded-xl bg-amber-700/20 border border-amber-700/40 px-3 py-1 text-xs font-bold text-amber-500 shadow-sm">
           <Medal className="h-4 w-4 text-amber-600" />
@@ -152,8 +167,9 @@ export function LeaderboardView({
       </div>
 
       <div className="my-4 text-center">
-        <h4 className="text-base sm:text-lg font-bold text-white truncate">{entry.username}</h4>
+        <h4 className="text-base sm:text-lg font-bold text-white truncate hover:text-gold transition">{entry.username}</h4>
         <span className="text-[11px] text-cinema-muted">Rank #3 Cinephile</span>
+        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
@@ -443,9 +459,11 @@ export function LeaderboardView({
               return (
                 <div
                   key={idx}
-                  className={`flex items-center justify-between px-5 py-3.5 transition ${
-                    isCurrentUser ? 'bg-gold/10 border-l-4 border-l-gold' : 'hover:bg-cinema-surface/50'
+                  onClick={() => onViewUserProfile?.({ id: entry.userId, username: entry.username, isPro: entry.isPro, score: entry.score, moves: entry.moves, streak: entry.streak })}
+                  className={`flex items-center justify-between px-5 py-3.5 transition cursor-pointer ${
+                    isCurrentUser ? 'bg-gold/10 border-l-4 border-l-gold' : 'hover:bg-cinema-surface/60'
                   }`}
+                  title={`View ${entry.username}'s profile`}
                 >
                   <div className="flex items-center gap-3">
                     <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-cinema-border bg-cinema-surface text-xs font-bold text-cinema-muted">
@@ -453,7 +471,9 @@ export function LeaderboardView({
                     </span>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-white">{entry.username}</span>
+                      <span className="text-xs sm:text-sm font-bold text-white hover:text-gold transition">
+                        {entry.username}
+                      </span>
                       {entry.isPro && (
                         <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1 py-0.2 text-[9px] font-bold text-gold border border-gold/30">
                           <Crown className="h-2.5 w-2.5" />
