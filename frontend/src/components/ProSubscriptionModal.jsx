@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createCheckoutSession, simulatePaymentWebhook } from '../api/auth';
+import { activateSubscription } from '../utils/billingService';
 
 export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
   const { user, isAuthenticated, setProStatus } = useAuth();
@@ -79,10 +80,13 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
       await new Promise(r => setTimeout(r, 800));
 
       setProStatus(true);
+      if (user?.id) {
+        activateSubscription(user.id, user.email, { brand: 'Visa', last4: '4242' });
+      }
       setReceiptData({
         orderId: sessionData.orderId,
         sessionId: sessionData.sessionId,
-        amount: '$4.99',
+        amount: '$3.00',
         currency: 'USD',
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         userEmail: user.email
@@ -155,7 +159,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
 
             <div className="mb-6 rounded-xl border border-gold/30 bg-cinema-card/80 p-4 text-center">
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-3xl font-extrabold text-white">$4.99</span>
+                <span className="text-3xl font-extrabold text-white">$3.00</span>
                 <span className="text-xs text-cinema-muted">/ month</span>
               </div>
               <p className="mt-1 text-[11px] text-cinema-muted">Cancel anytime with 1-click in account settings</p>
@@ -283,7 +287,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark py-2.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-95"
               >
                 <Lock className="h-3.5 w-3.5" />
-                <span>Pay $4.99 (Test Authorization)</span>
+                <span>Pay $3.00 (Test Authorization)</span>
               </button>
             </div>
           </div>

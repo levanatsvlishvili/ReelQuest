@@ -479,7 +479,190 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
       </div>
 
       {/* ===================================================================== */}
-      {/* 2. CINEMA WIDESCREEN FRAME VIEWER                                     */}
+      {/* 2. GUESS INPUT & SEARCH BAR (Positioned between dates and frames)     */}
+      {/* ===================================================================== */}
+      {gameStatus === 'PLAYING' ? (
+        <div className="rounded-2xl border border-violet-500/40 bg-cinema-card/95 p-4 shadow-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-wider text-violet-300">
+              Submit Movie Guess (Frame {guesses.length + 1} of {MAX_FRAMES})
+            </span>
+            <span className="text-[11px] text-cinema-muted">
+              {MAX_FRAMES - guesses.length} attempts remaining
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-2 relative">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <div className="relative flex items-center rounded-xl border border-cinema-border/80 bg-cinema-surface/90 px-3 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20">
+                <Search className="h-4 w-4 text-violet-400 shrink-0 mr-2.5" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setDropdownOpen(true);
+                    setSelectedIndex(0);
+                  }}
+                  onFocus={() => setDropdownOpen(true)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={`Type a movie title (e.g. Inception, The Matrix, Pulp Fiction)...`}
+                  className="w-full bg-transparent py-2.5 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setDropdownOpen(false);
+                    }}
+                    className="p-1 text-cinema-muted hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Dropdown */}
+              {dropdownOpen && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-72 overflow-y-auto rounded-2xl border border-cinema-border/90 bg-cinema-card/95 p-1.5 shadow-2xl backdrop-blur-lg">
+                  {suggestions.map((movie, idx) => {
+                    const isSelected = idx === selectedIndex;
+                    const alreadyGuessed = guesses.some(
+                      (g) => !g.skipped && g.title.toLowerCase() === movie.title.toLowerCase()
+                    );
+
+                    return (
+                      <div
+                        key={movie.id}
+                        onClick={() => {
+                          if (!alreadyGuessed) {
+                            handleGuessMovie(movie);
+                          }
+                        }}
+                        className={`flex items-center justify-between p-2 rounded-xl transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-violet-600/30 border border-violet-500/50 text-white'
+                            : 'hover:bg-cinema-surface text-slate-200'
+                        } ${alreadyGuessed ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-10 w-7 shrink-0 overflow-hidden rounded bg-black/50 border border-cinema-border/50">
+                            {movie.posterPath ? (
+                              <img
+                                src={getTmdbImageUrl(movie.posterPath)}
+                                alt={movie.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <Film className="h-full w-full p-1 text-cinema-muted" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-sm font-extrabold block truncate text-white">
+                              {movie.title}
+                            </span>
+                            <span className="text-[11px] text-cinema-muted block truncate">
+                              {movie.year} • Dir. {movie.director}
+                            </span>
+                          </div>
+                        </div>
+
+                        {alreadyGuessed ? (
+                          <span className="text-[10px] uppercase font-bold text-cinema-muted">
+                            Guessed
+                          </span>
+                        ) : (
+                          <span className="rounded-lg bg-violet-500/20 px-2 py-0.5 text-[10px] font-black text-violet-300 border border-violet-500/40">
+                            Guess
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Skip Frame Button */}
+            <button
+              onClick={handleSkipFrame}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-4 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
+              title="Skip to next frame without guessing"
+            >
+              <SkipForward className="h-3.5 w-3.5 text-violet-400" />
+              <span>Skip Frame</span>
+            </button>
+
+            {/* Give Up Button */}
+            <button
+              onClick={handleGiveUp}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 px-3.5 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
+              title="Give up and reveal secret movie"
+            >
+              <Flag className="h-3.5 w-3.5 text-rose-400" />
+              <span>Give Up</span>
+            </button>
+          </div>
+        </div>
+      ) : (
+        /* Game Over Banner */
+        <div
+          className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl ${
+            gameStatus === 'WON'
+              ? 'border-emerald-500/50 bg-emerald-500/15'
+              : 'border-rose-500/50 bg-rose-500/15'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${
+                gameStatus === 'WON'
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+              }`}
+            >
+              {gameStatus === 'WON' ? (
+                <Trophy className="h-6 w-6 text-gold" />
+              ) : (
+                <Film className="h-6 w-6 text-rose-400" />
+              )}
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-white">
+                {gameStatus === 'WON'
+                  ? `Solved on Frame ${guesses.length} of ${MAX_FRAMES}!`
+                  : gaveUp
+                    ? 'Conceded Defeat'
+                    : 'Out of Frames!'}
+              </h3>
+              <p className="text-xs text-slate-300">
+                Secret Film: <strong className="text-white font-extrabold">{targetMovie.title}</strong> ({targetMovie.year})
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <button
+              onClick={handleShare}
+              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-2.5 text-xs font-black text-white transition active:scale-95 shadow-lg shadow-violet-600/30"
+            >
+              <Share2 className="h-4 w-4" />
+              <span>{copiedShare ? 'Copied to Clipboard!' : 'Share Result'}</span>
+            </button>
+            <button
+              onClick={() => setShowResultModal(true)}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 hover:bg-cinema-surface px-4 py-2.5 text-xs font-bold text-white transition shadow-sm"
+            >
+              <span>View Film Card</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 3. CINEMA WIDESCREEN FRAME VIEWER                                     */}
       {/* ===================================================================== */}
       <div className="space-y-3">
         {/* Frame Navigator Tabs (1 to 6) */}
@@ -724,190 +907,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
       </div>
 
       {/* ===================================================================== */}
-      {/* 4. GUESS INPUT & SEARCH BAR                                           */}
-      {/* ===================================================================== */}
-      {gameStatus === 'PLAYING' ? (
-        <div className="rounded-2xl border border-violet-500/40 bg-cinema-card/95 p-4 shadow-xl space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-violet-300">
-              Submit Movie Guess (Frame {guesses.length + 1} of {MAX_FRAMES})
-            </span>
-            <span className="text-[11px] text-cinema-muted">
-              {MAX_FRAMES - guesses.length} attempts remaining
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 relative">
-            {/* Search Input */}
-            <div className="relative flex-1">
-              <div className="relative flex items-center rounded-xl border border-cinema-border/80 bg-cinema-surface/90 px-3 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20">
-                <Search className="h-4 w-4 text-violet-400 shrink-0 mr-2.5" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setDropdownOpen(true);
-                    setSelectedIndex(0);
-                  }}
-                  onFocus={() => setDropdownOpen(true)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={`Type a movie title (e.g. Inception, The Matrix, Pulp Fiction)...`}
-                  className="w-full bg-transparent py-2.5 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery('');
-                      setDropdownOpen(false);
-                    }}
-                    className="p-1 text-cinema-muted hover:text-white"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Autocomplete Dropdown */}
-              {dropdownOpen && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-72 overflow-y-auto rounded-2xl border border-cinema-border/90 bg-cinema-card/95 p-1.5 shadow-2xl backdrop-blur-lg">
-                  {suggestions.map((movie, idx) => {
-                    const isSelected = idx === selectedIndex;
-                    const alreadyGuessed = guesses.some(
-                      (g) => !g.skipped && g.title.toLowerCase() === movie.title.toLowerCase()
-                    );
-
-                    return (
-                      <div
-                        key={movie.id}
-                        onClick={() => {
-                          if (!alreadyGuessed) {
-                            handleGuessMovie(movie);
-                          }
-                        }}
-                        className={`flex items-center justify-between p-2 rounded-xl transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-violet-600/30 border border-violet-500/50 text-white'
-                            : 'hover:bg-cinema-surface text-slate-200'
-                        } ${alreadyGuessed ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-10 w-7 shrink-0 overflow-hidden rounded bg-black/50 border border-cinema-border/50">
-                            {movie.posterPath ? (
-                              <img
-                                src={getTmdbImageUrl(movie.posterPath)}
-                                alt={movie.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <Film className="h-full w-full p-1 text-cinema-muted" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-sm font-extrabold block truncate text-white">
-                              {movie.title}
-                            </span>
-                            <span className="text-[11px] text-cinema-muted block truncate">
-                              {movie.year} • Dir. {movie.director}
-                            </span>
-                          </div>
-                        </div>
-
-                        {alreadyGuessed ? (
-                          <span className="text-[10px] uppercase font-bold text-cinema-muted">
-                            Guessed
-                          </span>
-                        ) : (
-                          <span className="rounded-lg bg-violet-500/20 px-2 py-0.5 text-[10px] font-black text-violet-300 border border-violet-500/40">
-                            Guess
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Skip Frame Button */}
-            <button
-              onClick={handleSkipFrame}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-4 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
-              title="Skip to next frame without guessing"
-            >
-              <SkipForward className="h-3.5 w-3.5 text-violet-400" />
-              <span>Skip Frame</span>
-            </button>
-
-            {/* Give Up Button */}
-            <button
-              onClick={handleGiveUp}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 px-3.5 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
-              title="Give up and reveal secret movie"
-            >
-              <Flag className="h-3.5 w-3.5 text-rose-400" />
-              <span>Give Up</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        /* Game Over Banner */
-        <div
-          className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl ${
-            gameStatus === 'WON'
-              ? 'border-emerald-500/50 bg-emerald-500/15'
-              : 'border-rose-500/50 bg-rose-500/15'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${
-                gameStatus === 'WON'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                  : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-              }`}
-            >
-              {gameStatus === 'WON' ? (
-                <Trophy className="h-6 w-6 text-gold" />
-              ) : (
-                <Film className="h-6 w-6 text-rose-400" />
-              )}
-            </div>
-            <div>
-              <h3 className="text-base sm:text-lg font-black text-white">
-                {gameStatus === 'WON'
-                  ? `Solved on Frame ${guesses.length} of ${MAX_FRAMES}!`
-                  : gaveUp
-                    ? 'Conceded Defeat'
-                    : 'Out of Frames!'}
-              </h3>
-              <p className="text-xs text-slate-300">
-                Secret Film: <strong className="text-white font-extrabold">{targetMovie.title}</strong> ({targetMovie.year})
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button
-              onClick={handleShare}
-              className="flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-2.5 text-xs font-black text-white transition active:scale-95 shadow-lg shadow-violet-600/30"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>{copiedShare ? 'Copied to Clipboard!' : 'Share Result'}</span>
-            </button>
-            <button
-              onClick={() => setShowResultModal(true)}
-              className="flex items-center justify-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 hover:bg-cinema-surface px-4 py-2.5 text-xs font-bold text-white transition shadow-sm"
-            >
-              <span>View Film Card</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ===================================================================== */}
-      {/* 5. GUESS HISTORY TABLE                                                */}
+      {/* 4. GUESS HISTORY TABLE                                                */}
       {/* ===================================================================== */}
       {guesses.length > 0 && (
         <div className="rounded-2xl border border-cinema-border/70 bg-cinema-card/90 p-4 space-y-2.5 shadow-xl">

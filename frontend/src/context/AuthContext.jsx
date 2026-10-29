@@ -69,9 +69,16 @@ export function AuthProvider({ children }) {
     const loggedUser = await signIn(email, password);
     let fullUser = loggedUser;
     try {
+      const confirmedKey = `reelquest_confirmed_meta_${email.toLowerCase()}`;
+      const confirmedMeta = JSON.parse(localStorage.getItem(confirmedKey) || '{}');
       const metaKey = `reelquest_user_meta_${loggedUser.id}`;
-      const meta = JSON.parse(localStorage.getItem(metaKey) || '{}');
-      fullUser = { ...loggedUser, ...meta };
+      const existingMeta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+      const mergedMeta = { ...existingMeta, ...confirmedMeta };
+      if (Object.keys(mergedMeta).length > 0) {
+        localStorage.setItem(metaKey, JSON.stringify(mergedMeta));
+      }
+      localStorage.removeItem(confirmedKey);
+      fullUser = { ...loggedUser, ...mergedMeta };
     } catch {
       fullUser = loggedUser;
     }
@@ -101,12 +108,31 @@ export function AuthProvider({ children }) {
     return loggedUser;
   };
 
-  const register = async (email, password, username) => {
-    return await signUp(email, password, username);
+  const register = async (email, password, username, meta = {}) => {
+    const res = await signUp(email, password, username);
+    try {
+      if (meta && Object.keys(meta).length > 0) {
+        localStorage.setItem(`reelquest_pending_meta_${email.toLowerCase()}`, JSON.stringify(meta));
+      }
+    } catch (e) {
+      console.error('Failed to stash pending meta:', e);
+    }
+    return res;
   };
 
   const confirm = async (email, code) => {
-    return await confirmSignUp(email, code);
+    const res = await confirmSignUp(email, code);
+    try {
+      const pendingKey = `reelquest_pending_meta_${email.toLowerCase()}`;
+      const pendingMeta = JSON.parse(localStorage.getItem(pendingKey) || '{}');
+      if (pendingMeta && Object.keys(pendingMeta).length > 0) {
+        localStorage.setItem(`reelquest_confirmed_meta_${email.toLowerCase()}`, JSON.stringify(pendingMeta));
+        localStorage.removeItem(pendingKey);
+      }
+    } catch (e) {
+      console.error('Failed to move confirmed meta:', e);
+    }
+    return res;
   };
 
   const setProStatus = (isPro) => {

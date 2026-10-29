@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Trophy, HelpCircle, Flame, Crown, User, LogIn, LogOut, Volume2, VolumeX } from 'lucide-react';
+import { Film, Trophy, Flame, Crown, LogIn, LogOut, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEffects';
 import { getAvatarById, calculateCinemaLevel } from '../utils/cinemaLevels';
@@ -8,7 +8,6 @@ import { getDetailedMatchHistory } from '../api/matchHistory';
 export function Navbar({
   onOpenLeaderboard,
   isLeaderboardActive = false,
-  onOpenHowToPlay,
   onOpenPro,
   onOpenAuth,
   onOpenProfile,
@@ -34,6 +33,7 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Brand Logo & Name */}
         <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => window.location.reload()}>
           <div className="relative group">
             <img
@@ -58,17 +58,19 @@ export function Navbar({
           </div>
         </div>
 
+        {/* Right Controls: Unified h-9 height for pixel-perfect alignment */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           {isAuthenticated && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-orange-500/30 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-400">
+            <div className="hidden sm:flex h-9 items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-400">
               <Flame className="h-4 w-4 fill-orange-400/20" />
               <span>{currentStreak} Day Streak</span>
             </div>
           )}
 
+          {/* Leaderboard Button */}
           <button
             onClick={onOpenLeaderboard}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+            className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
               isLeaderboardActive
                 ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
                 : 'border border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/50 hover:text-gold'
@@ -78,25 +80,19 @@ export function Navbar({
             <span className="hidden sm:inline">Leaderboard</span>
           </button>
 
-          <button
-            onClick={onOpenHowToPlay}
-            className="rounded-lg border border-cinema-border bg-cinema-surface p-2 text-slate-300 transition hover:border-cinema-muted hover:text-white"
-            title="How to Play"
-          >
-            <HelpCircle className="h-4 w-4" />
-          </button>
-
+          {/* Sound Toggle Button */}
           <button
             onClick={handleToggleSound}
-            className="rounded-lg border border-cinema-border bg-cinema-surface p-2 text-slate-300 transition hover:border-gold/50 hover:text-gold"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-cinema-border bg-cinema-surface text-slate-300 transition hover:border-gold/50 hover:text-gold"
             title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
           >
             {muted ? <VolumeX className="h-4 w-4 text-slate-400" /> : <Volume2 className="h-4 w-4 text-gold" />}
           </button>
 
+          {/* PRO Button */}
           <button
             onClick={onOpenPro}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+            className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition ${
               user?.isPro
                 ? 'border border-gold/40 bg-gold/15 text-gold shadow-gold-glow hover:bg-gold/25'
                 : 'bg-gradient-to-r from-gold via-amber-400 to-gold-dark text-cinema-black shadow-gold-glow hover:opacity-90'
@@ -108,10 +104,10 @@ export function Navbar({
 
           {isAuthenticated ? (
             <>
-              {/* Profile Button with Avatar and Level */}
+              {/* Profile Button: uniform h-9 with custom photo / avatar and level badge */}
               <button
                 onClick={onOpenProfile}
-                className={`flex items-center gap-2 rounded-xl border py-1 pl-1.5 pr-3 text-xs font-medium transition ${
+                className={`flex h-9 items-center gap-2 rounded-xl border px-2.5 text-xs font-medium transition ${
                   isProfileActive
                     ? 'border-gold bg-gold/20 text-gold shadow-gold-glow'
                     : user?.isPro
@@ -120,26 +116,34 @@ export function Navbar({
                 }`}
                 title="View Cinephile Profile"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-black/40 border border-cinema-border/70 text-sm shadow-inner">
-                  {userAvatar.emoji}
-                </div>
-                <div className="flex flex-col text-left">
-                  <span className="max-w-[75px] truncate sm:max-w-[105px] font-bold text-white text-[12px] leading-tight">
-                    {user.username}
-                  </span>
-                  <div className="flex items-center gap-1 text-[10px]">
-                    <span className="font-extrabold text-gold">Lv.{levelInfo?.level || 1}</span>
-                    {user.isPro && (
-                      <span className="text-[9px] text-amber-400 font-black">PRO</span>
-                    )}
+                {user?.customAvatarUrl ? (
+                  <img
+                    src={user.customAvatarUrl}
+                    alt={user.username}
+                    className="h-6 w-6 rounded-lg object-cover border border-gold/40 shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-black/40 border border-cinema-border/70 text-xs shadow-inner">
+                    {userAvatar.emoji}
                   </div>
-                </div>
+                )}
+                <span className="max-w-[75px] sm:max-w-[110px] truncate font-bold text-white text-xs leading-none">
+                  {user.username}
+                </span>
+                <span className="rounded-md bg-gold/15 px-1.5 py-0.5 text-[10px] font-black text-gold border border-gold/30 leading-none">
+                  Lv.{levelInfo?.level || 1}
+                </span>
+                {user.isPro && (
+                  <span className="hidden sm:inline text-[9px] text-amber-400 font-black leading-none">
+                    PRO
+                  </span>
+                )}
               </button>
 
-              {/* Log Out Button directly in Navbar */}
+              {/* Log Out Button */}
               <button
                 onClick={logout}
-                className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 px-2.5 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"
+                className="flex h-9 items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 px-3 text-xs font-semibold text-slate-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"
                 title="Log Out"
               >
                 <LogOut className="h-4 w-4" />
@@ -149,7 +153,7 @@ export function Navbar({
           ) : (
             <button
               onClick={onOpenAuth}
-              className="flex items-center gap-1.5 rounded-lg border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-medium text-slate-200 transition hover:border-cinema-muted hover:text-white"
+              className="flex h-9 items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3.5 text-xs font-medium text-slate-200 transition hover:border-cinema-muted hover:text-white"
             >
               <LogIn className="h-4 w-4 text-cinema-muted" />
               <span>Sign In</span>

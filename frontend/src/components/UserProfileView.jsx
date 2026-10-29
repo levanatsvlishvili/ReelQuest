@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   ArrowLeft,
   Crown,
@@ -24,7 +24,16 @@ import {
   Shield,
   Save,
   CheckCircle2,
-  Edit3
+  Edit3,
+  CreditCard,
+  AlertTriangle,
+  Upload,
+  Trash2,
+  Globe,
+  Mail,
+  RefreshCw,
+  Receipt,
+  RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
@@ -39,6 +48,15 @@ import {
   getAvatarById,
   calculateCinemaLevel
 } from '../utils/cinemaLevels';
+import { COUNTRIES, getCountryByCode } from '../utils/countries';
+import {
+  getSubscription,
+  activateSubscription,
+  updatePaymentMethod,
+  setAutoRenew,
+  simulateMonthlyBillingRun
+} from '../utils/billingService';
+import { processAvatarImage } from '../utils/imageUpload';
 import { CinemaActivityHeatmap } from './CinemaActivityHeatmap';
 
 const ICON_COMPONENTS = {
@@ -59,7 +77,7 @@ const ICON_COMPONENTS = {
 };
 
 export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
-  const { user: currentUser, stats: currentStats, updateUserProfile } = useAuth();
+  const { user: currentUser, stats: currentStats, updateUserProfile, setProStatus } = useAuth();
 
   // Determine if viewing own profile or someone else's public profile
   const isOwnProfile = !targetUser || (currentUser && targetUser.id === currentUser.id);
@@ -69,7 +87,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     if (isOwnProfile) {
       return currentUser || { username: 'Guest Cinephile', id: 'guest', isPro: false };
     }
-    // Viewing someone else: check if they have saved metadata locally or use targetUser
     try {
       const meta = JSON.parse(localStorage.getItem(`reelquest_user_meta_${targetUser.id}`) || '{}');
       return { ...targetUser, ...meta };
@@ -78,7 +95,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     }
   }, [isOwnProfile, currentUser, targetUser]);
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'trophies' | 'history' | 'edit'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'trophies' | 'history' | 'billing' | 'edit'
   const [trophyFilter, setTrophyFilter] = useState('all');
   const [historyFilter, setHistoryFilter] = useState('all');
   const [matchHistory, setMatchHistory] = useState(() => getDetailedMatchHistory(profileUser?.id));
@@ -86,22 +103,48 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
   // Edit form state
   const [editAvatarId, setEditAvatarId] = useState(profileUser?.avatarId || 'avatar-director');
+  const [customAvatarUrl, setCustomAvatarUrl] = useState(profileUser?.customAvatarUrl || null);
+  const [uploadError, setUploadError] = useState(null);
+  const fileInputRef = useRef(null);
+
+  // Personal Info form fields
+  const [editFirstName, setEditFirstName] = useState(profileUser?.firstName || '');
+  const [editLastName, setEditLastName] = useState(profileUser?.lastName || '');
   const [editUsername, setEditUsername] = useState(profileUser?.username || '');
+  const [editCountryCode, setEditCountryCode] = useState(profileUser?.countryCode || 'GE');
   const [editBio, setEditBio] = useState(profileUser?.bio || '');
   const [editFavoriteDirector, setEditFavoriteDirector] = useState(profileUser?.favoriteDirector || '');
   const [editFavoriteMovie, setEditFavoriteMovie] = useState(profileUser?.favoriteMovie || '');
   const [editFavoriteGenre, setEditFavoriteGenre] = useState(profileUser?.favoriteGenre || 'Sci-Fi');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Keep edit form in sync when profileUser changes
+  // Subscription & Billing state
+  const [subscription, setSubscription] = useState(() =>
+    getSubscription(profileUser?.id, profileUser?.email, profileUser?.isPro)
+  );
+  const [billingNotice, setBillingNotice] = useState(null);
+  const [showCardModal, setShowCardModal] = useState(false);
+  const [cardHolder, setCardHolder] = useState(profileUser?.username || 'Cinephile');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExp, setCardExp] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+
+  // Keep form in sync when profileUser changes
   useEffect(() => {
     if (profileUser) {
       setEditAvatarId(profileUser.avatarId || 'avatar-director');
+      setCustomAvatarUrl(profileUser.customAvatarUrl || null);
+      setEditFirstName(profileUser.firstName || '');
+      setEditLastName(profileUser.lastName || '');
       setEditUsername(profileUser.username || '');
+      setEditCountryCode(profileUser.countryCode || 'GE');
       setEditBio(profileUser.bio || '');
       setEditFavoriteDirector(profileUser.favoriteDirector || '');
       setEditFavoriteMovie(profileUser.favoriteMovie || '');
       setEditFavoriteGenre(profileUser.favoriteGenre || 'Sci-Fi');
+
+      const sub = getSubscription(profileUser.id, profileUser.email, profileUser.isPro);
+      setSubscription(sub);
     }
   }, [profileUser]);
 
@@ -145,6 +188,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   }, [profileUser, activeStats, matchHistory]);
 
   const avatar = getAvatarById(isOwnProfile ? (profileUser?.avatarId || editAvatarId) : profileUser?.avatarId);
+  const activeCountry = getCountryByCode(profileUser?.countryCode || editCountryCode);
 
   // Filtered achievements
   const filteredAchievements = trophyData.achievements.filter(ach => {
@@ -167,12 +211,44 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const unlockedShowcase = trophyData.achievements.filter(a => a.isUnlocked && !a.isComingSoon).slice(0, 3);
   const winRate = activeStats?.gamesPlayed > 0 ? Math.round((activeStats.gamesWon / activeStats.gamesPlayed) * 100) : 0;
 
+  // Custom Avatar File Upload Handler
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadError(null);
+    try {
+      const processed = await processAvatarImage(file);
+      setCustomAvatarUrl(processed.dataUrl);
+      if (updateUserProfile) {
+        updateUserProfile({ customAvatarUrl: processed.dataUrl });
+      }
+    } catch (err) {
+      setUploadError(err.message || 'Failed to upload avatar image.');
+    }
+  };
+
+  const handleRemoveCustomAvatar = () => {
+    setCustomAvatarUrl(null);
+    if (updateUserProfile) {
+      updateUserProfile({ customAvatarUrl: null });
+    }
+  };
+
   const handleSaveProfile = (e) => {
     e.preventDefault();
     if (!updateUserProfile) return;
 
+    const selectedCountry = getCountryByCode(editCountryCode);
+
     updateUserProfile({
       avatarId: editAvatarId,
+      customAvatarUrl,
+      firstName: editFirstName.trim(),
+      lastName: editLastName.trim(),
+      countryCode: selectedCountry.code,
+      nationality: selectedCountry.name,
+      countryFlag: selectedCountry.flag,
       username: editUsername.trim() || profileUser.username,
       bio: editBio.trim(),
       favoriteDirector: editFavoriteDirector.trim(),
@@ -185,6 +261,53 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
       setSaveSuccess(false);
       setActiveTab('overview');
     }, 1200);
+  };
+
+  // Billing Actions
+  const handleUpdateCardSubmit = (e) => {
+    e.preventDefault();
+    const last4 = cardNumber.replace(/\D/g, '').slice(-4) || '4242';
+    const brand = cardNumber.startsWith('3') ? 'Amex' : cardNumber.startsWith('5') ? 'Mastercard' : 'Visa';
+    const [expMonth, expYear] = cardExp.split('/').map(s => s.trim());
+
+    const updated = updatePaymentMethod(profileUser.id, {
+      cardholderName: cardHolder,
+      brand,
+      last4,
+      expMonth: parseInt(expMonth, 10) || 12,
+      expYear: parseInt(expYear, 10) || 2028
+    });
+
+    setSubscription(updated);
+    setShowCardModal(false);
+    setBillingNotice({ type: 'success', text: `Payment method updated to ${brand} ending in ${last4}!` });
+    setTimeout(() => setBillingNotice(null), 4000);
+  };
+
+  const handleToggleAutoRenew = () => {
+    const nextState = !subscription?.cancelAtPeriodEnd;
+    const updated = setAutoRenew(profileUser.id, nextState);
+    setSubscription(updated);
+    setBillingNotice({
+      type: 'info',
+      text: nextState
+        ? 'Automatic renewal cancelled. Your PRO perks remain active until the end of the billing period.'
+        : 'Automatic monthly renewal ($3.00/mo) re-enabled.'
+    });
+    setTimeout(() => setBillingNotice(null), 4000);
+  };
+
+  const handleSimulateCycle = (outcome) => {
+    const res = simulateMonthlyBillingRun(profileUser.id, profileUser.email, outcome);
+    setSubscription(res.subscription);
+    if (res.isPro !== profileUser.isPro && setProStatus) {
+      setProStatus(res.isPro);
+    }
+    setBillingNotice({
+      type: outcome === 'SUCCESS' ? 'success' : res.suspended ? 'error' : 'warning',
+      text: res.message
+    });
+    setTimeout(() => setBillingNotice(null), 6000);
   };
 
   const formatMatchDate = (isoOrDateStr) => {
@@ -228,7 +351,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
             <p className="text-xs text-cinema-muted">
               {isOwnProfile
-                ? 'Your Hollywood progression, activity heatmap, badges, and film history'
+                ? 'Your Hollywood progression, activity heatmap, badges, and subscription management'
                 : `Official statistics, trophies, and cinema journey of ${profileUser.username}`}
             </p>
           </div>
@@ -282,6 +405,23 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
           {isOwnProfile && (
             <button
+              onClick={() => setActiveTab('billing')}
+              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                activeTab === 'billing'
+                  ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+                  : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
+              }`}
+            >
+              <CreditCard className="h-4 w-4" />
+              <span>Pro & Billing</span>
+              {subscription?.status === 'PAST_DUE' && (
+                <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+              )}
+            </button>
+          )}
+
+          {isOwnProfile && (
+            <button
               onClick={() => setActiveTab('edit')}
               className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
                 activeTab === 'edit'
@@ -303,10 +443,20 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           {/* Left: Avatar & Bio */}
           <div className="flex items-start sm:items-center gap-4">
-            {/* Avatar Badge */}
-            <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl ${avatar.bgGradient}`}>
-              <span className="text-4xl sm:text-5xl select-none">{avatar.emoji}</span>
-              <span className="absolute -bottom-2 rounded-full bg-cinema-black/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
+            {/* Avatar Badge: Custom Image OR Preset Avatar Emoji */}
+            <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl overflow-hidden ${
+              customAvatarUrl ? 'border-gold shadow-gold-glow bg-black/60' : avatar.bgGradient
+            }`}>
+              {customAvatarUrl ? (
+                <img
+                  src={customAvatarUrl}
+                  alt={profileUser.username}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-4xl sm:text-5xl select-none">{avatar.emoji}</span>
+              )}
+              <span className="absolute -bottom-1 rounded-full bg-cinema-black/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
                 Lv. {levelInfo.level}
               </span>
             </div>
@@ -316,20 +466,38 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 <h2 className="text-xl sm:text-2xl font-black text-white truncate">
                   {profileUser.username}
                 </h2>
+
+                {/* Country Flag Badge */}
+                <span className="flex items-center gap-1 rounded-full bg-cinema-surface/90 border border-cinema-border px-2.5 py-0.5 text-xs font-bold text-slate-200" title={activeCountry.name}>
+                  <span className="text-base">{activeCountry.flag}</span>
+                  <span className="text-[11px] font-semibold">{activeCountry.name}</span>
+                </span>
+
                 {profileUser.isPro ? (
                   <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-gold/25 to-amber-500/25 px-2.5 py-0.5 text-[10px] font-extrabold text-gold border border-gold/40 shadow-gold-glow">
                     <Crown className="h-3 w-3 fill-gold" />
-                    PRO VIP
+                    PRO VIP ($3/mo)
                   </span>
                 ) : (
                   <span className="rounded-full bg-cinema-border px-2.5 py-0.5 text-[10px] font-semibold text-cinema-muted">
                     Cinephile
                   </span>
                 )}
+
                 <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${levelInfo.badgeColor}`}>
                   {levelInfo.title}
                 </span>
               </div>
+
+              {/* First & Last Name if available */}
+              {(profileUser.firstName || profileUser.lastName) && (
+                <p className="text-xs font-bold text-slate-200">
+                  {profileUser.firstName} {profileUser.lastName}
+                  {profileUser.email && (
+                    <span className="text-cinema-muted font-normal ml-2">({profileUser.email})</span>
+                  )}
+                </p>
+              )}
 
               {profileUser.bio ? (
                 <p className="text-xs text-slate-300 max-w-xl line-clamp-2">
@@ -438,6 +606,59 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
           {/* GitHub Activity Heatmap */}
           <CinemaActivityHeatmap matchHistory={matchHistory} />
 
+          {/* Account Personal Details Card */}
+          <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
+            <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gold" />
+                <h3 className="text-sm font-extrabold text-white">Cinephile Identity & Credentials</h3>
+              </div>
+              {isOwnProfile && (
+                <button
+                  onClick={() => setActiveTab('edit')}
+                  className="text-xs font-bold text-gold hover:underline flex items-center gap-1"
+                >
+                  <Edit3 className="h-3.5 w-3.5" />
+                  <span>Edit Details</span>
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Full Name</span>
+                <span className="font-bold text-white text-sm">
+                  {profileUser.firstName || profileUser.lastName
+                    ? `${profileUser.firstName || ''} ${profileUser.lastName || ''}`.trim()
+                    : 'Not Specified'}
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Email Address</span>
+                <span className="font-bold text-white truncate block text-sm" title={profileUser.email}>
+                  {profileUser.email || 'guest@reelquest.io'}
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Nationality</span>
+                <span className="font-bold text-white flex items-center gap-1.5 text-sm">
+                  <span className="text-base">{activeCountry.flag}</span>
+                  <span>{activeCountry.name}</span>
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Subscription Tier</span>
+                <span className="font-extrabold text-sm flex items-center gap-1 text-gold">
+                  <Crown className="h-3.5 w-3.5" />
+                  <span>{profileUser.isPro ? 'Pro VIP ($3/mo)' : 'Free Member'}</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
           {/* Pro Banner if viewing own free profile */}
           {isOwnProfile && !profileUser.isPro && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/15 via-cinema-card to-amber-950/30 p-5 shadow-gold-glow">
@@ -446,7 +667,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   <Sparkles className="h-6 w-6" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-white">Upgrade to ReelQuest PRO VIP</h4>
+                  <h4 className="text-sm font-bold text-white">Upgrade to ReelQuest PRO VIP ($3.00/mo)</h4>
                   <p className="text-xs text-slate-300 mt-0.5">
                     Unlock Unlimited Otara hints, Custom Graph sandbox, Golden VIP avatar glow, and permanent Streak Shield protection.
                   </p>
@@ -457,7 +678,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 onClick={onOpenPro}
                 className="shrink-0 rounded-xl bg-gold px-5 py-2.5 text-xs font-black text-cinema-black hover:opacity-90 shadow-gold-glow transition active:scale-95"
               >
-                Get PRO Access
+                Unlock Pro ($3/mo)
               </button>
             </div>
           )}
@@ -947,30 +1168,360 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
       )}
 
       {/* ======================================================== */}
-      {/* TAB 4: EDIT PROFILE & AVATAR (OWN PROFILE ONLY)          */}
+      {/* TAB 4: PRO & BILLING (RECURRING $3/MO, CARDS, RETRY)     */}
+      {/* ======================================================== */}
+      {isOwnProfile && activeTab === 'billing' && (
+        <div className="space-y-6">
+          {/* Notification Banner (if any action performed) */}
+          {billingNotice && (
+            <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center gap-3 animate-fade-in ${
+              billingNotice.type === 'success'
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300'
+                : billingNotice.type === 'error'
+                ? 'bg-red-500/15 border-red-500/40 text-red-300'
+                : billingNotice.type === 'warning'
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
+                : 'bg-blue-500/15 border-blue-500/40 text-blue-300'
+            }`}>
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{billingNotice.text}</span>
+            </div>
+          )}
+
+          {/* Dunning Notice (if payment failed) */}
+          {subscription?.status === 'PAST_DUE' && subscription?.dunningNotice && (
+            <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 shadow-xl space-y-2">
+              <div className="flex items-center gap-2.5 text-amber-400 font-extrabold text-sm">
+                <AlertTriangle className="h-5 w-5" />
+                <span>Payment Notice: Monthly $3.00 Charge Failed (Attempt {subscription.dunningNotice.attempt}/3)</span>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                We were unable to charge your card for this billing cycle. A warning notification has been dispatched to <strong>{profileUser.email}</strong>.
+                An automatic retry is scheduled. If 3 consecutive attempts fail, your Pro perks will be suspended.
+              </p>
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  onClick={() => setShowCardModal(true)}
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-cinema-black hover:bg-amber-400 transition"
+                >
+                  Update Payment Method
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Suspended Alert */}
+          {subscription?.status === 'SUSPENDED' && (
+            <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-5 shadow-xl space-y-2">
+              <div className="flex items-center gap-2.5 text-red-400 font-extrabold text-sm">
+                <AlertTriangle className="h-5 w-5" />
+                <span>Subscription Suspended</span>
+              </div>
+              <p className="text-xs text-slate-200 leading-relaxed">
+                Your monthly Pro subscription was suspended after 3 unsuccessful payment attempts. Please provide a valid payment method below to reactivate your Pro status and resume unlimited hints and graph perks.
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => setShowCardModal(true)}
+                  className="rounded-xl bg-red-500 px-4 py-2 text-xs font-black text-white hover:bg-red-400 transition"
+                >
+                  Reactivate with New Card
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Active Plan Overview Card */}
+          <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 sm:p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/60 pb-4">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-gold">
+                  Current Billing Plan
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h3 className="text-lg font-black text-white">ReelQuest Pro Monthly</h3>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase border ${
+                    subscription?.status === 'ACTIVE'
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : subscription?.status === 'PAST_DUE'
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : subscription?.status === 'SUSPENDED'
+                      ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                      : 'bg-cinema-border text-cinema-muted border-cinema-border'
+                  }`}>
+                    {subscription?.status || 'INACTIVE'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-left sm:text-right">
+                <div className="flex items-baseline sm:justify-end gap-1">
+                  <span className="text-2xl font-black text-gold">$3.00</span>
+                  <span className="text-xs text-cinema-muted">/ month (Auto-Renewing)</span>
+                </div>
+                <span className="text-[11px] text-cinema-muted">
+                  Billed monthly via Stripe recurring payments
+                </span>
+              </div>
+            </div>
+
+            {/* Next Billing Date & Renewal Status */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Next Billing Date</span>
+                <span className="font-bold text-white text-sm">
+                  {subscription?.currentPeriodEnd
+                    ? formatMatchDate(subscription.currentPeriodEnd)
+                    : 'N/A'}
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Auto-Renewal</span>
+                <span className={`font-bold text-sm ${subscription?.cancelAtPeriodEnd ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {subscription?.cancelAtPeriodEnd ? 'Cancels at Period End' : 'Active (Automatic)'}
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Payment Method</span>
+                <span className="font-bold text-white text-sm flex items-center gap-1.5">
+                  <CreditCard className="h-4 w-4 text-gold" />
+                  <span>
+                    {subscription?.paymentMethod
+                      ? `${subscription.paymentMethod.brand} •••• ${subscription.paymentMethod.last4}`
+                      : 'No Card on File'}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            {/* Actions: Cancel/Resume and Change Card */}
+            <div className="flex items-center gap-3 pt-2 flex-wrap">
+              <button
+                onClick={() => setShowCardModal(true)}
+                className="flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/15 px-4 py-2.5 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow/20 transition active:scale-95"
+              >
+                <CreditCard className="h-4 w-4" />
+                <span>Update / Change Card</span>
+              </button>
+
+              {subscription?.status === 'ACTIVE' && (
+                <button
+                  onClick={handleToggleAutoRenew}
+                  className="rounded-xl border border-cinema-border bg-cinema-surface px-4 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:border-cinema-muted transition"
+                >
+                  {subscription?.cancelAtPeriodEnd ? 'Resume Auto-Renewal' : 'Cancel Auto-Renewal'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Billing & Invoice History Table */}
+          <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-3">
+            <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <Receipt className="h-4 w-4 text-gold" />
+                <h3 className="text-sm font-extrabold text-white">Payment & Invoice History</h3>
+              </div>
+              <span className="text-[10px] text-cinema-muted">
+                {subscription?.invoices?.length || 0} Invoices Recorded
+              </span>
+            </div>
+
+            {subscription?.invoices && subscription.invoices.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-cinema-border/60 text-cinema-muted text-[10px] uppercase font-bold">
+                      <th className="py-2.5 px-3">Invoice ID</th>
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3">Description</th>
+                      <th className="py-2.5 px-3">Amount</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3 text-right">Receipt</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-cinema-border/40">
+                    {subscription.invoices.map((inv, idx) => (
+                      <tr key={idx} className="hover:bg-cinema-surface/40 transition">
+                        <td className="py-3 px-3 font-mono font-bold text-slate-300">{inv.id}</td>
+                        <td className="py-3 px-3 text-slate-300">{formatMatchDate(inv.date)}</td>
+                        <td className="py-3 px-3 font-semibold text-white">{inv.description}</td>
+                        <td className="py-3 px-3 font-mono font-extrabold text-gold">{inv.amount}</td>
+                        <td className="py-3 px-3">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase border ${
+                            inv.status === 'PAID'
+                              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                              : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                          }`}>
+                            {inv.status === 'PAID' ? <Check className="h-2.5 w-2.5" /> : <AlertTriangle className="h-2.5 w-2.5" />}
+                            {inv.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <button
+                            onClick={() => alert(`ReelQuest Electronic Receipt\nInvoice: ${inv.id}\nDate: ${inv.date}\nAmount: ${inv.amount}\nStatus: ${inv.status}\nCustomer: ${profileUser.email}`)}
+                            className="text-[11px] font-bold text-gold hover:underline"
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-xs text-cinema-muted">
+                No past invoices found.
+              </div>
+            )}
+          </div>
+
+          {/* Test / Simulator Sandbox Controls */}
+          <div className="rounded-2xl border border-dashed border-cinema-border/80 bg-cinema-surface/40 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-400" />
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                Stripe Billing Cycle Simulator (Dev Testing Sandbox)
+              </h4>
+            </div>
+            <p className="text-[11px] text-cinema-muted leading-relaxed">
+              Test monthly recurring renewals, failed charge dunning emails, automatic retries (1 $\to$ 2 $\to$ 3), and account suspension without a live credit card.
+            </p>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                onClick={() => handleSimulateCycle('SUCCESS')}
+                className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 transition active:scale-95"
+              >
+                ✓ Simulate Successful $3.00 Renewal
+              </button>
+
+              <button
+                onClick={() => handleSimulateCycle('FAIL')}
+                className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/25 transition active:scale-95"
+              >
+                ⚠️ Simulate Failed Charge & Retry Flow ({subscription?.retryCount || 0}/3)
+              </button>
+
+              <button
+                onClick={() => {
+                  const resetSub = activateSubscription(profileUser.id, profileUser.email, { brand: 'Visa', last4: '4242' });
+                  setSubscription(resetSub);
+                  if (setProStatus) setProStatus(true);
+                  setBillingNotice({ type: 'success', text: 'Reset subscription to fresh Active ($3/mo)!' });
+                  setTimeout(() => setBillingNotice(null), 3000);
+                }}
+                className="rounded-xl border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition active:scale-95"
+              >
+                <RotateCcw className="h-3 w-3 inline mr-1" />
+                Reset Active
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* TAB 5: EDIT PROFILE & AVATAR (OWN PROFILE ONLY)          */}
       {/* ======================================================== */}
       {isOwnProfile && activeTab === 'edit' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
-          {/* Avatar Selector Grid */}
+          {/* Custom Avatar Upload Section */}
+          <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cinema-border/60 pb-3">
+              <div>
+                <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
+                  <Camera className="h-4 w-4 text-gold" />
+                  <span>Custom Profile Picture</span>
+                </h3>
+                <p className="text-xs text-cinema-muted mt-0.5">
+                  Upload your own photo (PNG, JPG, WebP) or pick from our curated cinema avatars below.
+                </p>
+              </div>
+
+              {customAvatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveCustomAvatar}
+                  className="flex items-center gap-1.5 text-xs font-bold text-rose-400 hover:text-rose-300 transition"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Remove Custom Photo</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-5">
+              {/* Preview Box */}
+              <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-2 border-gold shadow-gold-glow bg-black/60 overflow-hidden">
+                {customAvatarUrl ? (
+                  <img
+                    src={customAvatarUrl}
+                    alt="Custom Avatar Preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="text-center p-2 text-cinema-muted">
+                    <User className="h-8 w-8 mx-auto opacity-50" />
+                    <span className="text-[9px] block mt-1">No Custom Photo</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2 flex-1 text-center sm:text-left">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  accept="image/png, image/jpeg, image/webp"
+                  className="hidden"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center gap-2 rounded-xl bg-cinema-surface border border-cinema-border hover:border-gold px-4 py-2.5 text-xs font-bold text-white transition active:scale-95"
+                >
+                  <Upload className="h-4 w-4 text-gold" />
+                  <span>{customAvatarUrl ? 'Change Custom Photo' : 'Upload Custom Photo'}</span>
+                </button>
+
+                <p className="text-[11px] text-cinema-muted">
+                  Square 1:1 image recommended. Auto-cropped & optimized. Maximum file size: 8MB.
+                </p>
+
+                {uploadError && (
+                  <p className="text-xs font-bold text-red-400">{uploadError}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Preset Avatar Selector Grid */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <div>
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
-                <span>Select Your Cinema Persona</span>
-                <span className="text-xs font-normal text-cinema-muted">({CINEMA_AVATARS.length} Curated Avatars)</span>
+                <span>Or Choose a Preset Cinema Persona</span>
+                <span className="text-xs font-normal text-cinema-muted">({CINEMA_AVATARS.length} Curated Personas)</span>
               </h3>
               <p className="text-xs text-cinema-muted mt-0.5">
-                Your chosen avatar is displayed on the leaderboard, duel matches, and navbar profile.
+                Active when custom photo is not applied.
               </p>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {CINEMA_AVATARS.map(av => {
-                const isSelected = editAvatarId === av.id;
+                const isSelected = !customAvatarUrl && editAvatarId === av.id;
                 return (
                   <button
                     type="button"
                     key={av.id}
-                    onClick={() => setEditAvatarId(av.id)}
+                    onClick={() => {
+                      setEditAvatarId(av.id);
+                      setCustomAvatarUrl(null);
+                    }}
                     className={`relative flex flex-col items-center justify-between p-3.5 rounded-2xl border text-center transition-all duration-200 ${
                       isSelected
                         ? 'border-gold bg-gold/15 shadow-gold-glow scale-[1.02]'
@@ -1000,11 +1551,39 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Profile Details Inputs */}
+          {/* Profile Details Inputs: First & Last Name, Country, Bio, Favorites */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
-            <h3 className="text-sm font-extrabold text-white">Cinephile Details & Favorites</h3>
+            <h3 className="text-sm font-extrabold text-white">Cinephile Details & Personal Information</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  First Name (სახელი)
+                </label>
+                <input
+                  type="text"
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                  maxLength={30}
+                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white placeholder-cinema-muted focus:border-gold focus:outline-none"
+                  placeholder="e.g. Giorgi"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Last Name (გვარი)
+                </label>
+                <input
+                  type="text"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                  maxLength={40}
+                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white placeholder-cinema-muted focus:border-gold focus:outline-none"
+                  placeholder="e.g. Beridze"
+                />
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
                   Display Name / Username
@@ -1018,6 +1597,23 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   placeholder="e.g. CinemaVoyager"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  Nationality / Country (ეროვნება)
+                </label>
+                <select
+                  value={editCountryCode}
+                  onChange={(e) => setEditCountryCode(e.target.value)}
+                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white focus:border-gold focus:outline-none"
+                >
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code} className="bg-cinema-card text-white">
+                      {c.flag} {c.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -1049,7 +1645,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
                   All-Time Favorite Movie
                 </label>
@@ -1100,6 +1696,114 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
         </form>
+      )}
+
+      {/* Card Update Modal */}
+      {showCardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md rounded-2xl border border-gold/40 bg-gradient-to-b from-cinema-card to-cinema-surface p-6 shadow-2xl space-y-4">
+            <button
+              onClick={() => setShowCardModal(false)}
+              className="absolute right-4 top-4 rounded-lg p-1.5 text-cinema-muted hover:text-white"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <CreditCard className="h-5 w-5 text-gold" />
+              <h3 className="text-base font-black text-white">Update Payment Method</h3>
+            </div>
+            <p className="text-xs text-cinema-muted">
+              Add a new credit or debit card for your monthly $3.00 Pro subscription.
+            </p>
+
+            <form onSubmit={handleUpdateCardSubmit} className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Cardholder Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={cardHolder}
+                  onChange={(e) => setCardHolder(e.target.value)}
+                  placeholder="Levan Natsvlishvili"
+                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1">
+                  Card Number (16 Digits)
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={19}
+                  value={cardNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+                    setCardNumber(val);
+                  }}
+                  placeholder="4242 4242 4242 4242"
+                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-mono text-white placeholder-cinema-muted outline-none focus:border-gold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    Expiration (MM/YY)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={5}
+                    value={cardExp}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/\D/g, '');
+                      if (val.length >= 2) val = val.slice(0, 2) + '/' + val.slice(2, 4);
+                      setCardExp(val);
+                    }}
+                    placeholder="12/28"
+                    className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-mono text-white placeholder-cinema-muted outline-none focus:border-gold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 mb-1">
+                    CVC (3 Digits)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    maxLength={4}
+                    value={cardCvc}
+                    onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, ''))}
+                    placeholder="888"
+                    className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-mono text-white placeholder-cinema-muted outline-none focus:border-gold"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowCardModal(false)}
+                  className="rounded-xl border border-cinema-border bg-cinema-surface px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-xl bg-gold px-5 py-2 text-xs font-black text-cinema-black hover:opacity-90 shadow-gold-glow"
+                >
+                  Save New Card
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
