@@ -7,7 +7,6 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
-  Globe,
   Eye,
   EyeOff,
   Check,
@@ -15,7 +14,8 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { COUNTRIES, getCountryByCode } from '../utils/countries';
+import { getCountryByCode } from '../utils/countries';
+import { CountrySelect } from './CountrySelect';
 
 export function AuthModal({ isOpen, onClose }) {
   const { login, register, confirm } = useAuth();
@@ -267,7 +267,7 @@ export function AuthModal({ isOpen, onClose }) {
         )}
 
         {/* ========================================================= */}
-        {/* 2. REGISTRATION FORM (ENHANCED WITH DETAILED PROFILE INFO) */}
+        {/* 2. REGISTRATION FORM (STRICTLY ENGLISH, SEARCHABLE COUNTRY) */}
         {/* ========================================================= */}
         {tab === 'signup' && (
           <form onSubmit={handleSignUp} className="space-y-3.5">
@@ -275,38 +275,38 @@ export function AuthModal({ isOpen, onClose }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  First Name (სახელი)
+                  First Name
                 </label>
                 <input
                   type="text"
                   required
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="e.g. Giorgi"
+                  placeholder="e.g. John"
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Last Name (გვარი)
+                  Last Name
                 </label>
                 <input
                   type="text"
                   required
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
-                  placeholder="e.g. Beridze"
+                  placeholder="e.g. Smith"
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
                 />
               </div>
             </div>
 
-            {/* Username & Email */}
+            {/* Username & Nationality (Searchable) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Username (მეტსახელი)
+                  Username
                 </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted" />
@@ -321,31 +321,20 @@ export function AuthModal({ isOpen, onClose }) {
                 </div>
               </div>
 
+              {/* Searchable Sovereign Country Selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Nationality / Country (ეროვნება)
-                </label>
-                <div className="relative">
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white outline-none focus:border-gold transition appearance-none cursor-pointer"
-                  >
-                    {COUNTRIES.map((c) => (
-                      <option key={c.code} value={c.code} className="bg-cinema-card text-white">
-                        {c.flag} {c.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Globe className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted pointer-events-none" />
-                </div>
+                <CountrySelect
+                  value={countryCode}
+                  onChange={setCountryCode}
+                  label="Nationality"
+                />
               </div>
             </div>
 
             {/* Email Address */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1">
-                Email Address (ელ-ფოსტა)
+                Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted" />
@@ -388,7 +377,7 @@ export function AuthModal({ isOpen, onClose }) {
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1">
-                  Confirm Password (გამეორება)
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted" />
@@ -420,7 +409,7 @@ export function AuthModal({ isOpen, onClose }) {
             {/* Password Validation Requirements Checklist */}
             <div className="rounded-xl border border-cinema-border/60 bg-cinema-surface/40 p-2.5 space-y-1.5 text-[11px]">
               <span className="text-[10px] uppercase font-bold text-cinema-muted block">
-                Security Checklist:
+                Security Checklist
               </span>
               <div className="grid grid-cols-2 gap-1.5">
                 <span className={`flex items-center gap-1.5 ${passwordCriteria.length ? 'text-emerald-400 font-bold' : 'text-cinema-muted'}`}>

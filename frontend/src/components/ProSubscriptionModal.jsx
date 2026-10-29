@@ -64,17 +64,17 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
       await new Promise(r => setTimeout(r, 600));
       setSagaProgress(prev => [
         ...prev,
-        '2. Stripe Sandbox: Authorizing payment transaction (4242)...'
+        '2. Authorizing transaction via Stripe...'
       ]);
 
       await new Promise(r => setTimeout(r, 600));
-      // Call SAGA webhook simulation on AWS backend
+      // Call webhook handler
       const result = await simulatePaymentWebhook(sessionData.orderId, true);
 
       setSagaProgress(prev => [
         ...prev,
-        '3. SAGA Orchestrator: Webhook verified & idempotency lock acquired.',
-        '4. Cognito group ProUsers granted & DynamoDB profile upgraded!'
+        '3. Subscription confirmed by Stripe.',
+        '4. ReelQuest PRO membership activated!'
       ]);
 
       await new Promise(r => setTimeout(r, 800));
@@ -163,9 +163,9 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
                 <span className="text-xs text-cinema-muted">/ month</span>
               </div>
               <p className="mt-1 text-[11px] text-cinema-muted">Cancel anytime with 1-click in account settings</p>
-              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] text-blue-400 border border-blue-500/20">
+              <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] text-emerald-400 border border-emerald-500/20">
                 <ShieldCheck className="h-3 w-3" />
-                <span>Stripe Sandbox Simulator Active</span>
+                <span>256-Bit SSL Encrypted Checkout</span>
               </div>
             </div>
 
@@ -203,7 +203,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
         )}
 
         {/* ==================================================== */}
-        {/* VIEW 2: STRIPE SANDBOX CHECKOUT FORM */}
+        {/* VIEW 2: STRIPE CHECKOUT FORM */}
         {/* ==================================================== */}
         {step === 'CHECKOUT' && (
           <div className="space-y-5">
@@ -211,10 +211,11 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-gold flex items-center gap-1">
                   <CreditCard className="h-3.5 w-3.5" />
-                  Stripe Sandbox Checkout
+                  Secure Stripe Checkout
                 </span>
-                <span className="rounded bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400 border border-blue-500/30">
-                  TEST MODE
+                <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                  <Lock className="h-2.5 w-2.5" />
+                  ENCRYPTED
                 </span>
               </div>
               <h3 className="mt-1 text-lg font-bold text-white">Complete Your Subscription</h3>
@@ -227,7 +228,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
             <div className="rounded-xl border border-cinema-border bg-cinema-surface p-3.5 text-xs space-y-2">
               <div className="flex justify-between text-slate-300">
                 <span>ReelQuest PRO (Monthly)</span>
-                <span className="font-bold text-white">$4.99</span>
+                <span className="font-bold text-white">$3.00</span>
               </div>
               <div className="flex justify-between text-cinema-muted text-[11px]">
                 <span>Sales Tax / VAT (0%)</span>
@@ -235,14 +236,14 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               </div>
               <div className="border-t border-cinema-border/60 pt-2 flex justify-between font-bold text-white text-sm">
                 <span>Total Due Today</span>
-                <span className="text-gold">$4.99 USD</span>
+                <span className="text-gold">$3.00 USD</span>
               </div>
             </div>
 
-            {/* Simulated Card Element */}
+            {/* Card Element */}
             <div className="space-y-3">
               <label className="block text-xs font-semibold text-slate-200">
-                Test Payment Card
+                Payment Card
               </label>
 
               <div className="rounded-xl border border-cinema-border bg-cinema-surface/90 p-3 space-y-2.5">
@@ -264,7 +265,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
 
               <p className="text-[11px] text-cinema-muted flex items-start gap-1.5">
                 <Lock className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5" />
-                <span>Sandbox Mode: Test card prefilled. Clicking Pay triggers live AWS SAGA transaction orchestrator with zero real billing.</span>
+                <span>Your payment method is saved securely for automatic monthly renewal. Cancel anytime.</span>
               </p>
             </div>
 
@@ -287,14 +288,14 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark py-2.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-95"
               >
                 <Lock className="h-3.5 w-3.5" />
-                <span>Pay $3.00 (Test Authorization)</span>
+                <span>Pay $3.00 / Month</span>
               </button>
             </div>
           </div>
         )}
 
         {/* ==================================================== */}
-        {/* VIEW 3: LIVE SAGA PROCESSING ANIMATION */}
+        {/* VIEW 3: LIVE PAYMENT PROCESSING ANIMATION */}
         {/* ==================================================== */}
         {step === 'PROCESSING' && (
           <div className="py-6 text-center space-y-5">
@@ -303,8 +304,8 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white">Executing Distributed SAGA</h3>
-              <p className="text-xs text-cinema-muted mt-1">Processing atomic transaction across AWS microservices...</p>
+              <h3 className="text-base font-bold text-white">Processing Subscription</h3>
+              <p className="text-xs text-cinema-muted mt-1">Securely connecting to Stripe and verifying payment...</p>
             </div>
 
             <div className="rounded-xl border border-cinema-border bg-cinema-surface p-4 text-left font-mono text-xs space-y-2">

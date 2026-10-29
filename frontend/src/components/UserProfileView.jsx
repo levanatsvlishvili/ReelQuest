@@ -29,11 +29,8 @@ import {
   AlertTriangle,
   Upload,
   Trash2,
-  Globe,
   Mail,
-  RefreshCw,
-  Receipt,
-  RotateCcw
+  Receipt
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
@@ -48,13 +45,12 @@ import {
   getAvatarById,
   calculateCinemaLevel
 } from '../utils/cinemaLevels';
-import { COUNTRIES, getCountryByCode } from '../utils/countries';
+import { getCountryByCode } from '../utils/countries';
+import { CountrySelect } from './CountrySelect';
 import {
   getSubscription,
-  activateSubscription,
   updatePaymentMethod,
-  setAutoRenew,
-  simulateMonthlyBillingRun
+  setAutoRenew
 } from '../utils/billingService';
 import { processAvatarImage } from '../utils/imageUpload';
 import { CinemaActivityHeatmap } from './CinemaActivityHeatmap';
@@ -77,7 +73,7 @@ const ICON_COMPONENTS = {
 };
 
 export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
-  const { user: currentUser, stats: currentStats, updateUserProfile, setProStatus } = useAuth();
+  const { user: currentUser, stats: currentStats, updateUserProfile } = useAuth();
 
   // Determine if viewing own profile or someone else's public profile
   const isOwnProfile = !targetUser || (currentUser && targetUser.id === currentUser.id);
@@ -107,7 +103,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const [uploadError, setUploadError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Personal Info form fields
+  // Personal Info form fields (Strictly English)
   const [editFirstName, setEditFirstName] = useState(profileUser?.firstName || '');
   const [editLastName, setEditLastName] = useState(profileUser?.lastName || '');
   const [editUsername, setEditUsername] = useState(profileUser?.username || '');
@@ -297,19 +293,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     setTimeout(() => setBillingNotice(null), 4000);
   };
 
-  const handleSimulateCycle = (outcome) => {
-    const res = simulateMonthlyBillingRun(profileUser.id, profileUser.email, outcome);
-    setSubscription(res.subscription);
-    if (res.isPro !== profileUser.isPro && setProStatus) {
-      setProStatus(res.isPro);
-    }
-    setBillingNotice({
-      type: outcome === 'SUCCESS' ? 'success' : res.suspended ? 'error' : 'warning',
-      text: res.message
-    });
-    setTimeout(() => setBillingNotice(null), 6000);
-  };
-
   const formatMatchDate = (isoOrDateStr) => {
     if (!isoOrDateStr) return 'Recent Match';
     try {
@@ -327,123 +310,32 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* Top Bar with Navigation Back */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/70 pb-4">
-        <div className="flex items-center gap-3">
+      {/* Return to Leaderboard Link (Only shown when inspecting someone else's public profile) */}
+      {!isOwnProfile && (
+        <div className="flex items-center justify-between border-b border-cinema-border/70 pb-3">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-semibold text-cinema-muted transition hover:border-gold/50 hover:text-white"
+            className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-semibold text-cinema-muted transition hover:border-gold hover:text-white"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>{isOwnProfile ? 'Back to Game' : 'Back to Leaderboard'}</span>
+            <span>Back to Leaderboard</span>
           </button>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl sm:text-2xl font-black text-white">
-                {isOwnProfile ? 'My Cinephile Profile' : `${profileUser.username}'s Profile`}
-              </h1>
-              {!isOwnProfile && (
-                <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2 py-0.5 text-[10px] font-bold text-cyan-300">
-                  Public Profile
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-cinema-muted">
-              {isOwnProfile
-                ? 'Your Hollywood progression, activity heatmap, badges, and subscription management'
-                : `Official statistics, trophies, and cinema journey of ${profileUser.username}`}
-            </p>
-          </div>
+          <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+            Viewing Public Cinephile Profile
+          </span>
         </div>
+      )}
 
-        {/* Tab Switcher */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              activeTab === 'overview'
-                ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-                : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
-            }`}
-          >
-            <User className="h-4 w-4" />
-            <span>Overview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('trophies')}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              activeTab === 'trophies'
-                ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-                : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
-            }`}
-          >
-            <Trophy className="h-4 w-4" />
-            <span>Trophies</span>
-            <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300">
-              {trophyData.unlockedCount}/{trophyData.totalCount}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-              activeTab === 'history'
-                ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-                : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
-            }`}
-          >
-            <History className="h-4 w-4" />
-            <span>Matches</span>
-            {matchHistory.length > 0 && (
-              <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300">
-                {matchHistory.length}
-              </span>
-            )}
-          </button>
-
-          {isOwnProfile && (
-            <button
-              onClick={() => setActiveTab('billing')}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                activeTab === 'billing'
-                  ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-                  : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
-              }`}
-            >
-              <CreditCard className="h-4 w-4" />
-              <span>Pro & Billing</span>
-              {subscription?.status === 'PAST_DUE' && (
-                <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
-              )}
-            </button>
-          )}
-
-          {isOwnProfile && (
-            <button
-              onClick={() => setActiveTab('edit')}
-              className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
-                activeTab === 'edit'
-                  ? 'bg-gold text-cinema-black shadow-gold-glow'
-                  : 'text-cinema-muted hover:text-white hover:bg-cinema-surface'
-              }`}
-            >
-              <Edit3 className="h-4 w-4" />
-              <span>Edit Profile</span>
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Hero Banner: Identity & Level Banner */}
-      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-6 shadow-2xl">
+      {/* ======================================================== */}
+      {/* 1. HERO IDENTITY & PROGRESSION BANNER                    */}
+      {/* ======================================================== */}
+      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-6 sm:p-7 shadow-2xl">
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          {/* Left: Avatar & Bio */}
-          <div className="flex items-start sm:items-center gap-4">
-            {/* Avatar Badge: Custom Image OR Preset Avatar Emoji */}
+          {/* Left: Avatar & Personal Info */}
+          <div className="flex items-start sm:items-center gap-5">
+            {/* Avatar Badge: Custom Photo OR Preset Avatar */}
             <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl overflow-hidden ${
               customAvatarUrl ? 'border-gold shadow-gold-glow bg-black/60' : avatar.bgGradient
             }`}>
@@ -456,7 +348,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               ) : (
                 <span className="text-4xl sm:text-5xl select-none">{avatar.emoji}</span>
               )}
-              <span className="absolute -bottom-1 rounded-full bg-cinema-black/90 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
+              <span className="absolute -bottom-1 rounded-full bg-cinema-black/95 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
                 Lv. {levelInfo.level}
               </span>
             </div>
@@ -467,8 +359,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   {profileUser.username}
                 </h2>
 
-                {/* Country Flag Badge */}
-                <span className="flex items-center gap-1 rounded-full bg-cinema-surface/90 border border-cinema-border px-2.5 py-0.5 text-xs font-bold text-slate-200" title={activeCountry.name}>
+                {/* Country Flag Badge (195 Sovereign Countries) */}
+                <span className="flex items-center gap-1.5 rounded-full bg-cinema-surface/90 border border-cinema-border px-2.5 py-0.5 text-xs font-bold text-slate-200" title={activeCountry.name}>
                   <span className="text-base">{activeCountry.flag}</span>
                   <span className="text-[11px] font-semibold">{activeCountry.name}</span>
                 </span>
@@ -489,7 +381,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 </span>
               </div>
 
-              {/* First & Last Name if available */}
+              {/* Full Name & Email */}
               {(profileUser.firstName || profileUser.lastName) && (
                 <p className="text-xs font-bold text-slate-200">
                   {profileUser.firstName} {profileUser.lastName}
@@ -596,6 +488,87 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             />
           </div>
         </div>
+      </div>
+
+      {/* ======================================================== */}
+      {/* 2. FULL-WIDTH PROFILE NAVIGATION TABS                    */}
+      {/* Ensures "Edit Profile" & all tabs are 100% visible       */}
+      {/* ======================================================== */}
+      <div className="flex items-center gap-2 border-b border-cinema-border/70 pb-3 overflow-x-auto scrollbar-none w-full">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+            activeTab === 'overview'
+              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+          }`}
+        >
+          <User className="h-4 w-4" />
+          <span>Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('trophies')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+            activeTab === 'trophies'
+              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+          }`}
+        >
+          <Trophy className="h-4 w-4" />
+          <span>Trophies</span>
+          <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300 font-mono">
+            {trophyData.unlockedCount}/{trophyData.totalCount}
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('history')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+            activeTab === 'history'
+              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+          }`}
+        >
+          <History className="h-4 w-4" />
+          <span>Matches</span>
+          {matchHistory.length > 0 && (
+            <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300 font-mono">
+              {matchHistory.length}
+            </span>
+          )}
+        </button>
+
+        {isOwnProfile && (
+          <button
+            onClick={() => setActiveTab('billing')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+              activeTab === 'billing'
+                ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+                : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+            }`}
+          >
+            <CreditCard className="h-4 w-4" />
+            <span>Pro & Billing</span>
+            {subscription?.status === 'PAST_DUE' && (
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+            )}
+          </button>
+        )}
+
+        {isOwnProfile && (
+          <button
+            onClick={() => setActiveTab('edit')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+              activeTab === 'edit'
+                ? 'bg-gold text-cinema-black shadow-gold-glow'
+                : 'bg-cinema-surface/70 border border-cinema-border text-slate-200 hover:border-gold hover:text-gold'
+            }`}
+          >
+            <Edit3 className="h-4 w-4" />
+            <span>Edit Profile</span>
+          </button>
+        )}
       </div>
 
       {/* ======================================================== */}
@@ -1168,11 +1141,11 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
       )}
 
       {/* ======================================================== */}
-      {/* TAB 4: PRO & BILLING (RECURRING $3/MO, CARDS, RETRY)     */}
+      {/* TAB 4: PRO & BILLING (PRODUCTION $3/MO, REAL BILLING)    */}
       {/* ======================================================== */}
       {isOwnProfile && activeTab === 'billing' && (
         <div className="space-y-6">
-          {/* Notification Banner (if any action performed) */}
+          {/* Notification Banner (if card updated or renewal toggled) */}
           {billingNotice && (
             <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center gap-3 animate-fade-in ${
               billingNotice.type === 'success'
@@ -1188,7 +1161,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           )}
 
-          {/* Dunning Notice (if payment failed) */}
+          {/* Dunning Notice (When automatic charge attempt failed) */}
           {subscription?.status === 'PAST_DUE' && subscription?.dunningNotice && (
             <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 shadow-xl space-y-2">
               <div className="flex items-center gap-2.5 text-amber-400 font-extrabold text-sm">
@@ -1196,10 +1169,10 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 <span>Payment Notice: Monthly $3.00 Charge Failed (Attempt {subscription.dunningNotice.attempt}/3)</span>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed">
-                We were unable to charge your card for this billing cycle. A warning notification has been dispatched to <strong>{profileUser.email}</strong>.
+                We were unable to charge your saved card for this billing cycle. A warning notification has been sent to <strong>{profileUser.email}</strong>.
                 An automatic retry is scheduled. If 3 consecutive attempts fail, your Pro perks will be suspended.
               </p>
-              <div className="pt-2 flex items-center gap-3">
+              <div className="pt-2">
                 <button
                   onClick={() => setShowCardModal(true)}
                   className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-cinema-black hover:bg-amber-400 transition"
@@ -1378,53 +1351,11 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
             )}
           </div>
-
-          {/* Test / Simulator Sandbox Controls */}
-          <div className="rounded-2xl border border-dashed border-cinema-border/80 bg-cinema-surface/40 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-amber-400" />
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                Stripe Billing Cycle Simulator (Dev Testing Sandbox)
-              </h4>
-            </div>
-            <p className="text-[11px] text-cinema-muted leading-relaxed">
-              Test monthly recurring renewals, failed charge dunning emails, automatic retries (1 $\to$ 2 $\to$ 3), and account suspension without a live credit card.
-            </p>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <button
-                onClick={() => handleSimulateCycle('SUCCESS')}
-                className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/25 transition active:scale-95"
-              >
-                ✓ Simulate Successful $3.00 Renewal
-              </button>
-
-              <button
-                onClick={() => handleSimulateCycle('FAIL')}
-                className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/25 transition active:scale-95"
-              >
-                ⚠️ Simulate Failed Charge & Retry Flow ({subscription?.retryCount || 0}/3)
-              </button>
-
-              <button
-                onClick={() => {
-                  const resetSub = activateSubscription(profileUser.id, profileUser.email, { brand: 'Visa', last4: '4242' });
-                  setSubscription(resetSub);
-                  if (setProStatus) setProStatus(true);
-                  setBillingNotice({ type: 'success', text: 'Reset subscription to fresh Active ($3/mo)!' });
-                  setTimeout(() => setBillingNotice(null), 3000);
-                }}
-                className="rounded-xl border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition active:scale-95"
-              >
-                <RotateCcw className="h-3 w-3 inline mr-1" />
-                Reset Active
-              </button>
-            </div>
-          </div>
         </div>
       )}
 
       {/* ======================================================== */}
-      {/* TAB 5: EDIT PROFILE & AVATAR (OWN PROFILE ONLY)          */}
+      {/* TAB 5: EDIT PROFILE & AVATAR (STRICTLY ENGLISH LABELS)    */}
       {/* ======================================================== */}
       {isOwnProfile && activeTab === 'edit' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
@@ -1551,14 +1482,14 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Profile Details Inputs: First & Last Name, Country, Bio, Favorites */}
+          {/* Profile Details Inputs: Strictly English, Searchable Sovereign Country */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
-            <h3 className="text-sm font-extrabold text-white">Cinephile Details & Personal Information</h3>
+            <h3 className="text-sm font-extrabold text-white">Personal Information & Cinephile Details</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  First Name (სახელი)
+                  First Name
                 </label>
                 <input
                   type="text"
@@ -1566,13 +1497,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   onChange={(e) => setEditFirstName(e.target.value)}
                   maxLength={30}
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white placeholder-cinema-muted focus:border-gold focus:outline-none"
-                  placeholder="e.g. Giorgi"
+                  placeholder="e.g. John"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Last Name (გვარი)
+                  Last Name
                 </label>
                 <input
                   type="text"
@@ -1580,7 +1511,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   onChange={(e) => setEditLastName(e.target.value)}
                   maxLength={40}
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white placeholder-cinema-muted focus:border-gold focus:outline-none"
-                  placeholder="e.g. Beridze"
+                  placeholder="e.g. Smith"
                 />
               </div>
 
@@ -1599,21 +1530,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 />
               </div>
 
+              {/* Searchable Sovereign Country Dropdown */}
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Nationality / Country (ეროვნება)
-                </label>
-                <select
+                <CountrySelect
                   value={editCountryCode}
-                  onChange={(e) => setEditCountryCode(e.target.value)}
-                  className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white focus:border-gold focus:outline-none"
-                >
-                  {COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code} className="bg-cinema-card text-white">
-                      {c.flag} {c.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setEditCountryCode}
+                  label="Nationality"
+                />
               </div>
 
               <div>
@@ -1727,7 +1650,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   required
                   value={cardHolder}
                   onChange={(e) => setCardHolder(e.target.value)}
-                  placeholder="Levan Natsvlishvili"
+                  placeholder="John Smith"
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold"
                 />
               </div>

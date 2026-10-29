@@ -219,7 +219,7 @@ export function DailyDateNavigator({
           <button
             onClick={onOpenHowToPlay}
             className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-gold/50 hover:text-gold active:scale-95"
-            title="How to Play Beat Otara"
+            title="How to Play ReelQuest"
           >
             <HelpCircle className="h-3.5 w-3.5 text-gold" />
             <span className="hidden sm:inline">How to Play</span>

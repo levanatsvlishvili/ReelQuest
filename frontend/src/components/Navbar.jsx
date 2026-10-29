@@ -52,9 +52,6 @@ export function Navbar({
                 Beta
               </span>
             </div>
-            <p className="text-[11px] text-cinema-muted hidden sm:block">
-              The Hollywood Cinema Oracle • Beat Otara
-            </p>
           </div>
         </div>
 
