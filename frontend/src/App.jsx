@@ -128,7 +128,11 @@ export default function App() {
             activeDate={activeDate}
             onSelectDate={(d) => loadDateChallenge(d)}
             onOpenAuth={() => setIsAuthOpen(true)}
-            onPlayChallenge={(d) => {
+            onPlayChallenge={(d, mode) => {
+              if (mode && ['six-degrees', 'spotle', 'frame-sleuth', 'box-office'].includes(mode)) {
+                setActiveMode(mode);
+                setIsDuelMode(false);
+              }
               loadDateChallenge(d);
               setCurrentView('game');
             }}
@@ -323,9 +327,6 @@ export default function App() {
               <p className="text-xs text-cinema-muted leading-relaxed">
                 Daily cinema trivia and interactive movie games for film lovers.
               </p>
-              <div className="pt-1 text-xs text-slate-300">
-                Created by <strong className="text-white font-semibold">Levan Natsvlishvili</strong>
-              </div>
             </div>
 
             {/* Column 2: Game Modes */}

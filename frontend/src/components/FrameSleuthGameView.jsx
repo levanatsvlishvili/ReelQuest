@@ -27,6 +27,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
 import { saveDetailedMatch } from '../api/matchHistory';
+import { recordLeaderboardScore } from '../api/leaderboardService';
 import {
   FRAME_SLEUTH_MOVIES,
   getFrameSleuthMovieForDate,
@@ -205,6 +206,17 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         },
         guesses: newGuesses.map(g => g.skipped ? 'Skipped' : g.title)
       });
+      if (user?.id) {
+        recordLeaderboardScore('frame-sleuth', {
+          userId: user.id,
+          username: user.username,
+          isPro: user.isPro,
+          hops: newGuesses.length,
+          score: Math.max(50, 110 - newGuesses.length * 15),
+          durationSeconds: 30,
+          date: activeDate
+        });
+      }
     } else if (isLoss) {
       playDefeat();
       setShowResultModal(true);

@@ -48,9 +48,6 @@ export function Navbar({
               <span className="text-xl font-bold tracking-tight text-white">
                 Reel<span className="text-gold">Quest</span>
               </span>
-              <span className="rounded-full bg-cinema-border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-cinema-muted">
-                Beta
-              </span>
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
 import { saveDetailedMatch } from '../api/matchHistory';
+import { recordLeaderboardScore } from '../api/leaderboardService';
 import {
   BOX_OFFICE_MOVIES,
   formatFullRevenue,
@@ -196,6 +197,17 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         },
         guesses: [`Streak: ${currentStreak}`]
       });
+      if (user?.id && currentStreak >= 3) {
+        recordLeaderboardScore('box-office', {
+          userId: user.id,
+          username: user.username,
+          isPro: user.isPro,
+          hops: currentStreak,
+          score: currentStreak * 150,
+          durationSeconds: currentStreak * 14,
+          date: todayStr
+        });
+      }
     }
   };
 
@@ -268,6 +280,17 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         },
         guesses: updatedGuesses.map(g => `${g.movieA.title} vs ${g.movieB.title}: ${g.correct ? 'PASS' : 'FAIL'}`)
       });
+      if (user?.id) {
+        recordLeaderboardScore('box-office', {
+          userId: user.id,
+          username: user.username,
+          isPro: user.isPro,
+          hops: totalCorrect,
+          score: totalCorrect * 200,
+          durationSeconds: 60,
+          date: activeDate
+        });
+      }
     }
   };
 

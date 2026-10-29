@@ -24,6 +24,7 @@ import {
 import confetti from 'canvas-confetti';
 import { SPOTLE_MOVIES, getSpotleMovieForDate, compareSpotleMovies } from '../data/spotleMovies';
 import { saveDetailedMatch } from '../api/matchHistory';
+import { recordLeaderboardScore } from '../api/leaderboardService';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
 import { SpotleArchiveModal } from './SpotleArchiveModal';
@@ -233,6 +234,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         },
         guesses: newGuesses.map(g => g.guessedMovie.title)
       });
+      if (user?.id) {
+        recordLeaderboardScore('spotle', {
+          userId: user.id,
+          username: user.username,
+          isPro: user.isPro,
+          hops: newGuesses.length,
+          score: Math.max(100, 1000 - newGuesses.length * 100),
+          durationSeconds: timerSeconds,
+          date: activeDate
+        });
+      }
     } else if (isLoss) {
       playDefeat();
       setShowResultModal(true);
