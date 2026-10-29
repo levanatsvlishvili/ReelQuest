@@ -1,7 +1,7 @@
 /**
  * ReelQuest Pro Subscription & Billing Service
  * Models recurring $3.00/month subscription, Stripe integration ready,
- * saved payment methods, billing history, and dunning / retry handling.
+ * saved payment methods, real billing history, and renewal handling.
  */
 
 export const PRO_PLAN = {
@@ -11,15 +11,6 @@ export const PRO_PLAN = {
   currency: 'USD',
   interval: 'month',
   formattedPrice: '$3.00'
-};
-
-const DEFAULT_CARD = {
-  id: 'pm_default_4242',
-  brand: 'Visa',
-  last4: '4242',
-  expMonth: 12,
-  expYear: 2028,
-  cardholderName: 'Cinephile Member'
 };
 
 function getStorageKey(userId) {
@@ -38,8 +29,8 @@ export function getSubscription(userId, userEmail, isProUser = false) {
     console.error('Failed to load subscription:', e);
   }
 
-  // If user is already marked Pro in Cognito/Auth but has no local billing state,
-  // generate a default active $3/month subscription
+  // If user is marked Pro in Cognito/Auth but has no local billing state,
+  // return an active status without fake cards
   if (isProUser) {
     const now = new Date();
     const nextMonth = new Date(now);
@@ -53,18 +44,8 @@ export function getSubscription(userId, userEmail, isProUser = false) {
       cancelAtPeriodEnd: false,
       retryCount: 0,
       dunningNotice: null,
-      paymentMethod: DEFAULT_CARD,
-      invoices: [
-        {
-          id: `inv_${Date.now().toString().slice(-6)}`,
-          date: now.toISOString(),
-          amount: '$3.00',
-          currency: 'USD',
-          status: 'PAID',
-          description: 'ReelQuest Pro Monthly ($3.00/mo)',
-          paymentMethod: 'Visa •••• 4242'
-        }
-      ]
+      paymentMethod: null,
+      invoices: []
     };
     saveSubscription(userId, initialSub);
     return initialSub;
@@ -94,14 +75,18 @@ export function saveSubscription(userId, subscriptionData) {
 }
 
 /**
- * Creates or updates an active $3/month subscription
+ * Creates or updates an active $3/month subscription with real card details
  */
-export function activateSubscription(userId, userEmail, cardDetails = DEFAULT_CARD) {
+export function activateSubscription(userId, userEmail, cardDetails = null) {
   const now = new Date();
   const nextMonth = new Date(now);
   nextMonth.setDate(now.getDate() + 30);
 
   const existing = getSubscription(userId, userEmail, true);
+  const paymentMethodDesc = cardDetails
+    ? `${cardDetails.brand || 'Card'} •••• ${cardDetails.last4 || '••••'}`
+    : 'Stripe Payment';
+
   const newInvoice = {
     id: `inv_${Date.now().toString().slice(-6)}`,
     date: now.toISOString(),
@@ -109,7 +94,7 @@ export function activateSubscription(userId, userEmail, cardDetails = DEFAULT_CA
     currency: 'USD',
     status: 'PAID',
     description: 'ReelQuest Pro Monthly ($3.00/mo)',
-    paymentMethod: `${cardDetails.brand || 'Visa'} •••• ${cardDetails.last4 || '4242'}`
+    paymentMethod: paymentMethodDesc
   };
 
   const updated = {
@@ -121,15 +106,15 @@ export function activateSubscription(userId, userEmail, cardDetails = DEFAULT_CA
     cancelAtPeriodEnd: false,
     retryCount: 0,
     dunningNotice: null,
-    paymentMethod: {
+    paymentMethod: cardDetails ? {
       id: cardDetails.id || `pm_${Date.now()}`,
       brand: cardDetails.brand || 'Visa',
       last4: cardDetails.last4 || '4242',
       expMonth: cardDetails.expMonth || 12,
       expYear: cardDetails.expYear || 2028,
       cardholderName: cardDetails.cardholderName || 'Cinephile Member'
-    },
-    invoices: [newInvoice, ...(existing.invoices || [])]
+    } : null,
+    invoices: [newInvoice, ...(existing?.invoices || [])]
   };
 
   saveSubscription(userId, updated);
@@ -152,23 +137,16 @@ export function updatePaymentMethod(userId, newCard) {
     cardholderName: newCard.cardholderName || 'Cinephile Member'
   };
 
-  // If subscription was PAST_DUE, updating card resets retries and restores ACTIVE status
-  const newStatus = current.status === 'PAST_DUE' ? 'ACTIVE' : current.status;
-
   const updated = {
     ...current,
-    status: newStatus,
-    retryCount: 0,
-    dunningNotice: null,
     paymentMethod: updatedMethod
   };
-
   saveSubscription(userId, updated);
   return updated;
 }
 
 /**
- * Toggle auto-renew cancellation
+ * Toggles auto-renewal
  */
 export function setAutoRenew(userId, cancelAtPeriodEnd) {
   const current = getSubscription(userId);
@@ -176,105 +154,8 @@ export function setAutoRenew(userId, cancelAtPeriodEnd) {
 
   const updated = {
     ...current,
-    cancelAtPeriodEnd
+    cancelAtPeriodEnd: Boolean(cancelAtPeriodEnd)
   };
   saveSubscription(userId, updated);
   return updated;
-}
-
-/**
- * Simulates a recurring monthly billing cycle run
- * @param {'SUCCESS' | 'FAIL'} outcome
- */
-export function simulateMonthlyBillingRun(userId, userEmail, outcome = 'SUCCESS') {
-  const current = getSubscription(userId, userEmail, true);
-  if (!current) return null;
-
-  const now = new Date();
-
-  if (outcome === 'SUCCESS') {
-    const nextDate = new Date(now);
-    nextDate.setDate(now.getDate() + 30);
-
-    const successInvoice = {
-      id: `inv_${Date.now().toString().slice(-6)}`,
-      date: now.toISOString(),
-      amount: '$3.00',
-      currency: 'USD',
-      status: 'PAID',
-      description: 'ReelQuest Pro Monthly Renewal ($3.00/mo)',
-      paymentMethod: `${current.paymentMethod?.brand || 'Visa'} •••• ${current.paymentMethod?.last4 || '4242'}`
-    };
-
-    const updated = {
-      ...current,
-      status: 'ACTIVE',
-      currentPeriodStart: now.toISOString(),
-      currentPeriodEnd: nextDate.toISOString(),
-      retryCount: 0,
-      dunningNotice: null,
-      invoices: [successInvoice, ...(current.invoices || [])]
-    };
-    saveSubscription(userId, updated);
-    return { subscription: updated, isPro: true, message: 'Monthly renewal of $3.00 succeeded!' };
-  }
-
-  // Outcome === 'FAIL'
-  const newRetryCount = (current.retryCount || 0) + 1;
-  const failedInvoice = {
-    id: `inv_fail_${Date.now().toString().slice(-6)}`,
-    date: now.toISOString(),
-    amount: '$3.00',
-    currency: 'USD',
-    status: 'FAILED',
-    description: `ReelQuest Pro Monthly ($3.00) - Attempt #${newRetryCount} Declined`,
-    paymentMethod: `${current.paymentMethod?.brand || 'Visa'} •••• ${current.paymentMethod?.last4 || '4242'}`
-  };
-
-  if (newRetryCount < 3) {
-    const warningMessage = `Monthly charge of $3.00 failed (Attempt ${newRetryCount}/3). A warning notice has been sent to ${userEmail || 'your email'}. Next retry scheduled in 3 days. Please update your payment method.`;
-    const updated = {
-      ...current,
-      status: 'PAST_DUE',
-      retryCount: newRetryCount,
-      dunningNotice: {
-        attempt: newRetryCount,
-        maxAttempts: 3,
-        emailSentTo: userEmail || 'user@reelquest.io',
-        sentAt: now.toISOString(),
-        message: warningMessage
-      },
-      invoices: [failedInvoice, ...(current.invoices || [])]
-    };
-    saveSubscription(userId, updated);
-    return {
-      subscription: updated,
-      isPro: true, // Grace period: still active until 3rd failure
-      message: warningMessage,
-      warning: true
-    };
-  }
-
-  // 3rd attempt failed -> Subscription Suspended & Pro revoked
-  const suspensionMessage = `Subscription suspended after 3 failed payment attempts. An account notification was sent to ${userEmail || 'your email'}. PRO VIP perks have been deactivated.`;
-  const updated = {
-    ...current,
-    status: 'SUSPENDED',
-    retryCount: 3,
-    dunningNotice: {
-      attempt: 3,
-      maxAttempts: 3,
-      emailSentTo: userEmail || 'user@reelquest.io',
-      sentAt: now.toISOString(),
-      message: suspensionMessage
-    },
-    invoices: [failedInvoice, ...(current.invoices || [])]
-  };
-  saveSubscription(userId, updated);
-  return {
-    subscription: updated,
-    isPro: false,
-    message: suspensionMessage,
-    suspended: true
-  };
 }

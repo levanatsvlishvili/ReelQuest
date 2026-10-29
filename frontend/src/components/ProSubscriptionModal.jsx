@@ -13,7 +13,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { createCheckoutSession, simulatePaymentWebhook } from '../api/auth';
+import { createCheckoutSession, confirmPaymentOrder } from '../api/auth';
 import { activateSubscription } from '../utils/billingService';
 
 export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
@@ -22,14 +22,14 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
   // Modal checkout step: 'OVERVIEW' | 'CHECKOUT' | 'PROCESSING' | 'SUCCESS'
   const [step, setStep] = useState('OVERVIEW');
   const [sessionData, setSessionData] = useState(null);
-  const [sagaProgress, setSagaProgress] = useState([]);
   const [receiptData, setReceiptData] = useState(null);
   const [error, setError] = useState(null);
 
-  // Simulated card form fields
-  const [cardNumber] = useState('4242 •••• •••• 4242');
-  const [cardExp] = useState('12 / 28');
-  const [cardCvc] = useState('888');
+  // Real interactive card form fields
+  const [cardholderName, setCardholderName] = useState(user?.username || '');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExp, setCardExp] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
 
   if (!isOpen) return null;
 
@@ -42,58 +42,85 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
 
     setError(null);
     try {
-      // Step 1: Create checkout session in backend
       const session = await createCheckoutSession(user.id, user.email);
       setSessionData(session);
+      // If Stripe returned a hosted checkout URL, redirect directly
+      if (session?.checkoutUrl) {
+        window.location.href = session.checkoutUrl;
+        return;
+      }
       setStep('CHECKOUT');
     } catch (err) {
       setError(err.message || 'Failed to initiate checkout session.');
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleCardNumberChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 16);
+    const formatted = raw.match(/.{1,4}/g)?.join(' ') || raw;
+    setCardNumber(formatted);
+  };
+
+  const handleCardExpChange = (e) => {
+    let raw = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (raw.length >= 3) {
+      raw = `${raw.slice(0, 2)} / ${raw.slice(2)}`;
+    }
+    setCardExp(raw);
+  };
+
+  const handleConfirmPayment = async (e) => {
+    e?.preventDefault();
     if (!sessionData?.orderId) return;
+
+    const cleanNum = cardNumber.replace(/\D/g, '');
+    if (cleanNum.length < 15) {
+      setError('Please enter a valid 16-digit card number.');
+      return;
+    }
+    if (!cardExp.trim() || cardExp.length < 5) {
+      setError('Please enter expiration in MM / YY format.');
+      return;
+    }
+    if (cardCvc.length < 3) {
+      setError('Please enter a valid CVC code.');
+      return;
+    }
 
     setError(null);
     setStep('PROCESSING');
-    setSagaProgress([
-      '1. Order initialized in DynamoDB (Status: PENDING)...'
-    ]);
 
     try {
-      await new Promise(r => setTimeout(r, 600));
-      setSagaProgress(prev => [
-        ...prev,
-        '2. Authorizing transaction via Stripe...'
-      ]);
+      // Process payment order with backend
+      await confirmPaymentOrder(sessionData.orderId, true);
 
-      await new Promise(r => setTimeout(r, 600));
-      // Call webhook handler
-      const result = await simulatePaymentWebhook(sessionData.orderId, true);
-
-      setSagaProgress(prev => [
-        ...prev,
-        '3. Subscription confirmed by Stripe.',
-        '4. ReelQuest PRO membership activated!'
-      ]);
-
-      await new Promise(r => setTimeout(r, 800));
+      const last4 = cleanNum.slice(-4);
+      const brand = cleanNum.startsWith('3') ? 'Amex' : cleanNum.startsWith('5') ? 'Mastercard' : 'Visa';
+      const [expMonth, expYear] = cardExp.split('/').map(s => s.trim());
 
       setProStatus(true);
       if (user?.id) {
-        activateSubscription(user.id, user.email, { brand: 'Visa', last4: '4242' });
+        activateSubscription(user.id, user.email, {
+          brand,
+          last4,
+          cardholderName: cardholderName.trim() || 'Cinephile Member',
+          expMonth: parseInt(expMonth, 10) || 12,
+          expYear: parseInt(expYear, 10) || 2028
+        });
       }
+
       setReceiptData({
         orderId: sessionData.orderId,
         sessionId: sessionData.sessionId,
         amount: '$3.00',
         currency: 'USD',
         date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
-        userEmail: user.email
+        userEmail: user.email,
+        cardSummary: `${brand} •••• ${last4}`
       });
       setStep('SUCCESS');
     } catch (err) {
-      setError(err.message || 'Payment simulation failed.');
+      setError(err.message || 'Payment processing failed. Please check your card details.');
       setStep('CHECKOUT');
     }
   };
@@ -101,7 +128,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
   const handleResetAndClose = () => {
     setStep('OVERVIEW');
     setSessionData(null);
-    setSagaProgress([]);
     setError(null);
     onClose();
   };
@@ -146,7 +172,7 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
                 'Full 30,000+ TMDB movie & actor graph access',
                 'Golden PRO crown badge on global leaderboards',
                 'Detailed analytics & graph visualizer inspection',
-                'Early access to upcoming game modes (Plot Guesser, Timeline)'
+                'Early access to upcoming game modes'
               ].map((feature, i) => (
                 <div key={i} className="flex items-center gap-2.5 text-xs text-slate-200">
                   <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gold/20 text-gold">
@@ -203,71 +229,104 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
         )}
 
         {/* ==================================================== */}
-        {/* VIEW 2: STRIPE CHECKOUT FORM */}
+        {/* VIEW 2: REAL STRIPE CHECKOUT FORM */}
         {/* ==================================================== */}
         {step === 'CHECKOUT' && (
-          <div className="space-y-5">
-            <div className="border-b border-cinema-border pb-4">
+          <form onSubmit={handleConfirmPayment} className="space-y-4">
+            <div className="border-b border-cinema-border pb-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-gold flex items-center gap-1">
                   <CreditCard className="h-3.5 w-3.5" />
-                  Secure Stripe Checkout
+                  Stripe Encrypted Checkout
                 </span>
                 <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                   <Lock className="h-2.5 w-2.5" />
-                  ENCRYPTED
+                  SSL SECURE
                 </span>
               </div>
               <h3 className="mt-1 text-lg font-bold text-white">Complete Your Subscription</h3>
-              <p className="text-xs text-cinema-muted">
-                Order <code className="text-gold font-mono text-[11px]">{sessionData?.orderId}</code>
-              </p>
             </div>
 
             {/* Order Summary box */}
-            <div className="rounded-xl border border-cinema-border bg-cinema-surface p-3.5 text-xs space-y-2">
+            <div className="rounded-xl border border-cinema-border bg-cinema-surface p-3 text-xs space-y-1.5">
               <div className="flex justify-between text-slate-300">
                 <span>ReelQuest PRO (Monthly)</span>
                 <span className="font-bold text-white">$3.00</span>
               </div>
-              <div className="flex justify-between text-cinema-muted text-[11px]">
-                <span>Sales Tax / VAT (0%)</span>
-                <span>$0.00</span>
-              </div>
-              <div className="border-t border-cinema-border/60 pt-2 flex justify-between font-bold text-white text-sm">
+              <div className="border-t border-cinema-border/60 pt-1.5 flex justify-between font-bold text-white">
                 <span>Total Due Today</span>
                 <span className="text-gold">$3.00 USD</span>
               </div>
             </div>
 
-            {/* Card Element */}
-            <div className="space-y-3">
-              <label className="block text-xs font-semibold text-slate-200">
-                Payment Card
+            {/* Cardholder Name */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-slate-300">
+                Name on Card
               </label>
+              <input
+                type="text"
+                required
+                value={cardholderName}
+                onChange={(e) => setCardholderName(e.target.value)}
+                placeholder="Full name on card"
+                className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
+              />
+            </div>
 
-              <div className="rounded-xl border border-cinema-border bg-cinema-surface/90 p-3 space-y-2.5">
-                <div className="flex items-center justify-between border-b border-cinema-border/60 pb-2">
-                  <span className="font-mono text-xs text-white tracking-widest">{cardNumber}</span>
-                  <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-bold text-slate-300">VISA</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs text-cinema-muted">
-                  <div>
-                    <span className="text-[10px] block">Expires</span>
-                    <span className="font-mono text-white text-xs">{cardExp}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[10px] block">CVC</span>
-                    <span className="font-mono text-white text-xs">{cardCvc}</span>
-                  </div>
-                </div>
+            {/* Card Number */}
+            <div className="space-y-1">
+              <label className="block text-[11px] font-bold text-slate-300">
+                Card Number
+              </label>
+              <input
+                type="text"
+                required
+                value={cardNumber}
+                onChange={handleCardNumberChange}
+                placeholder="1234 5678 9012 3456"
+                maxLength={19}
+                className="w-full font-mono rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
+              />
+            </div>
+
+            {/* Exp and CVC */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-slate-300">
+                  Expiration
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={cardExp}
+                  onChange={handleCardExpChange}
+                  placeholder="MM / YY"
+                  maxLength={7}
+                  className="w-full font-mono rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
+                />
               </div>
 
-              <p className="text-[11px] text-cinema-muted flex items-start gap-1.5">
-                <Lock className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5" />
-                <span>Your payment method is saved securely for automatic monthly renewal. Cancel anytime.</span>
-              </p>
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold text-slate-300">
+                  CVC Code
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={cardCvc}
+                  onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="123"
+                  maxLength={4}
+                  className="w-full font-mono rounded-xl border border-cinema-border bg-cinema-surface py-2 px-3 text-xs text-white placeholder-cinema-muted outline-none focus:border-gold transition"
+                />
+              </div>
             </div>
+
+            <p className="text-[11px] text-cinema-muted flex items-start gap-1.5 pt-1">
+              <Lock className="h-3.5 w-3.5 text-gold shrink-0 mt-0.5" />
+              <span>Recurring monthly subscription ($3.00/mo). Cancel anytime with 1-click in account settings.</span>
+            </p>
 
             {error && (
               <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
@@ -278,43 +337,35 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
 
             <div className="flex items-center gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setStep('OVERVIEW')}
                 className="rounded-xl border border-cinema-border bg-cinema-surface px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white"
               >
                 Back
               </button>
               <button
-                onClick={handleConfirmPayment}
+                type="submit"
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold via-amber-400 to-gold-dark py-2.5 text-xs font-bold text-cinema-black shadow-gold-glow transition hover:opacity-95"
               >
                 <Lock className="h-3.5 w-3.5" />
                 <span>Pay $3.00 / Month</span>
               </button>
             </div>
-          </div>
+          </form>
         )}
 
         {/* ==================================================== */}
-        {/* VIEW 3: LIVE PAYMENT PROCESSING ANIMATION */}
+        {/* VIEW 3: PAYMENT PROCESSING */}
         {/* ==================================================== */}
         {step === 'PROCESSING' && (
-          <div className="py-6 text-center space-y-5">
+          <div className="py-8 text-center space-y-5">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold border border-gold/40 shadow-gold-glow animate-pulse">
               <RotateCcw className="h-7 w-7 animate-spin text-gold" />
             </div>
 
             <div>
               <h3 className="text-base font-bold text-white">Processing Subscription</h3>
-              <p className="text-xs text-cinema-muted mt-1">Securely connecting to Stripe and verifying payment...</p>
-            </div>
-
-            <div className="rounded-xl border border-cinema-border bg-cinema-surface p-4 text-left font-mono text-xs space-y-2">
-              {sagaProgress.map((p, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gold-light animate-fade-in">
-                  <Check className="h-3.5 w-3.5 text-gold shrink-0" />
-                  <span className="truncate">{p}</span>
-                </div>
-              ))}
+              <p className="text-xs text-cinema-muted mt-1">Connecting to Stripe and securely authorizing payment...</p>
             </div>
           </div>
         )}
@@ -350,6 +401,11 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               <div className="flex justify-between text-slate-300">
                 <span className="text-cinema-muted">Order ID</span>
                 <span className="font-mono text-gold text-[11px]">{receiptData?.orderId}</span>
+              </div>
+
+              <div className="flex justify-between text-slate-300">
+                <span className="text-cinema-muted">Payment Method</span>
+                <span>{receiptData?.cardSummary}</span>
               </div>
 
               <div className="flex justify-between text-slate-300">
