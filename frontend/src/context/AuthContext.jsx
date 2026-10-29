@@ -20,7 +20,15 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const stored = getStoredAuth();
     if (stored?.user) {
-      setUser(stored.user);
+      let fullUser = stored.user;
+      try {
+        const metaKey = `reelquest_user_meta_${stored.user.id}`;
+        const meta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+        fullUser = { ...stored.user, ...meta };
+      } catch {
+        fullUser = stored.user;
+      }
+      setUser(fullUser);
       setStats(getUserStats(stored.user.id));
 
       fetchUserProfile(stored.user.id)
@@ -59,7 +67,22 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const loggedUser = await signIn(email, password);
-    setUser(loggedUser);
+    let fullUser = loggedUser;
+    try {
+      const confirmedKey = `reelquest_confirmed_meta_${email.toLowerCase()}`;
+      const confirmedMeta = JSON.parse(localStorage.getItem(confirmedKey) || '{}');
+      const metaKey = `reelquest_user_meta_${loggedUser.id}`;
+      const existingMeta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+      const mergedMeta = { ...existingMeta, ...confirmedMeta };
+      if (Object.keys(mergedMeta).length > 0) {
+        localStorage.setItem(metaKey, JSON.stringify(mergedMeta));
+      }
+      localStorage.removeItem(confirmedKey);
+      fullUser = { ...loggedUser, ...mergedMeta };
+    } catch {
+      fullUser = loggedUser;
+    }
+    setUser(fullUser);
     const initialStats = getUserStats(loggedUser.id);
     setStats(initialStats);
 
@@ -85,12 +108,31 @@ export function AuthProvider({ children }) {
     return loggedUser;
   };
 
-  const register = async (email, password, username) => {
-    return await signUp(email, password, username);
+  const register = async (email, password, username, meta = {}) => {
+    const res = await signUp(email, password, username);
+    try {
+      if (meta && Object.keys(meta).length > 0) {
+        localStorage.setItem(`reelquest_pending_meta_${email.toLowerCase()}`, JSON.stringify(meta));
+      }
+    } catch (e) {
+      console.error('Failed to stash pending meta:', e);
+    }
+    return res;
   };
 
   const confirm = async (email, code) => {
-    return await confirmSignUp(email, code);
+    const res = await confirmSignUp(email, code);
+    try {
+      const pendingKey = `reelquest_pending_meta_${email.toLowerCase()}`;
+      const pendingMeta = JSON.parse(localStorage.getItem(pendingKey) || '{}');
+      if (pendingMeta && Object.keys(pendingMeta).length > 0) {
+        localStorage.setItem(`reelquest_confirmed_meta_${email.toLowerCase()}`, JSON.stringify(pendingMeta));
+        localStorage.removeItem(pendingKey);
+      }
+    } catch (e) {
+      console.error('Failed to move confirmed meta:', e);
+    }
+    return res;
   };
 
   const setProStatus = (isPro) => {
@@ -101,6 +143,26 @@ export function AuthProvider({ children }) {
       if (authData) {
         authData.user = updated;
         localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+      }
+      return updated;
+    });
+  };
+
+  const updateUserProfile = (updates) => {
+    setUser(prev => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...updates };
+      const authData = getStoredAuth();
+      if (authData) {
+        authData.user = updated;
+        localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+      }
+      try {
+        const metaKey = `reelquest_user_meta_${prev.id}`;
+        const existingMeta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+        localStorage.setItem(metaKey, JSON.stringify({ ...existingMeta, ...updates }));
+      } catch (err) {
+        console.error('Failed to persist user profile metadata:', err);
       }
       return updated;
     });
@@ -130,7 +192,8 @@ export function AuthProvider({ children }) {
         confirm,
         logout,
         recordGame,
-        setProStatus
+        setProStatus,
+        updateUserProfile
       }}
     >
       {children}

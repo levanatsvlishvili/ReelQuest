@@ -24,7 +24,9 @@ import {
   Flag,
   Zap,
   Radio,
-  User
+  User,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import {
   createDuel,
@@ -43,6 +45,18 @@ import { saveDetailedMatch } from '../api/matchHistory';
 import { useAuth } from '../context/AuthContext';
 import { VisualGraph } from './VisualGraph';
 import { ChainBuilder } from './ChainBuilder';
+import {
+  playClick,
+  playNodeConnect,
+  playCountdownTick,
+  playOpponentMove,
+  playEmote,
+  playVictory,
+  playDefeat,
+  isSoundMuted,
+  toggleSound,
+  subscribeSoundMuted
+} from '../utils/soundEffects';
 
 const EMOTE_OPTIONS = ['🔥', '🤔', '⚡', '🎬', '👏'];
 
@@ -247,6 +261,22 @@ export function DuelGameView({ onBackToMain }) {
   const [optimalPath, setOptimalPath] = useState([]);
   const [optimalLoading, setOptimalLoading] = useState(false);
 
+  // Sound effects & Opponent live telemetry triggers
+  const [muted, setMuted] = useState(isSoundMuted());
+  const [opponentFlash, setOpponentFlash] = useState(false);
+  const [rematchAlert, setRematchAlert] = useState(null);
+  const prevOpponentMovesRef = useRef(null);
+  const prevOpponentEmoteRef = useRef(null);
+
+  useEffect(() => {
+    return subscribeSoundMuted((newMuted) => setMuted(newMuted));
+  }, []);
+
+  const handleToggleSound = () => {
+    const next = toggleSound();
+    setMuted(next);
+  };
+
   const timerRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -295,6 +325,11 @@ export function DuelGameView({ onBackToMain }) {
     setMoves(0);
     setTimerSeconds(0);
     setAvailableCast([]);
+    setActiveEmote(null);
+    setOpponentFlash(false);
+    setError('');
+    prevOpponentMovesRef.current = null;
+    prevOpponentEmoteRef.current = null;
     setMoviesLoading(true);
     fetchActorMovies(duelData.startActor.id)
       .then((movies) => {
@@ -346,6 +381,7 @@ export function DuelGameView({ onBackToMain }) {
       setPhase('PLAYING');
       return;
     }
+    playCountdownTick(countdownLeft === 1);
     const t = setTimeout(() => {
       setCountdownLeft((prev) => prev - 1);
     }, 1000);
@@ -386,7 +422,24 @@ export function DuelGameView({ onBackToMain }) {
           triggerSynchronizedCountdown(updated, role);
         }
 
-        // 2. If in RESULTS, keep match history updated with final outcome once opponent finishes
+        // 2. If in PLAYING, monitor opponent live hops and reactions
+        if (phase === 'PLAYING') {
+          const oppMoves = role === 'HOST' ? updated.guestLiveMoves : updated.hostLiveMoves;
+          if (typeof oppMoves === 'number' && prevOpponentMovesRef.current !== null && oppMoves > prevOpponentMovesRef.current) {
+            playOpponentMove();
+            setOpponentFlash(true);
+            setTimeout(() => setOpponentFlash(false), 1400);
+          }
+          prevOpponentMovesRef.current = oppMoves;
+
+          const oppEmote = role === 'HOST' ? updated.guestEmote : updated.hostEmote;
+          if (oppEmote && oppEmote !== prevOpponentEmoteRef.current) {
+            playEmote();
+          }
+          prevOpponentEmoteRef.current = oppEmote;
+        }
+
+        // 3. If in RESULTS, keep match history updated with final outcome once opponent finishes
         if (phase === 'RESULTS' && updated) {
           const comp = computeDuelWinner(updated);
           if (comp.isCompleted) {
@@ -419,16 +472,22 @@ export function DuelGameView({ onBackToMain }) {
           }
         }
 
-        // 3. If in RESULTS and either player clicked Instant Rematch (`nextDuelId` created) -> auto-join the rematch!
+        // 4. If in RESULTS and either player clicked Instant Rematch (`nextDuelId` created) -> auto-join the rematch!
         if (phase === 'RESULTS' && updated.nextDuelId && updated.nextDuelId !== duel.duelId) {
+          setRematchAlert('Opponent requested an Instant Rematch! Launching...');
+          playNodeConnect();
           const nextDuel = await fetchDuel(updated.nextDuelId);
           if (nextDuel) {
-            setStoredRole(nextDuel.duelId, role);
-            setDuel(nextDuel);
-            const url = new URL(window.location.href);
-            url.searchParams.set('duel', nextDuel.duelId);
-            window.history.replaceState({}, '', url.toString());
-            triggerSynchronizedCountdown(nextDuel, role);
+            countdownTriggeredRef.current = null;
+            setTimeout(() => {
+              setStoredRole(nextDuel.duelId, role);
+              setDuel(nextDuel);
+              const url = new URL(window.location.href);
+              url.searchParams.set('duel', nextDuel.duelId);
+              window.history.replaceState({}, '', url.toString());
+              setRematchAlert(null);
+              triggerSynchronizedCountdown(nextDuel, role);
+            }, 1000);
           }
         }
       } catch (e) {
@@ -589,6 +648,7 @@ export function DuelGameView({ onBackToMain }) {
   };
 
   const handleSendEmote = (emoji) => {
+    playEmote();
     setActiveEmote(emoji);
     setTimeout(() => setActiveEmote(null), 2000);
     broadcastProgress(moves, currentActor?.name || '', `Sent ${emoji}`, emoji);
@@ -612,6 +672,7 @@ export function DuelGameView({ onBackToMain }) {
 
   // Gameplay interactions
   const handleSelectMovie = async (movie) => {
+    playClick();
     setSelectedMovie(movie);
     setCastLoading(true);
     broadcastProgress(moves, currentActor?.name, `Inspecting "${movie.title}"...`);
@@ -638,6 +699,7 @@ export function DuelGameView({ onBackToMain }) {
 
     // Check if target actor reached!
     if (String(actor.id) === String(duel?.targetActor?.id)) {
+      playVictory();
       if (timerRef.current) clearInterval(timerRef.current);
       const role = myRole || getStoredRole(duel.duelId) || 'HOST';
       const pathSummary = buildPathSummaryString(newChain);
@@ -682,6 +744,7 @@ export function DuelGameView({ onBackToMain }) {
     }
 
     // Broadcast hop to opponent in real-time
+    playNodeConnect();
     broadcastProgress(
       newMoves,
       actor.name,
@@ -701,6 +764,7 @@ export function DuelGameView({ onBackToMain }) {
 
   const handleUndo = async () => {
     if (chain.length <= 1) return;
+    playClick();
     const newChain = chain.slice(0, -1);
     const prevActor = newChain[newChain.length - 1].actor;
     const nextMoves = Math.max(0, moves - 1);
@@ -725,6 +789,7 @@ export function DuelGameView({ onBackToMain }) {
 
   const handleForfeit = async () => {
     if (!duel?.duelId) return;
+    playDefeat();
     if (timerRef.current) clearInterval(timerRef.current);
     const role = myRole || getStoredRole(duel.duelId) || 'HOST';
     try {
@@ -765,6 +830,7 @@ export function DuelGameView({ onBackToMain }) {
 
   const handleInstantRematch = async () => {
     if (!duel?.duelId) return;
+    playClick();
     setLoadingAction(true);
     try {
       const role = myRole || getStoredRole(duel.duelId) || 'HOST';
@@ -794,6 +860,7 @@ export function DuelGameView({ onBackToMain }) {
   };
 
   const handleCopyInviteLink = () => {
+    playClick();
     navigator.clipboard.writeText(getInviteUrl());
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
@@ -877,9 +944,21 @@ export function DuelGameView({ onBackToMain }) {
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">
+            <button
+              onClick={handleToggleSound}
+              className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-semibold text-slate-300 hover:border-gold/40 hover:text-gold transition"
+              title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+            >
+              {muted ? <VolumeX className="h-3.5 w-3.5 text-slate-400" /> : <Volume2 className="h-3.5 w-3.5 text-gold" />}
+              <span className="hidden sm:inline">{muted ? 'Muted' : 'SFX On'}</span>
+            </button>
+
             {phase !== 'MENU' && (
               <button
-                onClick={handleResetToMenu}
+                onClick={() => {
+                  playClick();
+                  handleResetToMenu();
+                }}
                 className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-semibold text-slate-300 hover:border-gold/40 hover:text-gold transition"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -887,7 +966,10 @@ export function DuelGameView({ onBackToMain }) {
               </button>
             )}
             <button
-              onClick={onBackToMain}
+              onClick={() => {
+                playClick();
+                onBackToMain();
+              }}
               className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-black/60 px-3 py-2 text-xs font-semibold text-cinema-muted hover:text-white transition"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
@@ -1347,8 +1429,9 @@ export function DuelGameView({ onBackToMain }) {
 
             {/* Giant Countdown Number */}
             <div className="py-4">
-              <div className="mx-auto flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-3xl border-2 border-gold bg-gold/15 text-5xl sm:text-6xl font-black text-gold shadow-gold-glow animate-pulse">
-                {countdownLeft > 0 ? countdownLeft : 'GO!'}
+              <div className="relative mx-auto flex h-28 w-28 sm:h-32 sm:w-32 items-center justify-center rounded-3xl border-2 border-gold bg-gold/15 text-5xl sm:text-6xl font-black text-gold shadow-gold-glow animate-pulse">
+                <span className="relative z-10">{countdownLeft > 0 ? countdownLeft : 'GO!'}</span>
+                <div className="absolute inset-0 rounded-3xl border border-gold/40 animate-ping opacity-30" />
               </div>
               <p className="mt-3 text-xs font-bold uppercase tracking-widest text-slate-300">
                 Get Ready to Connect
@@ -1356,6 +1439,18 @@ export function DuelGameView({ onBackToMain }) {
               <p className="mt-1 text-sm sm:text-base font-extrabold text-white">
                 {duel.startActor?.name} <span className="text-gold mx-1.5">→</span> {duel.targetActor?.name}
               </p>
+            </div>
+
+            {/* Otara Pre-Match Benchmark Briefing */}
+            <div className="inline-flex items-center gap-2.5 rounded-2xl border border-gold/40 bg-cinema-black/70 px-4 py-2 text-xs text-amber-200">
+              <img
+                src="/assets/otara/otara-avatar.png"
+                alt="Otara"
+                className="h-6 w-6 rounded-full border border-gold/60 bg-gold/20 p-0.5 object-contain"
+              />
+              <span>
+                Otara Benchmark: <strong className="text-gold">{duel.optimalMoves || 2} Hops</strong>. Race to the target in fewest hops!
+              </span>
             </div>
           </div>
         </div>
@@ -1400,11 +1495,18 @@ export function DuelGameView({ onBackToMain }) {
                 </div>
               </div>
 
-              {/* Center (2 cols): VS + Quick Emotes */}
+              {/* Center (2 cols): Otara Referee & Quick Emotes */}
               <div className="md:col-span-2 flex flex-col items-center justify-center gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gold">
-                  LIVE 1V1
-                </span>
+                <div className="flex items-center gap-1.5 rounded-full bg-cinema-black/80 border border-gold/40 px-2 py-0.5 shadow-sm">
+                  <img
+                    src="/assets/otara/otara-avatar.png"
+                    alt="Otara"
+                    className="h-4 w-4 rounded-full object-contain"
+                  />
+                  <span className="text-[9px] font-black uppercase text-gold">
+                    Par {duel.optimalMoves || 2}
+                  </span>
+                </div>
                 <div className="flex items-center gap-1">
                   {EMOTE_OPTIONS.map((emoji) => (
                     <button
@@ -1421,13 +1523,22 @@ export function DuelGameView({ onBackToMain }) {
               </div>
 
               {/* Right (5 cols): OPPONENT'S LIVE TELEMETRY */}
-              <div className="md:col-span-5 flex items-center justify-between rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3">
+              <div className={`md:col-span-5 flex items-center justify-between rounded-xl border px-4 py-3 transition-all duration-300 ${
+                opponentFlash
+                  ? 'border-amber-400 bg-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.35)] scale-[1.01]'
+                  : 'border-indigo-500/40 bg-indigo-500/10'
+              }`}>
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full bg-indigo-400 animate-pulse" />
+                    <span className={`h-2 w-2 rounded-full ${opponentFlash ? 'bg-amber-400 animate-ping' : 'bg-indigo-400 animate-pulse'}`} />
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300 truncate">
                       OPPONENT ({opponentDisplayName})
                     </span>
+                    {opponentFlash && (
+                      <span className="animate-bounce inline-flex items-center rounded bg-amber-400 text-cinema-black px-1.5 py-0.2 text-[9px] font-black uppercase">
+                        +1 HOP!
+                      </span>
+                    )}
                     {opponentEmote && (
                       <span className="text-base animate-bounce ml-1" title="Opponent reaction">
                         {opponentEmote}
@@ -1456,7 +1567,7 @@ export function DuelGameView({ onBackToMain }) {
 
                 <div className="text-right shrink-0 pl-2">
                   <span className="text-[9px] uppercase text-cinema-muted block">Opp Hops</span>
-                  <span className="text-base font-black text-indigo-300">
+                  <span className={`text-base font-black ${opponentFlash ? 'text-amber-400 scale-110' : 'text-indigo-300'} transition-transform`}>
                     {opponentFinishedMoves !== null && opponentFinishedMoves !== undefined
                       ? opponentForfeited
                         ? '🏳️'
@@ -1464,6 +1575,36 @@ export function DuelGameView({ onBackToMain }) {
                       : opponentLiveMoves}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Real-time Comparative Race Indicator */}
+            <div className="rounded-xl border border-cinema-border/60 bg-cinema-black/40 px-3.5 py-2">
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider mb-1">
+                <span className="text-emerald-400 flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  You: {moves} {moves === 1 ? 'Hop' : 'Hops'}
+                </span>
+                <span className="text-gold flex items-center gap-1">
+                  <Sparkles className="h-2.5 w-2.5" />
+                  Otara Par: {duel.optimalMoves || 2}
+                </span>
+                <span className="text-indigo-300 flex items-center gap-1">
+                  <User className="h-3 w-3" />
+                  {opponentDisplayName}: {opponentLiveMoves} {opponentLiveMoves === 1 ? 'Hop' : 'Hops'}
+                </span>
+              </div>
+              <div className="relative h-2 w-full overflow-hidden rounded-full bg-cinema-surface/80 border border-cinema-border/40">
+                <div
+                  className="absolute top-0 bottom-0 left-0 bg-emerald-400 transition-all duration-500 rounded-full"
+                  style={{ width: `${Math.min(50, (moves / Math.max(1, (duel.optimalMoves || 2) * 2)) * 50)}%` }}
+                />
+                <div
+                  className="absolute top-0 bottom-0 right-0 bg-indigo-400 transition-all duration-500 rounded-full"
+                  style={{ width: `${Math.min(50, (opponentLiveMoves / Math.max(1, (duel.optimalMoves || 2) * 2)) * 50)}%` }}
+                />
+                {/* Center Otara Par Line */}
+                <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gold shadow-[0_0_8px_rgba(230,175,46,0.9)]" />
               </div>
             </div>
 
@@ -1531,6 +1672,15 @@ export function DuelGameView({ onBackToMain }) {
         const duelResult = computeDuelWinner(duel);
         return (
           <div className="rounded-2xl border border-gold/40 bg-cinema-card p-6 sm:p-8 shadow-2xl space-y-6 animate-fade-in">
+            {rematchAlert && (
+              <div className="rounded-2xl border-2 border-gold bg-gradient-to-r from-gold/25 via-amber-500/20 to-gold/25 p-4 text-center shadow-gold-glow animate-pulse">
+                <span className="text-sm font-extrabold text-gold flex items-center justify-center gap-2">
+                  <RefreshCw className="h-4 w-4 animate-spin text-gold" />
+                  {rematchAlert}
+                </span>
+              </div>
+            )}
+
             <div className="text-center space-y-2">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 border border-gold/40 text-gold shadow-gold-glow">
                 <Trophy className="h-7 w-7" />

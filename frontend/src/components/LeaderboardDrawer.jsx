@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Trophy, Crown, X, Clock, Footprints, RefreshCw, Calendar, Flame, Medal } from 'lucide-react';
 import { fetchLeaderboard } from '../api/client';
 
-export function LeaderboardDrawer({ isOpen, onClose, challengeId }) {
+export function LeaderboardDrawer({ isOpen, onClose, challengeId, onViewUserProfile }) {
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' | 'all-time'
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -104,7 +104,14 @@ export function LeaderboardDrawer({ isOpen, onClose, challengeId }) {
             return (
               <div
                 key={index}
-                className="flex items-center justify-between rounded-xl border border-cinema-border bg-cinema-surface p-3 transition hover:border-gold/40"
+                onClick={() => {
+                  if (onViewUserProfile) {
+                    onViewUserProfile({ id: entry.userId, username: entry.username, isPro: entry.isPro, score: entry.score, moves: entry.moves, streak: entry.streak });
+                    onClose();
+                  }
+                }}
+                className={`flex items-center justify-between rounded-xl border border-cinema-border bg-cinema-surface p-3 transition hover:border-gold/50 ${onViewUserProfile ? 'cursor-pointer hover:bg-cinema-surface/80' : ''}`}
+                title={`Click to view ${entry.username}'s profile`}
               >
                 <div className="flex items-center gap-3">
                   <span

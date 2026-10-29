@@ -9,7 +9,7 @@ import { LeaderboardDrawer } from './components/LeaderboardDrawer';
 import { HowToPlayModal } from './components/HowToPlayModal';
 import { ProSubscriptionModal } from './components/ProSubscriptionModal';
 import { AuthModal } from './components/AuthModal';
-import { UserProfileModal } from './components/UserProfileModal';
+import { UserProfileView } from './components/UserProfileView';
 import { GameModeSelector } from './components/GameModeSelector';
 import { UpcomingGamePreview } from './components/UpcomingGamePreview';
 import { DailyDateNavigator } from './components/DailyDateNavigator';
@@ -19,6 +19,9 @@ import { LeaderboardView } from './components/LeaderboardView';
 import { OtaraChallengeCard } from './components/OtaraChallengeCard';
 import { DuelGameView } from './components/DuelGameView';
 import { OtaraHintModal } from './components/OtaraHintModal';
+import { SpotleGameView } from './components/SpotleGameView';
+import { FrameSleuthGameView } from './components/FrameSleuthGameView';
+import { BoxOfficeClashView } from './components/BoxOfficeClashView';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -58,7 +61,8 @@ export default function App() {
     openVictoryModal
   } = useGameSession();
 
-  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard'
+  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard' | 'profile'
+  const [profileUser, setProfileUser] = useState(null); // null = own profile
   const [activeMode, setActiveMode] = useState('six-degrees');
   const [isDuelMode, setIsDuelMode] = useState(false);
 
@@ -81,32 +85,60 @@ export default function App() {
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
   const [isProModalOpen, setIsProModalOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
-        onOpenLeaderboard={() => setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard')}
+        onOpenLeaderboard={() => {
+          setProfileUser(null);
+          setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard');
+        }}
         isLeaderboardActive={currentView === 'leaderboard'}
         onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenPro={() => setIsProModalOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
-        onOpenProfile={() => setIsProfileOpen(true)}
+        onOpenProfile={() => {
+          if (currentView === 'profile' && !profileUser) {
+            setCurrentView('game');
+          } else {
+            setProfileUser(null);
+            setCurrentView('profile');
+          }
+        }}
+        isProfileActive={currentView === 'profile' && !profileUser}
       />
 
       <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-        {currentView === 'leaderboard' ? (
+        {currentView === 'profile' ? (
+          <UserProfileView
+            targetUser={profileUser}
+            onBack={() => {
+              const fromLeaderboard = Boolean(profileUser);
+              setProfileUser(null);
+              setCurrentView(fromLeaderboard ? 'leaderboard' : 'game');
+            }}
+            onOpenPro={() => setIsProModalOpen(true)}
+          />
+        ) : currentView === 'leaderboard' ? (
           <LeaderboardView
             onBackToGame={() => setCurrentView('game')}
             activeChallenge={challenge}
             activeDate={activeDate}
             onSelectDate={(d) => loadDateChallenge(d)}
             onOpenAuth={() => setIsAuthOpen(true)}
-            onPlayChallenge={(d) => {
+            onPlayChallenge={(d, mode) => {
+              if (mode && ['six-degrees', 'spotle', 'frame-sleuth', 'box-office'].includes(mode)) {
+                setActiveMode(mode);
+                setIsDuelMode(false);
+              }
               loadDateChallenge(d);
               setCurrentView('game');
+            }}
+            onViewUserProfile={(target) => {
+              setProfileUser(target);
+              setCurrentView('profile');
             }}
           />
         ) : (
@@ -128,6 +160,21 @@ export default function App() {
                   setActiveMode('six-degrees');
                   setIsDuelMode(false);
                 }}
+              />
+            ) : activeMode === 'spotle' ? (
+              <SpotleGameView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
+              />
+            ) : activeMode === 'frame-sleuth' ? (
+              <FrameSleuthGameView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
+              />
+            ) : activeMode === 'box-office' ? (
+              <BoxOfficeClashView
+                onOpenPro={() => setIsProModalOpen(true)}
+                onOpenAuth={() => setIsAuthOpen(true)}
               />
             ) : activeMode !== 'six-degrees' ? (
               <UpcomingGamePreview
@@ -157,6 +204,7 @@ export default function App() {
                     onOpenArchive={() => setIsArchiveOpen(true)}
                     onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
                     onOpenDuel={() => setIsDuelMode(true)}
+                    onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
                   />
                 )}
 
@@ -261,15 +309,151 @@ export default function App() {
         )}
       </main>
 
-      <footer className="mt-auto border-t border-cinema-border/50 bg-cinema-surface/50 py-6 text-center text-xs text-cinema-muted">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <Film className="h-3.5 w-3.5 text-gold" />
-          <span className="font-semibold text-slate-300">ReelQuest</span>
-          <span>— The Hollywood Cinema Oracle • Beat Otara</span>
+      {/* Production-Grade Clean Cinema Footer */}
+      <footer className="mt-auto border-t border-cinema-border/70 bg-gradient-to-b from-cinema-card/90 via-cinema-surface to-cinema-black pt-10 pb-8 text-xs text-cinema-muted">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
+          {/* Main Columns Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Column 1: Brand & Creator */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/20 text-gold border border-gold/40 shadow-gold-glow">
+                  <Film className="h-5 w-5" />
+                </div>
+                <span className="text-lg font-black tracking-tight text-white">
+                  Reel<span className="text-gold">Quest</span>
+                </span>
+              </div>
+              <p className="text-xs text-cinema-muted leading-relaxed">
+                Daily cinema trivia and interactive movie games for film lovers.
+              </p>
+            </div>
+
+            {/* Column 2: Game Modes */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Games
+              </h4>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveMode('six-degrees');
+                      setIsDuelMode(false);
+                      setCurrentView('game');
+                    }}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Beat Otara
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveMode('spotle');
+                      setCurrentView('game');
+                    }}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Spotle
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveMode('frame-sleuth');
+                      setCurrentView('game');
+                    }}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Frame Sleuth
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveMode('box-office');
+                      setCurrentView('game');
+                    }}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Box Office Clash
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 3: Platform Features */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Features
+              </h4>
+              <ul className="space-y-2 text-xs">
+                <li>
+                  <button
+                    onClick={() => setIsHowToPlayOpen(true)}
+                    className="hover:text-gold transition text-left"
+                  >
+                    How to Play
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setCurrentView('leaderboard')}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Leaderboard & Rankings
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => setIsProModalOpen(true)}
+                    className="hover:text-gold transition text-left"
+                  >
+                    ReelQuest PRO ($3/mo)
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => {
+                      setActiveMode('six-degrees');
+                      setIsDuelMode(false);
+                      setCurrentView('game');
+                      setIsArchiveOpen(true);
+                    }}
+                    className="hover:text-gold transition text-left"
+                  >
+                    Daily Challenge Archive
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4: Cinema Data */}
+            <div className="space-y-3">
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                Cinema Data
+              </h4>
+              <p className="text-[11px] text-cinema-muted leading-relaxed">
+                Movie metadata, cast filmographies, and high-resolution stills provided by <strong className="text-slate-200">The Movie Database (TMDB)</strong>.
+              </p>
+              <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+                <span>Daily challenges refresh at 00:00 UTC</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-cinema-border/60 pt-5 text-[11px]">
+            <p className="text-cinema-muted text-center sm:text-left">
+              © 2026 ReelQuest. All rights reserved.
+            </p>
+            <p className="text-slate-300">
+              Created by <strong className="text-white">Levan Natsvlishvili</strong>
+            </p>
+          </div>
         </div>
-        <p className="text-[11px]">
-          The ultimate movie connection trivia game. Powered by TMDB.
-        </p>
       </footer>
 
       {/* Modals & Overlays */}
@@ -289,6 +473,10 @@ export default function App() {
         isOpen={isLeaderboardOpen}
         onClose={() => setIsLeaderboardOpen(false)}
         challengeId={challenge?.challengeId}
+        onViewUserProfile={(target) => {
+          setProfileUser(target);
+          setCurrentView('profile');
+        }}
       />
 
       <HowToPlayModal
@@ -305,12 +493,6 @@ export default function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-      />
-
-      <UserProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onOpenPro={() => setIsProModalOpen(true)}
       />
 
       <DailyArchiveModal

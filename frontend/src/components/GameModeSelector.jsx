@@ -1,4 +1,4 @@
-import { GitFork, HelpCircle, DollarSign, History, Sparkles, Flame } from 'lucide-react';
+import { GitFork, Sparkles, Flame, Film, Camera, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const GAME_MODES = [
@@ -21,34 +21,31 @@ export const GAME_MODES = [
     hasStreak: false // Custom Path Finder is a sandbox tool, not a game — no streak
   },
   {
-    id: 'plot-guesser',
-    title: 'Plot Guesser',
-    subtitle: 'Logline Mystery',
-    icon: HelpCircle,
-    status: 'COMING_SOON',
-    badge: 'COMING SOON',
-    hasStreak: true,
-    description: 'Guess iconic films from mysterious synopsis clues with minimal hints.'
+    id: 'spotle',
+    title: 'Spotle',
+    subtitle: 'Daily Movie Mystery',
+    icon: Film,
+    status: 'ACTIVE',
+    badge: 'NEW',
+    hasStreak: true
+  },
+  {
+    id: 'frame-sleuth',
+    title: 'Frame Sleuth',
+    subtitle: '6-Frame Mystery',
+    icon: Camera,
+    status: 'ACTIVE',
+    badge: 'NEW',
+    hasStreak: true
   },
   {
     id: 'box-office',
-    title: 'Box Office Clash',
-    subtitle: 'Gross Showdown',
-    icon: DollarSign,
-    status: 'COMING_SOON',
-    badge: 'COMING SOON',
-    hasStreak: true,
-    description: 'Higher or Lower: Pit blockbusters against each other based on worldwide box office earnings.'
-  },
-  {
-    id: 'movie-timeline',
-    title: 'Movie Timeline',
-    subtitle: 'Chronology',
-    icon: History,
-    status: 'COMING_SOON',
-    badge: 'COMING SOON',
-    hasStreak: true,
-    description: 'Place cinematic masterpieces in their exact historical release order without breaking the streak.'
+    title: 'Box Office',
+    subtitle: 'Higher or Lower',
+    icon: TrendingUp,
+    status: 'ACTIVE',
+    badge: 'NEW',
+    hasStreak: true
   }
 ];
 

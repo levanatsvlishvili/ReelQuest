@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { fetchOtaraHint, getTmdbImageUrl } from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { playClick, playHintWhisper, playNodeConnect } from '../utils/soundEffects';
 
 export function OtaraHintModal({
   isOpen,
@@ -202,7 +203,10 @@ export function OtaraHintModal({
             {/* Stage 2: Direct Solution Reveal */}
             {!isRevealed ? (
               <button
-                onClick={() => setIsRevealed(true)}
+                onClick={() => {
+                  playHintWhisper();
+                  setIsRevealed(true);
+                }}
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-cinema-card hover:bg-gold/15 hover:border-gold px-4 py-3 text-xs font-extrabold text-gold transition active:scale-98 shadow-sm"
               >
                 <Eye className="h-4 w-4" />

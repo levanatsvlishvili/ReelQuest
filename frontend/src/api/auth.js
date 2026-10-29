@@ -191,7 +191,7 @@ export async function createCheckoutSession(userId, email) {
   return await res.json();
 }
 
-export async function simulatePaymentWebhook(orderId, success = true) {
+export async function confirmPaymentOrder(orderId, success = true) {
   if (!API_BASE_URL) {
     throw new Error('API Gateway URL not configured');
   }
@@ -202,7 +202,7 @@ export async function simulatePaymentWebhook(orderId, success = true) {
   });
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));
-    throw new Error(errData.error || 'Failed to process payment webhook');
+    throw new Error(errData.error || 'Failed to process payment');
   }
   return await res.json();
 }
