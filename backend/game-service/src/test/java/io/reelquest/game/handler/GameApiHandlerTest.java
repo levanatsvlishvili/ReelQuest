@@ -90,6 +90,7 @@ class GameApiHandlerTest {
 
         dataProvider.addActor(new Actor("31", "Tom Hanks", 95.0, null));
         dataProvider.addActor(new Actor("6193", "Leonardo DiCaprio", 98.0, null));
+        dataProvider.addActor(new Actor("380", "Robert De Niro", 97.0, null));
         dataProvider.addActor(new Actor("nm0000158", "Tom Hanks", 95.0, null));
         dataProvider.addActor(new Actor("nm0000138", "Leonardo DiCaprio", 98.0, null));
         dataProvider.addMovie(new Movie("m_catch", "Catch Me If You Can", 2002, 8.1, null, 100));
@@ -97,6 +98,9 @@ class GameApiHandlerTest {
         dataProvider.addEdge("6193", "m_catch", "Frank", 2);
         dataProvider.addEdge("nm0000158", "m_catch", "Carl", 1);
         dataProvider.addEdge("nm0000138", "m_catch", "Frank", 2);
+        dataProvider.addMovie(new Movie("m_killers", "Killers of the Flower Moon", 2023, 8.0, null, 100));
+        dataProvider.addEdge("6193", "m_killers", "Ernest", 1);
+        dataProvider.addEdge("380", "m_killers", "William", 2);
 
         handler = new GameApiHandler(
                 dynamoDbClient,
@@ -121,6 +125,7 @@ class GameApiHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(200);
         assertThat(response.getBody()).contains("startActor");
         assertThat(response.getBody()).contains("targetActor");
+        assertThat(response.getBody()).contains("\"optimalDegrees\":2");
     }
 
     @Test

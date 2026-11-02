@@ -124,6 +124,10 @@ export function ChallengeScheduler() {
       setErrorMsg('Start Star and Target Star must be two different actors.');
       return;
     }
+    if (Number(optimalHops) < 2) {
+      setErrorMsg('Beat Otara daily challenges must have at least 2 hops (minimum 2 movies in between).');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -461,7 +465,7 @@ export function ChallengeScheduler() {
                   <span className="text-[11px] text-slate-400">Optimal Hops:</span>
                   <input
                     type="number"
-                    min="1"
+                    min="2"
                     max="6"
                     value={optimalHops}
                     onChange={(e) => setOptimalHops(e.target.value)}
@@ -479,7 +483,7 @@ export function ChallengeScheduler() {
                   type="text"
                   value={pathSummary}
                   onChange={(e) => setPathSummary(e.target.value)}
-                  placeholder="e.g. Tom Hanks ➔ Catch Me If You Can ➔ Leonardo DiCaprio"
+                  placeholder="e.g. Tom Hanks ➔ Catch Me If You Can ➔ Leonardo DiCaprio ➔ Killers of the Flower Moon ➔ Robert De Niro"
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-gold focus:outline-none"
                 />
               </div>
