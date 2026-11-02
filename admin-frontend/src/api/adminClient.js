@@ -2,7 +2,6 @@ import { getAdminToken, getStoredAdminAuth } from './auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com';
 
-// Clean up any legacy dummy / mock data stored in browser localStorage
 (function purgeLegacyDummyStorage() {
   try {
     localStorage.removeItem('reelquest_admin_users');
@@ -52,9 +51,6 @@ export async function searchActors(query) {
   return list.filter(a => a.name && a.name.toLowerCase().includes(q)).slice(0, 30);
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 1: REAL TELEMETRY & KPI METRICS
-// -----------------------------------------------------------------------------
 export async function fetchDashboardMetrics() {
   const today = new Date().toISOString().slice(0, 10);
   const startTime = performance.now();
@@ -126,9 +122,6 @@ export async function fetchDashboardMetrics() {
   };
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 2: DAILY CHALLENGE & HOLLYWOOD BFS GRAPH
-// -----------------------------------------------------------------------------
 export async function fetchTodayChallenge() {
   try {
     const res = await fetch(`${API_BASE_URL}/challenges/daily`);
@@ -224,9 +217,6 @@ export async function computeShortestPath(startId, targetId) {
   return await res.json();
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 3: REAL USER MANAGEMENT (COGNITO + DYNAMODB)
-// -----------------------------------------------------------------------------
 export async function fetchRealLeaderboard(scope = 'all-time') {
   try {
     const today = new Date().toISOString().slice(0, 10);
@@ -246,7 +236,6 @@ export async function fetchRealLeaderboard(scope = 'all-time') {
 export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
   const userMap = new Map();
 
-  // 1. Fetch live registered users directly from environment backend API
   try {
     const res = await fetch(`${API_BASE_URL}/admin/users`);
     if (res.ok) {
@@ -267,7 +256,6 @@ export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
     console.warn('Backend /admin/users fetch notice:', err);
   }
 
-  // 2. Merge leaderboard entries if any new players exist
   try {
     const [allTime, today] = await Promise.all([
       fetchRealLeaderboard('all-time'),
@@ -301,7 +289,6 @@ export async function fetchUsersList(searchQuery = '', filterTier = 'ALL') {
     console.warn('Leaderboard merge notice:', err);
   }
 
-  // 3. Merge currently logged-in admin if in an active session
   const storedAuth = getStoredAdminAuth();
   if (storedAuth?.user) {
     const adminId = storedAuth.user.id || storedAuth.user.email;
@@ -357,9 +344,6 @@ export async function resetUserStreak(userId, newStreak) {
   return { id: userId, streak: newStreak };
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 4: REAL GAME MATCH HISTORY & SESSIONS AUDIT
-// -----------------------------------------------------------------------------
 export async function fetchGameHistory({
   userId = 'ALL',
   gameMode = 'ALL',
@@ -386,7 +370,6 @@ export async function fetchGameHistory({
     console.warn('Backend /admin/games/history fetch notice:', err);
   }
 
-  // Enrich sessions with actor names and photos from TMDB popular actor catalog
   const enriched = sessions.map(item => {
     let sName = item.startActorName;
     let sImage = null;
@@ -461,9 +444,6 @@ export async function fetchGameHistory({
   };
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 5: REAL LEADERBOARD MODERATION & ANTI-CHEAT
-// -----------------------------------------------------------------------------
 export async function fetchFlaggedLeaderboard() {
   const allTime = await fetchRealLeaderboard('all-time');
   const today = await fetchRealLeaderboard('today');
@@ -505,9 +485,6 @@ export async function deleteFlaggedScore(id) {
   return true;
 }
 
-// -----------------------------------------------------------------------------
-// MODULE 6: REAL CINEMA GRAPH TELEMETRY
-// -----------------------------------------------------------------------------
 export async function fetchCinemaGraphStats() {
   return {
     totalEntities: '121,225',

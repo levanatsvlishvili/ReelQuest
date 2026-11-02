@@ -72,7 +72,6 @@ export function FrameSleuthArchiveModal({ isOpen, onClose, currentDate, onSelect
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-2xl rounded-3xl border border-violet-500/40 bg-cinema-card p-6 shadow-2xl space-y-5 text-white max-h-[90vh] flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-cinema-border/70 shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/40">
@@ -204,7 +203,6 @@ export function FrameSleuthArchiveModal({ isOpen, onClose, currentDate, onSelect
           })}
         </div>
 
-        {/* Footer */}
         <div className="pt-3 border-t border-cinema-border/60 flex items-center justify-between text-xs text-cinema-muted shrink-0">
           <span className="flex items-center gap-1.5 font-bold">
             <Sparkles className="h-3.5 w-3.5 text-violet-400" />

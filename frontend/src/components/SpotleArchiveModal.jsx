@@ -73,7 +73,6 @@ export function SpotleArchiveModal({ isOpen, onClose, currentDate, onSelectDate 
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
       <div className="relative flex max-h-[90vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black shadow-2xl">
         
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-cinema-border/80 px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 text-gold border border-gold/30 shadow-gold-glow">

@@ -98,7 +98,6 @@ export function SystemInfo() {
         </div>
       )}
 
-      {/* Grid of parameters */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {envVars.map((item) => (
           <div

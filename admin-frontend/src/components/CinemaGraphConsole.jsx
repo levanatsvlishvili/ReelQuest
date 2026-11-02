@@ -20,7 +20,6 @@ export function CinemaGraphConsole() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Real BFS Path Tester State
   const [startActorId, setStartActorId] = useState('6384'); // Keanu Reeves
   const [targetActorId, setTargetActorId] = useState('1892'); // Matt Damon
   const [testingPath, setTestingPath] = useState(false);
@@ -62,7 +61,6 @@ export function CinemaGraphConsole() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-white tracking-tight">
@@ -83,7 +81,6 @@ export function CinemaGraphConsole() {
         </button>
       </div>
 
-      {/* Real Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-5 space-y-2">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">

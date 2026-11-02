@@ -34,7 +34,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md animate-fade-in">
       <div className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-gold/40 bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black p-5 sm:p-7 shadow-2xl scrollbar-thin flex flex-col">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-xl p-2 text-cinema-muted transition hover:bg-cinema-border hover:text-white"
@@ -42,7 +41,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* Modal Header */}
         <div className="flex items-center gap-3 border-b border-cinema-border/70 pb-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gold/20 text-gold border border-gold/40 shadow-gold-glow">
             <Film className="h-6 w-6" />
@@ -62,7 +60,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
           </div>
         </div>
 
-        {/* Navigation Tabs */}
         <div className="mt-4 flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none border-b border-cinema-border/50">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -84,14 +81,9 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
           })}
         </div>
 
-        {/* Content Area */}
         <div className="my-5 space-y-4 text-xs">
-          {/* ========================================================= */}
-          {/* TAB 1: ABOUT & ALL GAMES OVERVIEW                         */}
-          {/* ========================================================= */}
           {activeTab === 'overview' && (
             <div className="space-y-4">
-              {/* About Banner */}
               <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4 leading-relaxed text-slate-200">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Sparkles className="h-4 w-4 text-gold" />
@@ -102,7 +94,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                 </p>
               </div>
 
-              {/* Game Cards Grid */}
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 pt-1">
                 Daily Game Modes
               </h4>
@@ -209,7 +200,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                 </div>
               </div>
 
-              {/* Daily Schedule Notice */}
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/40 p-3 flex items-center justify-between text-[11px] text-cinema-muted">
                 <span>⏰ All daily puzzles reset automatically every day at <strong>00:00 UTC</strong>.</span>
                 <span className="text-gold font-bold">1 Challenge Per Game / Day</span>
@@ -217,9 +207,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 2: BEAT OTARA RULES                                   */}
-          {/* ========================================================= */}
           {activeTab === 'beat-otara' && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4">
@@ -275,9 +262,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 3: SPOTLE RULES                                       */}
-          {/* ========================================================= */}
           {activeTab === 'spotle' && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-4">
@@ -309,9 +293,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 4: FRAME SLEUTH RULES                                 */}
-          {/* ========================================================= */}
           {activeTab === 'frame-sleuth' && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
@@ -337,9 +318,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 5: BOX OFFICE CLASH RULES                             */}
-          {/* ========================================================= */}
           {activeTab === 'box-office' && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-purple-500/30 bg-purple-500/10 p-4">
@@ -373,9 +351,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 6: PROGRESSION, XP & STREAKS                          */}
-          {/* ========================================================= */}
           {activeTab === 'progression' && (
             <div className="space-y-4">
               <div className="rounded-2xl border border-gold/30 bg-gold/10 p-4">
@@ -422,7 +397,6 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
           )}
         </div>
 
-        {/* Modal Bottom Action Button */}
         <div className="mt-auto pt-4 border-t border-cinema-border/70">
           <button
             onClick={onClose}

@@ -33,7 +33,6 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand Logo & Name */}
         <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => window.location.reload()}>
           <div className="relative group">
             <img
@@ -52,7 +51,6 @@ export function Navbar({
           </div>
         </div>
 
-        {/* Right Controls: Unified h-9 height for pixel-perfect alignment */}
         <div className="flex items-center gap-2 sm:gap-2.5">
           {isAuthenticated && (
             <div className="hidden sm:flex h-9 items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-400">
@@ -61,7 +59,6 @@ export function Navbar({
             </div>
           )}
 
-          {/* Leaderboard Button */}
           <button
             onClick={onOpenLeaderboard}
             className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
@@ -74,7 +71,6 @@ export function Navbar({
             <span className="hidden sm:inline">Leaderboard</span>
           </button>
 
-          {/* Sound Toggle Button */}
           <button
             onClick={handleToggleSound}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-cinema-border bg-cinema-surface text-slate-300 transition hover:border-gold/50 hover:text-gold"
@@ -83,7 +79,6 @@ export function Navbar({
             {muted ? <VolumeX className="h-4 w-4 text-slate-400" /> : <Volume2 className="h-4 w-4 text-gold" />}
           </button>
 
-          {/* PRO Button */}
           <button
             onClick={onOpenPro}
             className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition ${
@@ -98,7 +93,6 @@ export function Navbar({
 
           {isAuthenticated ? (
             <>
-              {/* Profile Button: uniform h-9 with custom photo / avatar and level badge */}
               <button
                 onClick={onOpenProfile}
                 className={`flex h-9 items-center gap-2 rounded-xl border px-2.5 text-xs font-medium transition ${
@@ -134,7 +128,6 @@ export function Navbar({
                 )}
               </button>
 
-              {/* Log Out Button */}
               <button
                 onClick={logout}
                 className="flex h-9 items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface/80 px-3 text-xs font-semibold text-slate-300 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"

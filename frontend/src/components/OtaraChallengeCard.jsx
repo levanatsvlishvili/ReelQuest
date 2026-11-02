@@ -142,7 +142,6 @@ export function OtaraChallengeCard({
               </div>
             </div>
 
-            {/* Big Start Button + 1v1 Online Duel Button */}
             <div className="pt-2">
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
                 <button

@@ -79,7 +79,6 @@ export function OtaraHintModal({
         {/* Subtle gold glow accent */}
         <div className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-gold/15 blur-3xl pointer-events-none" />
 
-        {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-cinema-border/70 pb-4">
           <div className="flex items-center gap-3.5">
             <div className="relative">
@@ -307,7 +306,6 @@ export function OtaraHintModal({
           </div>
         ) : null}
 
-        {/* Footer info & close */}
         <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-[11px] text-cinema-muted">
           <span>Using hints still counts toward your total hops.</span>
           <button

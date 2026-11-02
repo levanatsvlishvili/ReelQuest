@@ -33,7 +33,6 @@ export function LeaderboardDrawer({ isOpen, onClose, challengeId, onViewUserProf
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/70 backdrop-blur-sm animate-fade-in">
       <div className="flex h-full w-full max-w-md flex-col border-l border-cinema-border bg-cinema-card shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-cinema-border p-4">
           <div className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-gold" />
@@ -58,7 +57,6 @@ export function LeaderboardDrawer({ isOpen, onClose, challengeId, onViewUserProf
           </div>
         </div>
 
-        {/* Tab Switcher */}
         <div className="grid grid-cols-2 p-2.5 gap-1.5 border-b border-cinema-border/60 bg-cinema-bg/40">
           <button
             onClick={() => handleTabChange('daily')}
@@ -180,7 +178,6 @@ export function LeaderboardDrawer({ isOpen, onClose, challengeId, onViewUserProf
           )}
         </div>
 
-        {/* Footer info */}
         <div className="border-t border-cinema-border p-4 text-center">
           <p className="text-[11px] text-cinema-muted">
             {activeTab === 'daily'

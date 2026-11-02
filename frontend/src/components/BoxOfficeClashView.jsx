@@ -39,17 +39,12 @@ import {
 export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const { user, isAuthenticated, stats } = useAuth();
 
-  // Mode: 'endless' (Streak) or 'daily' (5-Round Challenge)
   const [subMode, setSubMode] = useState('endless');
 
-  // Active date for Daily Mode
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
   const isToday = activeDate === todayStr;
 
-  // =========================================================================
-  // ENDLESS STREAK STATE
-  // =========================================================================
   const [currentStreak, setCurrentStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(() => {
     try {
@@ -66,9 +61,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const [endlessGameOver, setEndlessGameOver] = useState(false);
   const [endlessHistory, setEndlessHistory] = useState([]); // Array of previous matchups
 
-  // =========================================================================
-  // DAILY 5-ROUND STATE
-  // =========================================================================
   const dailyMatchups = useMemo(() => {
     return getDailyBoxOfficeMatchups(activeDate);
   }, [activeDate]);
@@ -78,12 +70,10 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const [dailyRevealed, setDailyRevealed] = useState(false);
   const [dailyComplete, setDailyComplete] = useState(false);
 
-  // Modals & UI helpers
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
   const [animatingNext, setAnimatingNext] = useState(false);
 
-  // Load daily progress for activeDate
   useEffect(() => {
     if (subMode !== 'daily') return;
     try {
@@ -123,9 +113,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     setEndlessHistory([]);
   };
 
-  // =========================================================================
   // ENDLESS GUESS HANDLER
-  // =========================================================================
   const handleEndlessGuess = (choice) => {
     if (endlessRevealed || endlessGameOver) return;
     playClick();
@@ -211,9 +199,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // =========================================================================
-  // DAILY 5-ROUND GUESS HANDLER
-  // =========================================================================
   const handleDailyGuess = (choice) => {
     if (dailyRevealed || dailyComplete) return;
     playClick();
@@ -326,14 +311,10 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     setTimeout(() => setCopiedShare(false), 2500);
   };
 
-  // Helper for current Daily round matchup
   const activeDailyMatchup = dailyMatchups[dailyRound] || dailyMatchups[0];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12 animate-fade-in">
-      {/* ===================================================================== */}
-      {/* 1. HEADER (Brand, Sub-Mode Switcher, Date / Streak Badges)           */}
-      {/* ===================================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/70 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
@@ -408,9 +389,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 2. SUB-MODE SUB-HEADER (Streak bar OR Daily round navigator)          */}
-      {/* ===================================================================== */}
       {subMode === 'endless' ? (
         <div className="flex items-center justify-between rounded-2xl border border-cinema-border/70 bg-cinema-card/80 p-3 sm:p-4 shadow-lg">
           <div className="flex items-center gap-3">
@@ -480,9 +458,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 3. THE VERSUS CLASH ARENA (Movie A vs Movie B)                        */}
-      {/* ===================================================================== */}
       {(() => {
         const movieA = subMode === 'endless' ? endlessMovieA : activeDailyMatchup?.movieA;
         const movieB = subMode === 'endless' ? endlessMovieB : activeDailyMatchup?.movieB;
@@ -498,7 +473,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               VS
             </div>
 
-            {/* CARD A (Left Movie - Known Revenue) */}
             <div className="relative overflow-hidden rounded-3xl border border-cinema-border/80 bg-cinema-card shadow-2xl flex flex-col justify-between min-h-[380px] sm:min-h-[440px] group">
               {/* Background Poster Artwork */}
               <div
@@ -511,7 +485,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40 z-10" />
 
-              {/* Top Details */}
               <div className="relative z-20 p-5 sm:p-6 space-y-2">
                 <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-gold border border-gold/30">
                   Benchmark Film
@@ -540,7 +513,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               </div>
             </div>
 
-            {/* CARD B (Right Movie - The Contender to Guess) */}
             <div
               className={`relative overflow-hidden rounded-3xl border shadow-2xl flex flex-col justify-between min-h-[380px] sm:min-h-[440px] transition-all duration-300 ${
                 isRevealed && lastResult === 'CORRECT'
@@ -561,7 +533,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40 z-10" />
 
-              {/* Top Details */}
               <div className="relative z-20 p-5 sm:p-6 space-y-2">
                 <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
                   The Contender
@@ -576,7 +547,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                 </div>
               </div>
 
-              {/* Bottom Interactive Choice Buttons or Revealed Revenue */}
               <div className="relative z-20 p-5 sm:p-6 border-t border-white/10 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center min-h-[160px]">
                 {!isRevealed ? (
                   <div className="w-full space-y-3">
@@ -585,7 +555,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                     </span>
 
                     <div className="grid grid-cols-2 gap-3 w-full">
-                      {/* HIGHER BUTTON */}
                       <button
                         onClick={() => {
                           if (subMode === 'endless') handleEndlessGuess('HIGHER');
@@ -598,7 +567,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                         <span className="text-[10px] text-emerald-200">More than {formatShortRevenue(movieA?.revenue)}</span>
                       </button>
 
-                      {/* LOWER BUTTON */}
                       <button
                         onClick={() => {
                           if (subMode === 'endless') handleEndlessGuess('LOWER');
@@ -640,7 +608,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                       </span>
                     </div>
 
-                    {/* In Daily Mode: Next Round Button */}
                     {subMode === 'daily' && !dailyComplete && (
                       <button
                         onClick={handleNextDailyRound}
@@ -658,10 +625,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         );
       })()}
 
-      {/* ===================================================================== */}
-      {/* 4. GAME OVER & RESULTS BANNERS                                        */}
-      {/* ===================================================================== */}
-      {/* Endless Game Over Banner */}
       {subMode === 'endless' && endlessGameOver && (
         <div className="rounded-3xl border border-rose-500/40 bg-cinema-card p-6 shadow-2xl text-center space-y-4 animate-fade-in">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 mx-auto">
@@ -704,7 +667,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* Daily 5-Round Completion Banner */}
       {subMode === 'daily' && dailyComplete && (
         <div className="rounded-3xl border border-emerald-500/40 bg-cinema-card p-6 shadow-2xl text-center space-y-4 animate-fade-in">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto">
@@ -752,9 +714,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 5. HOW TO PLAY MODAL                                                  */}
-      {/* ===================================================================== */}
       {showHowToPlay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-md rounded-3xl border border-emerald-500/40 bg-cinema-card p-6 shadow-2xl space-y-4 text-white">

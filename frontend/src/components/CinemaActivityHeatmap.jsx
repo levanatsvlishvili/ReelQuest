@@ -51,7 +51,6 @@ export function CinemaActivityHeatmap({ matchHistory = [] }) {
 
   return (
     <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl backdrop-blur-sm">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cinema-border/60 pb-4 mb-4">
         <div>
           <div className="flex items-center gap-2">
@@ -77,7 +76,6 @@ export function CinemaActivityHeatmap({ matchHistory = [] }) {
         </div>
       </div>
 
-      {/* Heatmap Grid Container */}
       <div className="overflow-x-auto pb-3 scrollbar-thin">
         <div className="inline-block min-w-[720px]">
           {/* Month labels along the top */}
@@ -126,7 +124,6 @@ export function CinemaActivityHeatmap({ matchHistory = [] }) {
         </div>
       </div>
 
-      {/* Footer / Legend / Tooltip Info */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-cinema-border/50 text-xs">
         {/* Dynamic Tooltip info when hovering a square */}
         <div className="text-cinema-muted text-xs min-h-[20px] flex items-center gap-2">

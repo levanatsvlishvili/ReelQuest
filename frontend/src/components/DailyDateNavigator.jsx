@@ -107,7 +107,6 @@ export function DailyDateNavigator({
     <div className={`flex items-center justify-between gap-2 sm:gap-3 rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-2 sm:p-2.5 shadow-lg backdrop-blur-md ${compact ? 'w-full' : ''}`}>
       {/* Left controls & Carousel */}
       <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
-        {/* Step backward */}
         <button
           onClick={onPrevDay}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-cinema-border bg-cinema-black/50 text-slate-300 transition hover:border-gold/50 hover:bg-gold/10 hover:text-gold active:scale-95"
@@ -164,7 +163,6 @@ export function DailyDateNavigator({
           ))}
         </div>
 
-        {/* Step forward */}
         <button
           onClick={onNextDay}
           disabled={isToday}
@@ -179,7 +177,6 @@ export function DailyDateNavigator({
         </button>
       </div>
 
-      {/* Right controls: "1v1 Duel", "Back to Today" & "Archive" */}
       <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {!compact && onOpenDuel && (
           <button

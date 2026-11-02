@@ -69,7 +69,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Modals
   const [showResultModal, setShowResultModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showHowToPlay, setShowHowToPlay] = useState(false);
@@ -411,9 +410,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12 animate-fade-in">
-      {/* ===================================================================== */}
-      {/* 1. HEADER SECTION (Game Mode Brand, Date Navigator & Control Buttons) */}
-      {/* ===================================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/70 pb-5">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
@@ -490,9 +486,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 2. GUESS INPUT & SEARCH BAR (Positioned between dates and frames)     */}
-      {/* ===================================================================== */}
       {gameStatus === 'PLAYING' ? (
         <div className="rounded-2xl border border-violet-500/40 bg-cinema-card/95 p-4 shadow-xl space-y-3">
           <div className="flex items-center justify-between">
@@ -597,7 +590,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               )}
             </div>
 
-            {/* Skip Frame Button */}
             <button
               onClick={handleSkipFrame}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800/80 hover:bg-slate-700 text-slate-200 px-4 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
@@ -607,7 +599,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               <span>Skip Frame</span>
             </button>
 
-            {/* Give Up Button */}
             <button
               onClick={handleGiveUp}
               className="flex items-center justify-center gap-1.5 rounded-xl border border-rose-500/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 px-3.5 py-2.5 text-xs font-black transition active:scale-95 shadow-sm shrink-0"
@@ -673,9 +664,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 3. CINEMA WIDESCREEN FRAME VIEWER                                     */}
-      {/* ===================================================================== */}
       <div className="space-y-3">
         {/* Frame Navigator Tabs (1 to 6) */}
         <div className="flex items-center justify-between gap-2">
@@ -720,7 +708,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             })}
           </div>
 
-          {/* Inspect / Zoom Button */}
           <button
             onClick={() => {
               playClick();
@@ -734,9 +721,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
           </button>
         </div>
 
-        {/* Cinematic Aspect-Ratio Frame Container */}
         <div className="relative aspect-video w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-cinema-border/80 bg-black shadow-2xl shadow-violet-950/20 group">
-          {/* Film Grain & Vignette Overlay */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 z-10" />
 
           {/* The High-Resolution Movie Frame */}
@@ -802,7 +787,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             )}
           </div>
 
-          {/* Zoom Overlay Click Trigger */}
           <button
             onClick={() => {
               playClick();
@@ -816,9 +800,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 3. ATTEMPTS PROGRESS TRACK & CLUES                                    */}
-      {/* ===================================================================== */}
       <div className="grid grid-cols-6 gap-2">
         {Array.from({ length: MAX_FRAMES }).map((_, idx) => {
           const g = guesses[idx];
@@ -863,7 +844,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         })}
       </div>
 
-      {/* Clues Card (Decade, Genres, Director unlocks) */}
       <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/85 p-3.5 sm:p-4 shadow-xl space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -918,9 +898,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 4. GUESS HISTORY TABLE                                                */}
-      {/* ===================================================================== */}
       {guesses.length > 0 && (
         <div className="rounded-2xl border border-cinema-border/70 bg-cinema-card/90 p-4 space-y-2.5 shadow-xl">
           <div className="flex items-center justify-between border-b border-cinema-border/50 pb-2">
@@ -982,9 +959,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 6. FULLSCREEN ZOOM MODAL (HIGH RESOLUTION INSPECTION)                 */}
-      {/* ===================================================================== */}
       {showZoomModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fade-in">
           <div className="relative max-w-6xl w-full max-h-[92vh] flex flex-col items-center">
@@ -1028,13 +1002,9 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 7. RESULT / VICTORY / REVEAL MODAL                                    */}
-      {/* ===================================================================== */}
       {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-lg rounded-3xl border border-violet-500/50 bg-cinema-card p-6 shadow-2xl space-y-5 text-white max-h-[90vh] overflow-y-auto">
-            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-cinema-border/70">
               <div className="flex items-center gap-2">
                 <div
@@ -1073,7 +1043,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               </button>
             </div>
 
-            {/* Movie Poster & Metadata Card */}
             <div className="flex items-start gap-3.5 rounded-2xl border border-cinema-border/80 bg-cinema-surface/70 p-3.5">
               <img
                 src={getTmdbImageUrl(targetMovie.posterPath)}
@@ -1139,7 +1108,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               </div>
             )}
 
-            {/* Share and Action Buttons */}
             <div className="pt-2 flex flex-col gap-2">
               <button
                 onClick={handleShare}
@@ -1164,9 +1132,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 8. HOW TO PLAY MODAL                                                  */}
-      {/* ===================================================================== */}
       {showHowToPlay && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
           <div className="w-full max-w-md rounded-3xl border border-violet-500/40 bg-cinema-card p-6 shadow-2xl space-y-4 text-white">

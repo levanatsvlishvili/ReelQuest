@@ -54,9 +54,6 @@ export const GAME_MODE_FILTERS = [
 ];
 
 export const ACHIEVEMENTS = [
-  // ==========================================
-  // BEAT OTARA (Six Degrees of Cinema)
-  // ==========================================
   {
     id: 'otara_first_link',
     gameMode: 'six-degrees',
@@ -170,9 +167,7 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // ==========================================
   // 1v1 ONLINE DUELS
-  // ==========================================
   {
     id: 'duel_gladiator_rises',
     gameMode: 'duels',
@@ -226,9 +221,6 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // ==========================================
-  // SPOTLE (Daily Cinema Mystery)
-  // ==========================================
   {
     id: 'spotle_first_solved',
     gameMode: 'spotle',
@@ -295,9 +287,6 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // ==========================================
-  // FRAME SLEUTH (Visual Frame Deduction)
-  // ==========================================
   {
     id: 'frame_first_solved',
     gameMode: 'frame-sleuth',
@@ -377,9 +366,6 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // ==========================================
-  // BOX OFFICE CLASH (Higher or Lower)
-  // ==========================================
   {
     id: 'bo_first_clash',
     gameMode: 'box-office',
@@ -465,9 +451,7 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // ==========================================
   // STREAKS & META (Global Mastery)
-  // ==========================================
   {
     id: 'meta_streak_3',
     gameMode: 'meta',
@@ -522,9 +506,7 @@ export const ACHIEVEMENTS = [
     checkProgress: (stats, history, user) => (user?.isPro ? 1 : 0)
   },
 
-  // ==========================================
   // UPCOMING GAMES (Extensible Stubs)
-  // ==========================================
   {
     id: 'future_quoted_first',
     gameMode: 'upcoming',

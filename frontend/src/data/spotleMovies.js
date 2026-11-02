@@ -12005,17 +12005,14 @@ export function compareSpotleMovies(guessed, target) {
 
   const isExactWin = guessed.id === target.id || guessed.title.toLowerCase().trim() === target.title.toLowerCase().trim();
 
-  // 1. Release Year
   const yearDiff = target.year - guessed.year;
   const yearDirection = yearDiff > 0 ? 'HIGHER' : yearDiff < 0 ? 'LOWER' : 'EQUAL';
   const yearStatus = yearDiff === 0 ? 'EXACT' : Math.abs(yearDiff) <= 3 ? 'CLOSE' : 'MISS';
 
-  // 2. Director
   const guessedDir = (guessed.director || '').trim().toLowerCase();
   const targetDir = (target.director || '').trim().toLowerCase();
   const directorStatus = guessedDir === targetDir ? 'EXACT' : 'MISS';
 
-  // 3. Genres
   const guessedGenres = (guessed.genres || []).map(g => g.toLowerCase().trim());
   const targetGenres = (target.genres || []).map(g => g.toLowerCase().trim());
   const matchingGenres = (guessed.genres || []).filter(g =>
@@ -12033,7 +12030,6 @@ export function compareSpotleMovies(guessed, target) {
     }
   }
 
-  // 4. Lead Cast / Stars
   const targetCastLower = (target.cast || []).map(c => c.toLowerCase().trim());
   const matchingCast = (guessed.cast || []).filter(actor =>
     targetCastLower.some(tc => tc.includes(actor.toLowerCase().trim()) || actor.toLowerCase().trim().includes(tc))
@@ -12045,7 +12041,6 @@ export function compareSpotleMovies(guessed, target) {
     castStatus = 'PARTIAL';
   }
 
-  // 5. Score / Rating
   const ratingDiff = Number((target.rating - guessed.rating).toFixed(1));
   const ratingDirection = ratingDiff > 0 ? 'HIGHER' : ratingDiff < 0 ? 'LOWER' : 'EQUAL';
   const ratingStatus = Math.abs(ratingDiff) <= 0.2 ? 'EXACT' : Math.abs(ratingDiff) <= 0.8 ? 'CLOSE' : 'MISS';

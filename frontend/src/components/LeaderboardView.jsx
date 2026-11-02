@@ -51,7 +51,6 @@ export function LeaderboardView({
   const top3 = leaderboard.slice(0, 3);
   const restLeaderboard = leaderboard.slice(3);
 
-  // Helper to shift date for date switcher
   function shiftDateStr(dateStr, days) {
     if (!dateStr || dateStr === 'Custom') return new Date().toISOString().slice(0, 10);
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -259,7 +258,6 @@ export function LeaderboardView({
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* Top Bar Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-cinema-border/70 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-4 sm:p-5 shadow-xl">
         <div className="flex items-center gap-3">
           <button
@@ -308,7 +306,6 @@ export function LeaderboardView({
         </div>
       </div>
 
-      {/* Multi-Game Tabs (Beat Otara, Spotle, Frame Sleuth, Box Office Clash, Global XP) */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-none border-b border-cinema-border/50">
         {GAME_MODES.map((mode) => {
           const Icon = mode.icon;
@@ -337,7 +334,6 @@ export function LeaderboardView({
         })}
       </div>
 
-      {/* Scope Switcher Tabs: Daily Challenge vs All-Time Legends */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="inline-flex rounded-xl border border-cinema-border bg-cinema-surface p-1 shadow-sm">
           {selectedGameMode !== 'global-xp' && (
@@ -367,7 +363,6 @@ export function LeaderboardView({
           </button>
         </div>
 
-        {/* Date Selector (Only when Daily is selected for games that support daily dates) */}
         {activeTab === 'daily' && selectedGameMode !== 'global-xp' && (
           <div className="w-full sm:w-auto">
             <DailyDateNavigator
@@ -384,7 +379,6 @@ export function LeaderboardView({
         )}
       </div>
 
-      {/* Matchup Context Banner (Visible when Daily is selected) */}
       {activeTab === 'daily' && selectedGameMode === 'six-degrees' && activeChallenge && (
         <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
           <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
@@ -447,7 +441,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Spotle Context Banner */}
       {activeTab === 'daily' && selectedGameMode === 'spotle' && (
         <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
           <div className="flex items-center justify-between gap-4">
@@ -472,7 +465,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Frame Sleuth Context Banner */}
       {activeTab === 'daily' && selectedGameMode === 'frame-sleuth' && (
         <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
           <div className="flex items-center justify-between gap-4">
@@ -497,7 +489,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Box Office Clash Context Banner */}
       {activeTab === 'daily' && selectedGameMode === 'box-office' && (
         <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
           <div className="flex items-center justify-between gap-4">
@@ -522,7 +513,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Guest Notice Banner */}
       {!isAuthenticated && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-gold/30 bg-gold/10 p-4 shadow-sm">
           <div className="flex items-center gap-3">
@@ -549,7 +539,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Leaderboard Podium (Top 3) */}
       {top3.length > 0 && (
         <div className="pt-2">
           {top3.length === 1 ? (
@@ -571,7 +560,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Leaderboard Table (Ranks 4+) */}
       {restLeaderboard.length > 0 && (
         <div className="rounded-2xl border border-cinema-border/70 bg-cinema-card/80 overflow-hidden shadow-xl">
           <div className="border-b border-cinema-border px-5 py-3">
@@ -628,7 +616,6 @@ export function LeaderboardView({
         </div>
       )}
 
-      {/* Empty State */}
       {leaderboard.length === 0 && !loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 rounded-2xl border border-cinema-border/60 bg-cinema-surface/40 p-8 shadow-inner">
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gold/10 text-gold border border-gold/30 shadow-gold-glow">

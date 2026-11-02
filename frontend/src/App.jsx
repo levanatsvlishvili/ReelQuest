@@ -143,7 +143,6 @@ export default function App() {
           />
         ) : (
           <>
-            {/* Game Mode Navigation Tabs */}
             <GameModeSelector
               activeMode={activeMode}
               onSelectMode={(mode) => {
@@ -194,7 +193,6 @@ export default function App() {
               </div>
             ) : (
               <>
-                {/* Daily Date & Archive Navigator */}
                 {!isCustom && (
                   <DailyDateNavigator
                     currentDate={activeDate}
@@ -220,7 +218,6 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Pre-Game READY State: Otara's Briefing & Start Challenge Button */}
                 {gameStatus === 'READY' ? (
                   <div className="space-y-6">
                     <OtaraChallengeCard
@@ -232,7 +229,6 @@ export default function App() {
                       onOpenDuel={() => setIsDuelMode(true)}
                     />
 
-                    {/* Locked Filmography Teaser */}
                     <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-cinema-border/60 bg-cinema-surface/40 backdrop-blur-sm space-y-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold border border-gold/30">
                         <Film className="h-6 w-6" />
@@ -268,7 +264,6 @@ export default function App() {
                       onOpenHint={() => setIsHintOpen(true)}
                     />
 
-                    {/* Otara's Live Coaching / Post-game Reaction */}
                     <OtaraChallengeCard
                       challenge={challenge}
                       gameStatus={gameStatus}
@@ -309,12 +304,9 @@ export default function App() {
         )}
       </main>
 
-      {/* Production-Grade Clean Cinema Footer */}
       <footer className="mt-auto border-t border-cinema-border/70 bg-gradient-to-b from-cinema-card/90 via-cinema-surface to-cinema-black pt-10 pb-8 text-xs text-cinema-muted">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-          {/* Main Columns Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Column 1: Brand & Creator */}
             <div className="space-y-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/20 text-gold border border-gold/40 shadow-gold-glow">
@@ -329,7 +321,6 @@ export default function App() {
               </p>
             </div>
 
-            {/* Column 2: Game Modes */}
             <div className="space-y-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-white">
                 Games
@@ -383,7 +374,6 @@ export default function App() {
               </ul>
             </div>
 
-            {/* Column 3: Platform Features */}
             <div className="space-y-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-white">
                 Features
@@ -429,7 +419,6 @@ export default function App() {
               </ul>
             </div>
 
-            {/* Column 4: Cinema Data */}
             <div className="space-y-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-white">
                 Cinema Data
@@ -444,7 +433,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-cinema-border/60 pt-5 text-[11px]">
             <p className="text-cinema-muted text-center sm:text-left">
               © 2026 ReelQuest. All rights reserved.
@@ -456,7 +444,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Modals & Overlays */}
       <VictoryModal
         isOpen={showVictory}
         onClose={() => setShowVictory(false)}

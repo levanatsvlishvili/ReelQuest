@@ -109,7 +109,6 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-in">
         <div className="relative overflow-hidden rounded-3xl border border-gold/40 bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black p-8 shadow-2xl">
-          {/* Subtle gold glow behind card */}
           <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-gold/15 blur-3xl pointer-events-none" />
 
           <div className="relative z-10 text-center max-w-2xl mx-auto space-y-6">
@@ -126,7 +125,6 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
               Connect <strong className="text-white">ANY two actors in cinema history</strong>. Our Hollywood Graph Engine discovers the shortest chain of movies and co-stars in seconds.
             </p>
 
-            {/* Feature Highlights Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 text-left">
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-4 backdrop-blur-sm">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold/15 text-gold mb-2.5">
@@ -178,7 +176,6 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
   // PRO User View
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 animate-fade-in space-y-8">
-      {/* Studio Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3.5 py-1 text-xs font-bold text-gold">
           <Crown className="h-3.5 w-3.5 fill-gold" />
@@ -192,7 +189,6 @@ export function CustomPathFinder({ onOpenPro, onPlayCustomChallenge }) {
         </p>
       </div>
 
-      {/* Input Selection Card */}
       <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-6 shadow-xl backdrop-blur-md space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr] items-center gap-4">
           {/* Start Actor Picker */}

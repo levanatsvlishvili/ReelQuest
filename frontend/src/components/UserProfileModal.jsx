@@ -131,7 +131,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
       <div className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-cinema-border bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black shadow-2xl">
         
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 z-10 rounded-lg p-1.5 text-cinema-muted transition hover:bg-cinema-border hover:text-white"
@@ -139,7 +138,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* User Identity Header */}
         <div className="shrink-0 border-b border-cinema-border/80 px-6 pt-6 pb-4">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gold/15 text-lg font-black text-gold border border-gold/30 shadow-gold-glow">
@@ -163,7 +161,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
             </div>
           </div>
 
-          {/* Tab Navigation Switcher */}
           <div className="mt-5 flex items-center gap-2 border-b border-cinema-border/60 pb-1">
             <button
               onClick={() => setActiveTab('overview')}
@@ -214,12 +211,8 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
         {/* Modal Body - Tab Views */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
 
-          {/* ======================================================== */}
-          {/* TAB 1: OVERVIEW                                          */}
-          {/* ======================================================== */}
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-fade-in">
-              {/* Pro Banner if Free */}
               {!user.isPro && (
                 <div className="flex items-center justify-between rounded-xl border border-gold/30 bg-gold/10 p-3.5">
                   <div className="flex items-center gap-2.5">
@@ -241,7 +234,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                 </div>
               )}
 
-              {/* Core Stats Grid */}
               <div>
                 <h4 className="text-xs font-bold uppercase tracking-wider text-cinema-muted mb-3">
                   Cinema Performance
@@ -342,12 +334,8 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 2: TROPHY CABINET                                    */}
-          {/* ======================================================== */}
           {activeTab === 'trophies' && (
             <div className="space-y-5 animate-fade-in">
-              {/* Cabinet Progress Summary Banner */}
               <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/15 via-cinema-surface to-amber-950/20 p-4 shadow-gold-glow">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
@@ -392,7 +380,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                 ))}
               </div>
 
-              {/* Achievement Badges Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 {filteredAchievements.map(ach => {
                   const tier = ACHIEVEMENT_TIERS[ach.tier] || ACHIEVEMENT_TIERS.bronze;
@@ -492,9 +479,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
             </div>
           )}
 
-          {/* ======================================================== */}
-          {/* TAB 3: MATCH HISTORY                                     */}
-          {/* ======================================================== */}
           {activeTab === 'history' && (
             <div className="space-y-4 animate-fade-in">
               {/* Sub-Filters */}
@@ -530,7 +514,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                 )}
               </div>
 
-              {/* Match Cards List */}
               {filteredMatches.length > 0 ? (
                 <div className="space-y-3">
                   {filteredMatches.map(m => {
@@ -551,7 +534,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                             : 'border-cinema-border bg-cinema-surface/40 hover:border-cinema-border/80'
                         }`}
                       >
-                        {/* Header: Mode Badge + Date + Result */}
                         <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
                           <div className="flex items-center gap-2">
                             {isBoxOffice ? (
@@ -733,7 +715,6 @@ export function UserProfileModal({ isOpen, onClose, onOpenPro }) {
                           </div>
                         )}
 
-                        {/* Footer: Details & Badges */}
                         <div className="mt-2.5 flex items-center justify-between text-[11px] text-cinema-muted">
                           <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1 text-slate-300">

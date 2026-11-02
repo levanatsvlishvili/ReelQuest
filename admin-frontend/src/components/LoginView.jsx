@@ -29,7 +29,6 @@ export function LoginView() {
       <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-sky-500/10 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="w-full max-w-md relative z-10 space-y-6">
-        {/* Brand Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-gold/20 to-amber-500/10 border border-gold/40 shadow-gold-glow">
             <Shield className="h-8 w-8 text-gold" />
@@ -47,7 +46,6 @@ export function LoginView() {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-5">
           {(authError || localError) && (
             <div className="rounded-xl border border-rose-500/40 bg-rose-500/10 p-3.5 flex items-start gap-3 text-xs text-rose-300 animate-fade-in">
@@ -112,7 +110,6 @@ export function LoginView() {
 
         </div>
 
-        {/* Security watermark footer */}
         <div className="text-center text-[11px] text-slate-500 flex items-center justify-center gap-2">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
           <span>Protected by AWS Cognito JWT & Amazon CloudWatch Audit Logging</span>

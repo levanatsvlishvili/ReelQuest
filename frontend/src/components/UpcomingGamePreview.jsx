@@ -39,7 +39,6 @@ export function UpcomingGamePreview({ modeId, onBackToMain, onOpenPro }) {
         </div>
       </div>
 
-      {/* Pro early access banner */}
       <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 p-3.5 text-xs text-left">
         <div className="flex items-center gap-2.5">
           <Crown className="h-4 w-4 text-gold shrink-0" />

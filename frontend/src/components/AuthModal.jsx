@@ -135,7 +135,6 @@ export function AuthModal({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
       <div className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl border border-cinema-border/90 bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black p-5 sm:p-7 shadow-2xl scrollbar-thin">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute right-4 top-4 rounded-xl p-1.5 text-cinema-muted transition hover:bg-cinema-border hover:text-white"
@@ -143,7 +142,6 @@ export function AuthModal({ isOpen, onClose }) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* Header Icon & Title */}
         <div className="mb-5 flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold/15 text-gold border border-gold/30 shadow-gold-glow/20">
             <Film className="h-5 w-5" />
@@ -162,7 +160,6 @@ export function AuthModal({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Tab Switcher */}
         {tab !== 'confirm' && (
           <div className="mb-5 grid grid-cols-2 rounded-xl bg-cinema-black/60 p-1 border border-cinema-border/60">
             <button
@@ -210,9 +207,6 @@ export function AuthModal({ isOpen, onClose }) {
           </div>
         )}
 
-        {/* ========================================================= */}
-        {/* 1. SIGN IN FORM                                           */}
-        {/* ========================================================= */}
         {tab === 'signin' && (
           <form onSubmit={handleSignIn} className="space-y-4">
             <div>
@@ -266,9 +260,6 @@ export function AuthModal({ isOpen, onClose }) {
           </form>
         )}
 
-        {/* ========================================================= */}
-        {/* 2. REGISTRATION FORM (STRICTLY ENGLISH, SEARCHABLE COUNTRY) */}
-        {/* ========================================================= */}
         {tab === 'signup' && (
           <form onSubmit={handleSignUp} className="space-y-3.5">
             {/* First Name & Last Name (Side-by-Side) */}
@@ -448,9 +439,6 @@ export function AuthModal({ isOpen, onClose }) {
           </form>
         )}
 
-        {/* ========================================================= */}
-        {/* 3. CONFIRM EMAIL CODE                                     */}
-        {/* ========================================================= */}
         {tab === 'confirm' && (
           <form onSubmit={handleConfirm} className="space-y-4">
             <div className="text-center">

@@ -95,7 +95,6 @@ export function LeaderboardModeration() {
         </div>
       </div>
 
-      {/* Flagged Runs Section */}
       {flags.length > 0 && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -181,7 +180,6 @@ export function LeaderboardModeration() {
         </div>
       )}
 
-      {/* Clean Audit Banner */}
       {flags.length === 0 && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">

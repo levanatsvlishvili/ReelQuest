@@ -150,7 +150,6 @@ export function ChainBuilder({
             </button>
           </div>
 
-          {/* Active movie banner */}
           <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="h-14 w-10 shrink-0 overflow-hidden rounded bg-cinema-border">

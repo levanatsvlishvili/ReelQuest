@@ -174,7 +174,6 @@ export function Sidebar({ currentTab, onSelectTab, mobileOpen, onCloseMobile }) 
             <ExternalLink className="h-3.5 w-3.5 text-slate-500" />
           </a>
 
-          {/* Admin User Card */}
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-8 w-8 rounded-lg bg-gold/20 border border-gold/40 text-gold flex items-center justify-center font-extrabold text-xs shrink-0">
