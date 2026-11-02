@@ -56,7 +56,6 @@ export async function fetchMultiGameLeaderboard(gameMode = 'six-degrees', scope 
   const effectiveDate = dateStr || new Date().toISOString().slice(0, 10);
   let records = [];
 
-  // 1. If Beat Otara ('six-degrees'), attempt to fetch from backend API
   if (gameMode === 'six-degrees') {
     try {
       const challengeId = `daily-${effectiveDate}`;
@@ -69,7 +68,6 @@ export async function fetchMultiGameLeaderboard(gameMode = 'six-degrees', scope 
     }
   }
 
-  // 2. If no remote records or for other game modes, read real stored submissions
   if (records.length === 0) {
     const localKey = scope === 'all-time'
       ? `reelquest_lb_${gameMode}_all_time`
@@ -88,7 +86,6 @@ export async function fetchMultiGameLeaderboard(gameMode = 'six-degrees', scope 
     }
   }
 
-  // 3. Extract matching real completed matches from the current user's profile
   const userMatches = currentUser?.id ? getStoredMatchHistory(currentUser.id) : [];
   const relevantUserMatches = userMatches.filter(m => {
     if (!m.won) return false;
@@ -143,10 +140,8 @@ export async function fetchMultiGameLeaderboard(gameMode = 'six-degrees', scope 
     records.unshift(userEntry);
   }
 
-  // 4. Sort strictly according to real game metrics
   sortLeaderboard(records, gameMode);
 
-  // 5. Assign ranks
   return records.slice(0, 50).map((item, idx) => ({
     rank: idx + 1,
     ...item

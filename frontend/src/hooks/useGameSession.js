@@ -32,7 +32,6 @@ export function useGameSession() {
   const [undosCount, setUndosCount] = useState(0);
   const [usedHint, setUsedHint] = useState(false);
 
-  // Helper to save session
   const saveSession = useCallback((cId, stateObj) => {
     if (!cId) return;
     try {
@@ -42,7 +41,6 @@ export function useGameSession() {
     }
   }, []);
 
-  // Helper to load session
   const loadSession = useCallback((cId) => {
     if (!cId) return null;
     try {
@@ -277,7 +275,6 @@ export function useGameSession() {
   const undoLastMove = useCallback(() => {
     if (!challenge) return;
 
-    // 1. If a movie is currently selected, stepping back unselects the movie first!
     playClick();
     if (selectedMovie) {
       setSelectedMovie(null);
@@ -285,7 +282,6 @@ export function useGameSession() {
       return;
     }
 
-    // 2. If chain has more than 1 actor, step back to previous actor
     if (chain.length > 1) {
       const newChain = chain.slice(0, -1);
       const prevNode = newChain[newChain.length - 1];

@@ -19,7 +19,6 @@ export function CountrySelect({ value, onChange, label = 'Nationality', required
     );
   }, [search]);
 
-  // Click outside to close
   useEffect(() => {
     function handleClickOutside(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
@@ -56,7 +55,6 @@ export function CountrySelect({ value, onChange, label = 'Nationality', required
         </label>
       )}
 
-      {/* Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -69,10 +67,8 @@ export function CountrySelect({ value, onChange, label = 'Nationality', required
         <ChevronDown className={`h-4 w-4 text-cinema-muted transition-transform shrink-0 ml-2 ${isOpen ? 'rotate-180 text-gold' : ''}`} />
       </button>
 
-      {/* Floating Searchable Dropdown */}
       {isOpen && (
         <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-2xl border border-cinema-border/90 bg-cinema-card/95 p-2 shadow-2xl backdrop-blur-xl animate-fade-in max-h-72 flex flex-col">
-          {/* Search Input Box */}
           <div className="relative mb-2 shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-cinema-muted" />
             <input
@@ -85,7 +81,6 @@ export function CountrySelect({ value, onChange, label = 'Nationality', required
             />
           </div>
 
-          {/* Country List (Alphabetical, 195 sovereign states) */}
           <div className="overflow-y-auto space-y-0.5 flex-1 scrollbar-thin pr-1">
             {filteredCountries.length > 0 ? (
               filteredCountries.map((c) => {

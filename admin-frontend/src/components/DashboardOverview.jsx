@@ -85,7 +85,6 @@ export function DashboardOverview({ onNavigateTab }) {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Banner */}
       <div className="rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-[#12151e] to-cinema-card p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gold/15 border border-gold/30 text-gold uppercase tracking-wider">
@@ -111,7 +110,6 @@ export function DashboardOverview({ onNavigateTab }) {
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map((kpi, idx) => {
           const Icon = kpi.icon;
@@ -183,7 +181,6 @@ export function DashboardOverview({ onNavigateTab }) {
           </div>
         </div>
 
-        {/* System Health Card (1 Col) */}
         <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card p-6 space-y-4">
           <div>
             <h3 className="text-sm font-extrabold text-white">Infrastructure Status</h3>

@@ -91,7 +91,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const isPro = Boolean(user?.isPro);
   const todayStr = new Date().toISOString().slice(0, 10);
 
-  // Active Date & Mystery Target
   const [activeDate, setActiveDate] = useState(todayStr);
   const [targetMovie, setTargetMovie] = useState(() => getSpotleMovieForDate(todayStr));
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -390,9 +389,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
   return (
     <div className="space-y-4 animate-fade-in max-w-4xl mx-auto pb-12">
-      {/* ===================================================================== */}
-      {/* 1. COMPACT HEADER & DATE NAVIGATOR                                    */}
-      {/* ===================================================================== */}
       <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
         {/* Brand & Mode Tag */}
         <div className="flex items-center gap-2.5">
@@ -484,9 +480,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
       {/* CLUE LEGEND MODAL / POPDOWN (HOW TO PLAY)                             */}
-      {/* ===================================================================== */}
       {showLegend && (
         <div className="rounded-xl border border-gold/30 bg-cinema-card/95 p-3.5 text-xs text-slate-300 shadow-xl space-y-2 animate-fade-in">
           <div className="flex items-center justify-between border-b border-cinema-border/50 pb-2">
@@ -518,9 +512,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 2. SEARCH & CONTROLS BAR (Search, Attempt Counter & Give Up)          */}
-      {/* ===================================================================== */}
       {gameStatus === 'PLAYING' && (
         <div className="space-y-2">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -623,7 +614,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               )}
             </div>
 
-            {/* Attempt Counter Info Badge & Give Up Button */}
             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
               <div className="flex items-center gap-1.5 rounded-xl border border-gold/40 bg-gold/15 px-3.5 py-2.5 text-xs font-black text-gold shadow-sm">
                 <Trophy className="h-3.5 w-3.5 text-gold shrink-0" />
@@ -643,9 +633,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* 3. MYSTERY CLUES SECTION (Positioned Above the Grid)                  */}
-      {/* ===================================================================== */}
       <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/85 p-3.5 sm:p-4 shadow-xl space-y-2.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -716,12 +703,8 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 4. THE SPOTLE PUZZLE MATRIX (Chronological: Guesses added below)       */}
-      {/* ===================================================================== */}
       <div className="w-full overflow-x-auto pb-4 scrollbar-none perspective-1000">
         <div className="min-w-[760px] max-w-4xl mx-auto space-y-2">
-          {/* Header Row: 7 Category Tiles */}
           <div className="grid grid-cols-7 gap-2 text-center select-none">
             {[
               { label: 'Movie', icon: Film },
@@ -981,7 +964,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             );
           })}
 
-          {/* When no guesses made yet: clean inviting prompt row */}
           {guesses.length === 0 && (
             <div className="rounded-xl border border-dashed border-cinema-border/70 bg-cinema-card/40 p-8 text-center text-cinema-muted space-y-1">
               <p className="text-xs font-bold text-slate-300">
@@ -995,9 +977,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      {/* ===================================================================== */}
-      {/* 5. POST-GAME VICTORY / DEFEAT MODAL                                   */}
-      {/* ===================================================================== */}
       {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-3 sm:p-4 backdrop-blur-md animate-fade-in">
           <div className="relative w-full max-w-lg rounded-3xl border-2 border-gold/60 bg-gradient-to-b from-cinema-card via-cinema-surface to-cinema-black p-6 sm:p-8 shadow-2xl text-center space-y-5">

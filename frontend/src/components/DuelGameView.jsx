@@ -117,7 +117,6 @@ export function computeDuelWinner(duel) {
     };
   }
 
-  // 1. Both forfeited -> Tie
   if (hostForfeited && guestForfeited) {
     return {
       isCompleted: true,
@@ -129,7 +128,6 @@ export function computeDuelWinner(duel) {
     };
   }
 
-  // 2. One player forfeited
   if (hostForfeited) {
     return {
       isCompleted: true,
@@ -152,7 +150,6 @@ export function computeDuelWinner(duel) {
     };
   }
 
-  // 3. Both finished: compare moves (hops) first
   const hMoves = Number(duel.hostMoves || 0);
   const gMoves = Number(duel.guestMoves || 0);
 
@@ -178,7 +175,6 @@ export function computeDuelWinner(duel) {
     };
   }
 
-  // 4. Equal hops: compare duration (time in seconds)
   const hDuration = Number(duel.hostDurationSeconds ?? duel.hostTimeSeconds ?? 0);
   const gDuration = Number(duel.guestDurationSeconds ?? duel.guestTimeSeconds ?? 0);
 
@@ -204,7 +200,6 @@ export function computeDuelWinner(duel) {
     };
   }
 
-  // 5. Exact dead-heat tie on both hops and duration
   return {
     isCompleted: true,
     winnerRole: 'TIE',
@@ -220,7 +215,6 @@ export function DuelGameView({ onBackToMain }) {
   const myPlayerId = getTabPlayerId(user);
   const defaultUsername = user?.nickname || user?.email?.split('@')[0] || 'Cinephile';
 
-  // Phases: 'MENU' | 'LOBBY_WAIT' | 'COUNTDOWN' | 'PLAYING' | 'RESULTS'
   const [phase, setPhase] = useState('MENU');
   const [duel, setDuel] = useState(null);
   const [myRole, setMyRole] = useState(null); // 'HOST' | 'GUEST'
@@ -363,7 +357,6 @@ export function DuelGameView({ onBackToMain }) {
     setMyRole(role);
     setPhase('COUNTDOWN');
 
-    // Compute remaining countdown based on server countdownStartedAt (bounded between 3s and 5s so both players always see the dramatic countdown)
     let initialSec = 5;
     if (duelData.countdownStartedAt) {
       const elapsedSec = Math.floor((Date.now() - duelData.countdownStartedAt) / 1000);
@@ -414,7 +407,6 @@ export function DuelGameView({ onBackToMain }) {
 
         const role = myRole || getStoredRole(updated.duelId) || 'HOST';
 
-        // 1. If in LOBBY_WAIT and guest has joined -> start 5-second synchronized countdown!
         if (
           phase === 'LOBBY_WAIT' &&
           (updated.status === 'IN_PROGRESS' || updated.guestUsername)
@@ -422,7 +414,6 @@ export function DuelGameView({ onBackToMain }) {
           triggerSynchronizedCountdown(updated, role);
         }
 
-        // 2. If in PLAYING, monitor opponent live hops and reactions
         if (phase === 'PLAYING') {
           const oppMoves = role === 'HOST' ? updated.guestLiveMoves : updated.hostLiveMoves;
           if (typeof oppMoves === 'number' && prevOpponentMovesRef.current !== null && oppMoves > prevOpponentMovesRef.current) {
@@ -439,7 +430,6 @@ export function DuelGameView({ onBackToMain }) {
           prevOpponentEmoteRef.current = oppEmote;
         }
 
-        // 3. If in RESULTS, keep match history updated with final outcome once opponent finishes
         if (phase === 'RESULTS' && updated) {
           const comp = computeDuelWinner(updated);
           if (comp.isCompleted) {
@@ -472,7 +462,6 @@ export function DuelGameView({ onBackToMain }) {
           }
         }
 
-        // 4. If in RESULTS and either player clicked Instant Rematch (`nextDuelId` created) -> auto-join the rematch!
         if (phase === 'RESULTS' && updated.nextDuelId && updated.nextDuelId !== duel.duelId) {
           setRematchAlert('Opponent requested an Instant Rematch! Launching...');
           playNodeConnect();
@@ -654,7 +643,6 @@ export function DuelGameView({ onBackToMain }) {
     broadcastProgress(moves, currentActor?.name || '', `Sent ${emoji}`, emoji);
   };
 
-  // Format chain into a readable string summary for post-game comparison
   const buildPathSummaryString = (chainArr) => {
     if (!Array.isArray(chainArr) || chainArr.length === 0) return '';
     const parts = [];
@@ -914,7 +902,6 @@ export function DuelGameView({ onBackToMain }) {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Top Arena Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-5 sm:p-6 shadow-card">
         <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -986,9 +973,6 @@ export function DuelGameView({ onBackToMain }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* PHASE 1: MENU (CREATE RANDOM OR CUSTOM LOBBY / JOIN CODE)              */}
-      {/* ===================================================================== */}
       {phase === 'MENU' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column (7 cols): Create a 1v1 Duel Lobby */}
@@ -1247,9 +1231,6 @@ export function DuelGameView({ onBackToMain }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* PHASE 2: LIVE WAITING ROOM (WAITING FOR OPPONENT TO JOIN)             */}
-      {/* ===================================================================== */}
       {phase === 'LOBBY_WAIT' && duel && (
         <div className="rounded-2xl border border-gold/40 bg-cinema-card p-6 sm:p-8 shadow-2xl space-y-6">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-cinema-border pb-5">
@@ -1349,7 +1330,6 @@ export function DuelGameView({ onBackToMain }) {
             </div>
           </div>
 
-          {/* Players Status Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center justify-between rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4">
               <div className="flex items-center gap-3">
@@ -1392,9 +1372,6 @@ export function DuelGameView({ onBackToMain }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* PHASE 3: SYNCHRONIZED 5-SECOND COUNTDOWN OVERLAY                      */}
-      {/* ===================================================================== */}
       {phase === 'COUNTDOWN' && duel && (
         <div className="relative overflow-hidden rounded-3xl border-2 border-gold bg-gradient-to-b from-cinema-card via-cinema-black to-cinema-card p-8 sm:p-12 text-center shadow-2xl animate-fade-in">
           <div className="absolute inset-0 bg-gold/5 pointer-events-none" />
@@ -1404,7 +1381,6 @@ export function DuelGameView({ onBackToMain }) {
               Both Players Connected • Match Starting!
             </span>
 
-            {/* Head to Head Banner */}
             <div className="flex items-center justify-center gap-6">
               <div className="text-right">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-gold block">
@@ -1456,9 +1432,6 @@ export function DuelGameView({ onBackToMain }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* PHASE 4: ACTIVE REAL-TIME ONLINE GAMEPLAY                             */}
-      {/* ===================================================================== */}
       {phase === 'PLAYING' && duel && (
         <div className="space-y-5">
           {/* LIVE HEAD-TO-HEAD TELEMETRY HUD */}
@@ -1665,9 +1638,6 @@ export function DuelGameView({ onBackToMain }) {
         </div>
       )}
 
-      {/* ===================================================================== */}
-      {/* PHASE 5: POST-MATCH RESULTS + OTARA'S OPTIMAL ROUTE + REMATCH         */}
-      {/* ===================================================================== */}
       {phase === 'RESULTS' && duel && (() => {
         const duelResult = computeDuelWinner(duel);
         return (
@@ -1701,9 +1671,7 @@ export function DuelGameView({ onBackToMain }) {
               </p>
             </div>
 
-          {/* Head-to-Head Scoreboard Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Host Card */}
             <div
               className={`rounded-2xl border p-5 space-y-3 ${
                 duelResult.isCompleted && duelResult.winnerRole === 'HOST'
@@ -1767,7 +1735,6 @@ export function DuelGameView({ onBackToMain }) {
               )}
             </div>
 
-            {/* Challenger Card */}
             <div
               className={`rounded-2xl border p-5 space-y-3 ${
                 duelResult.isCompleted && duelResult.winnerRole === 'GUEST'
@@ -1832,9 +1799,6 @@ export function DuelGameView({ onBackToMain }) {
             </div>
           </div>
 
-          {/* ================================================================= */}
-          {/* OTARA'S OPTIMAL SHORTEST PATH REVEAL                              */}
-          {/* ================================================================= */}
           <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cinema-surface via-cinema-black/80 to-cinema-surface p-5 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-3">

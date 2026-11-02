@@ -123,7 +123,6 @@ const LEVEL_TIERS = [
 export function calculateCinemaLevel(stats = {}, matchHistory = []) {
   let xp = 0;
 
-  // 1. Matches XP
   matchHistory.forEach(m => {
     if (m.won) {
       if (m.gameMode === 'six-degrees') {
@@ -147,11 +146,9 @@ export function calculateCinemaLevel(stats = {}, matchHistory = []) {
     }
   });
 
-  // 2. Streaks XP
   const streak = stats.streak || 0;
   xp += streak * 50;
 
-  // 3. User total score from server/stats
   if (stats.totalScore) {
     xp += Math.round(stats.totalScore * 0.5);
   }

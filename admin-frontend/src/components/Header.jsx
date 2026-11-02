@@ -63,7 +63,6 @@ export function Header({ currentTab, onOpenMobile, onRefresh }) {
           <span>eu-central-1 (DDB Live)</span>
         </div>
 
-        {/* Refresh button */}
         <button
           onClick={handleRefreshClick}
           title="Refresh Data"

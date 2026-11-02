@@ -103,7 +103,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const [uploadError, setUploadError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Personal Info form fields (Strictly English)
   const [editFirstName, setEditFirstName] = useState(profileUser?.firstName || '');
   const [editLastName, setEditLastName] = useState(profileUser?.lastName || '');
   const [editUsername, setEditUsername] = useState(profileUser?.username || '');
@@ -326,14 +325,10 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* 1. HERO IDENTITY & PROGRESSION BANNER                    */}
-      {/* ======================================================== */}
       <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-6 sm:p-7 shadow-2xl">
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          {/* Left: Avatar & Personal Info */}
           <div className="flex items-start sm:items-center gap-5">
             {/* Avatar Badge: Custom Photo OR Preset Avatar */}
             <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl overflow-hidden ${
@@ -381,7 +376,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 </span>
               </div>
 
-              {/* Full Name & Email */}
               {(profileUser.firstName || profileUser.lastName) && (
                 <p className="text-xs font-bold text-slate-200">
                   {profileUser.firstName} {profileUser.lastName}
@@ -422,7 +416,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Right: Quick Stat Badges */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
             <div className="rounded-xl border border-cinema-border bg-cinema-card/80 p-3 text-center">
               <span className="text-[10px] uppercase font-bold text-cinema-muted block">Total XP</span>
@@ -490,10 +483,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* 2. FULL-WIDTH PROFILE NAVIGATION TABS                    */}
-      {/* Ensures "Edit Profile" & all tabs are 100% visible       */}
-      {/* ======================================================== */}
       <div className="flex items-center gap-2 border-b border-cinema-border/70 pb-3 overflow-x-auto scrollbar-none w-full">
         <button
           onClick={() => setActiveTab('overview')}
@@ -571,15 +560,10 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         )}
       </div>
 
-      {/* ======================================================== */}
-      {/* TAB 1: OVERVIEW                                          */}
-      {/* ======================================================== */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          {/* GitHub Activity Heatmap */}
           <CinemaActivityHeatmap matchHistory={matchHistory} />
 
-          {/* Account Personal Details Card */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
             <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3 mb-4">
               <div className="flex items-center gap-2">
@@ -632,7 +616,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Pro Banner if viewing own free profile */}
           {isOwnProfile && !profileUser.isPro && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/15 via-cinema-card to-amber-950/30 p-5 shadow-gold-glow">
               <div className="flex items-center gap-3">
@@ -783,12 +766,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 2: TROPHY CABINET                                    */}
-      {/* ======================================================== */}
       {activeTab === 'trophies' && (
         <div className="space-y-6">
-          {/* Summary Banner */}
           <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/15 via-cinema-surface to-amber-950/20 p-5 shadow-gold-glow">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -831,7 +810,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             ))}
           </div>
 
-          {/* Achievements Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredAchievements.map(ach => {
               const tier = ACHIEVEMENT_TIERS[ach.tier] || ACHIEVEMENT_TIERS.bronze;
@@ -919,9 +897,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 3: MATCH HISTORY                                     */}
-      {/* ======================================================== */}
       {activeTab === 'history' && (
         <div className="space-y-6">
           {/* History Mode Filter Pills */}
@@ -968,7 +943,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                         : 'border-cinema-border bg-cinema-surface/40 hover:border-cinema-border/80'
                     }`}
                   >
-                    {/* Header */}
                     <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
                       <div className="flex items-center gap-2">
                         {isBoxOffice ? (
@@ -1018,7 +992,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                       </span>
                     </div>
 
-                    {/* Middle: Details */}
                     {isBoxOffice ? (
                       <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-3 border border-cinema-border/30">
                         <div className="flex items-center gap-3">
@@ -1113,7 +1086,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                       </div>
                     )}
 
-                    {/* Footer Details */}
                     <div className="mt-2.5 flex items-center justify-between text-[11px] text-cinema-muted">
                       <span className="flex items-center gap-1 text-slate-300">
                         <Clock className="h-3.5 w-3.5 text-cinema-muted" />
@@ -1140,12 +1112,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 4: PRO & BILLING (PRODUCTION $3/MO, REAL BILLING)    */}
-      {/* ======================================================== */}
       {isOwnProfile && activeTab === 'billing' && (
         <div className="space-y-6">
-          {/* Notification Banner (if card updated or renewal toggled) */}
           {billingNotice && (
             <div className={`p-4 rounded-2xl border text-xs font-bold flex items-center gap-3 animate-fade-in ${
               billingNotice.type === 'success'
@@ -1161,7 +1129,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           )}
 
-          {/* Dunning Notice (When automatic charge attempt failed) */}
           {subscription?.status === 'PAST_DUE' && subscription?.dunningNotice && (
             <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 shadow-xl space-y-2">
               <div className="flex items-center gap-2.5 text-amber-400 font-extrabold text-sm">
@@ -1204,7 +1171,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           )}
 
-          {/* Active Plan Overview Card */}
           <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 sm:p-6 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/60 pb-4">
               <div>
@@ -1269,7 +1235,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
             </div>
 
-            {/* Actions: Cancel/Resume and Change Card */}
             <div className="flex items-center gap-3 pt-2 flex-wrap">
               <button
                 onClick={() => setShowCardModal(true)}
@@ -1354,12 +1319,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </div>
       )}
 
-      {/* ======================================================== */}
-      {/* TAB 5: EDIT PROFILE & AVATAR (STRICTLY ENGLISH LABELS)    */}
-      {/* ======================================================== */}
       {isOwnProfile && activeTab === 'edit' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
-          {/* Custom Avatar Upload Section */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cinema-border/60 pb-3">
               <div>
@@ -1430,7 +1391,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Preset Avatar Selector Grid */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <div>
               <h3 className="text-sm font-extrabold text-white flex items-center gap-2">
@@ -1482,7 +1442,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Profile Details Inputs: Strictly English, Searchable Sovereign Country */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <h3 className="text-sm font-extrabold text-white">Personal Information & Cinephile Details</h3>
 
@@ -1600,7 +1559,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
             </div>
 
-            {/* Save Button */}
             <div className="pt-2 flex items-center justify-between">
               {saveSuccess ? (
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
@@ -1621,7 +1579,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
         </form>
       )}
 
-      {/* Card Update Modal */}
       {showCardModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in">
           <div className="relative w-full max-w-md rounded-2xl border border-gold/40 bg-gradient-to-b from-cinema-card to-cinema-surface p-6 shadow-2xl space-y-4">

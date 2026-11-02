@@ -79,7 +79,6 @@ export function DailyArchiveModal({ isOpen, onClose, currentDate, onSelectDate }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl border border-cinema-border/80 bg-cinema-card shadow-2xl flex flex-col">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-cinema-border/60 px-6 py-4 bg-cinema-surface/50">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 text-gold border border-gold/30">
@@ -215,7 +214,6 @@ export function DailyArchiveModal({ isOpen, onClose, currentDate, onSelectDate }
           )}
         </div>
 
-        {/* Footer */}
         <div className="border-t border-cinema-border/60 px-6 py-3 bg-cinema-surface/40 flex items-center justify-between text-xs text-cinema-muted">
           <span>Total archive challenges: unlimited</span>
           <button

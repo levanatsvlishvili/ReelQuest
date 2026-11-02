@@ -29,7 +29,6 @@ export function ChallengeScheduler() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingDate, setEditingDate] = useState(null);
 
-  // Form State
   const [formDate, setFormDate] = useState('');
   const [actorSearchQuery, setActorSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -151,7 +150,6 @@ export function ChallengeScheduler() {
 
   return (
     <div className="space-y-6">
-      {/* Top action header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-white tracking-tight">
@@ -171,7 +169,6 @@ export function ChallengeScheduler() {
         </button>
       </div>
 
-      {/* Today's Active Spotlight Card */}
       {(() => {
         const todayChallenge = challenges.find(c => c.status === 'ACTIVE_TODAY');
         if (!todayChallenge) return null;
@@ -370,7 +367,6 @@ export function ChallengeScheduler() {
 
               {/* Actor Pair Selection Box */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                {/* Start Star Card */}
                 <div className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3.5 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     1. Starting Star
@@ -410,7 +406,6 @@ export function ChallengeScheduler() {
                   )}
                 </div>
 
-                {/* Target Star Card */}
                 <div className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3.5 space-y-2">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                     2. Target Star
@@ -489,7 +484,6 @@ export function ChallengeScheduler() {
                 />
               </div>
 
-              {/* Submit Buttons */}
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
@@ -509,7 +503,6 @@ export function ChallengeScheduler() {
               </div>
             </form>
 
-            {/* Inner Actor Picker Drawer */}
             {selectingTargetFor && (
               <div className="mt-4 pt-4 border-t border-cinema-border space-y-3">
                 <div className="flex items-center justify-between">

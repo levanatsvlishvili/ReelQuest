@@ -158,7 +158,6 @@ export function VictoryModal({
           </p>
         </div>
 
-        {/* Stats Grid */}
         <div className="my-5 grid grid-cols-2 gap-3">
           <div className="flex items-center gap-3 rounded-xl border border-cinema-border bg-cinema-surface p-3">
             <Footprints className="h-5 w-5 text-gold" />
@@ -257,7 +256,6 @@ export function VictoryModal({
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex flex-col gap-2.5 sm:flex-row">
           <button
             onClick={handleShare}

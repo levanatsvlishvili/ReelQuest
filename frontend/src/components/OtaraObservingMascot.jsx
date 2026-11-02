@@ -31,7 +31,6 @@ export default function OtaraObservingMascot({
   const targetOffsetRef = useRef({ x: 0, y: 0 });
   const currentOffsetRef = useRef({ x: 0, y: 0 });
 
-  // 1. Mouse Tracking with Smooth LERP (only when in OBSERVING emotion)
   useEffect(() => {
     if (emotion !== 'OBSERVING') return;
 
@@ -93,7 +92,6 @@ export default function OtaraObservingMascot({
     };
   }, [emotion]);
 
-  // 2. Natural Random Blinking (only when in OBSERVING emotion)
   useEffect(() => {
     if (emotion !== 'OBSERVING') return;
 
@@ -196,7 +194,6 @@ export default function OtaraObservingMascot({
         className="h-full w-full object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.85)] drop-shadow-[0_0_18px_rgba(230,175,46,0.2)]"
       />
 
-      {/* LEFT EYE CONTAINER (Viewer's Left) */}
       <div
         className="absolute overflow-hidden"
         style={{
@@ -220,7 +217,6 @@ export default function OtaraObservingMascot({
           }}
         />
 
-        {/* Eyelid Blink Overlay */}
         <div
           className="absolute inset-0 bg-[#cfa182] border-b border-[#3d271e] transition-all duration-75"
           style={{
@@ -229,7 +225,6 @@ export default function OtaraObservingMascot({
         />
       </div>
 
-      {/* RIGHT EYE CONTAINER (Viewer's Right) */}
       <div
         className="absolute overflow-hidden"
         style={{
@@ -253,7 +248,6 @@ export default function OtaraObservingMascot({
           }}
         />
 
-        {/* Eyelid Blink Overlay */}
         <div
           className="absolute inset-0 bg-[#cfa182] border-b border-[#3d271e] transition-all duration-75"
           style={{

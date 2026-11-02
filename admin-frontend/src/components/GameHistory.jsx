@@ -27,7 +27,6 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters & Sorting & Pagination State
   const [selectedUser, setSelectedUser] = useState(initialUserId);
   const [selectedMode, setSelectedMode] = useState('ALL');
   const [sortBy, setSortBy] = useState('newest');
@@ -37,7 +36,6 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
   const [totalCount, setTotalCount] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modal inspection
   const [selectedMatch, setSelectedMatch] = useState(null);
 
   useEffect(() => {
@@ -86,7 +84,6 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
 
   return (
     <div className="space-y-6">
-      {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5">
@@ -487,7 +484,6 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
               </button>
             </div>
 
-            {/* Match Cards */}
             <div className="p-4 rounded-xl border border-cinema-border/80 bg-[#0b0e17] space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-400">Game Mode</span>
@@ -534,7 +530,6 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
                 </div>
               </div>
 
-              {/* Match Stats Grid */}
               <div className="grid grid-cols-3 gap-3 pt-2">
                 <div className="p-2.5 rounded-xl bg-cinema-card text-center border border-cinema-border">
                   <span className="text-[10px] text-slate-400 block">Verified Score</span>

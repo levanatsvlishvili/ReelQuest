@@ -19,7 +19,6 @@ import { activateSubscription } from '../utils/billingService';
 export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
   const { user, isAuthenticated, setProStatus } = useAuth();
 
-  // Modal checkout step: 'OVERVIEW' | 'CHECKOUT' | 'PROCESSING' | 'SUCCESS'
   const [step, setStep] = useState('OVERVIEW');
   const [sessionData, setSessionData] = useState(null);
   const [receiptData, setReceiptData] = useState(null);
@@ -142,9 +141,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
           <X className="h-5 w-5" />
         </button>
 
-        {/* ==================================================== */}
-        {/* VIEW 1: OVERVIEW & PLAN PERKS */}
-        {/* ==================================================== */}
         {step === 'OVERVIEW' && (
           <div>
             <div className="text-center">
@@ -228,9 +224,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
           </div>
         )}
 
-        {/* ==================================================== */}
-        {/* VIEW 2: REAL STRIPE CHECKOUT FORM */}
-        {/* ==================================================== */}
         {step === 'CHECKOUT' && (
           <form onSubmit={handleConfirmPayment} className="space-y-4">
             <div className="border-b border-cinema-border pb-3">
@@ -247,7 +240,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               <h3 className="mt-1 text-lg font-bold text-white">Complete Your Subscription</h3>
             </div>
 
-            {/* Order Summary box */}
             <div className="rounded-xl border border-cinema-border bg-cinema-surface p-3 text-xs space-y-1.5">
               <div className="flex justify-between text-slate-300">
                 <span>ReelQuest PRO (Monthly)</span>
@@ -259,7 +251,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               </div>
             </div>
 
-            {/* Cardholder Name */}
             <div className="space-y-1">
               <label className="block text-[11px] font-bold text-slate-300">
                 Name on Card
@@ -274,7 +265,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               />
             </div>
 
-            {/* Card Number */}
             <div className="space-y-1">
               <label className="block text-[11px] font-bold text-slate-300">
                 Card Number
@@ -354,9 +344,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
           </form>
         )}
 
-        {/* ==================================================== */}
-        {/* VIEW 3: PAYMENT PROCESSING */}
-        {/* ==================================================== */}
         {step === 'PROCESSING' && (
           <div className="py-8 text-center space-y-5">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gold/15 text-gold border border-gold/40 shadow-gold-glow animate-pulse">
@@ -370,9 +357,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
           </div>
         )}
 
-        {/* ==================================================== */}
-        {/* VIEW 4: SUCCESS RECEIPT */}
-        {/* ==================================================== */}
         {step === 'SUCCESS' && (
           <div className="space-y-5 text-center">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-lg">
@@ -386,7 +370,6 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
               </p>
             </div>
 
-            {/* Digital Receipt Card */}
             <div className="rounded-xl border border-cinema-border bg-cinema-surface p-4 text-xs text-left space-y-2.5">
               <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-cinema-muted text-[10px] border-b border-cinema-border pb-2">
                 <Receipt className="h-3.5 w-3.5 text-gold" />
