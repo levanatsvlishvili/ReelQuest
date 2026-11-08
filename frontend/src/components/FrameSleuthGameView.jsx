@@ -6,22 +6,15 @@ import {
   Trophy,
   Calendar,
   Sparkles,
-  Clock,
   Share2,
-  RotateCcw,
   Check,
   X,
-  ChevronRight,
   Flag,
   ZoomIn,
   SkipForward,
   Lock,
-  Unlock,
-  HelpCircle,
-  Clapperboard,
   Eye,
   Flame,
-  Info,
   Maximize2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -411,75 +404,56 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
   const canUnlockDirector = isPro || guesses.length >= 4;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/70 pb-5">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/20 text-violet-400 border border-violet-500/40 shadow-sm">
-              <Camera className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  Frame Sleuth
-                </h1>
-                <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-violet-300 border border-violet-500/40">
-                  NEW
+    <div className="mx-auto max-w-4xl space-y-5 pb-12 animate-fade-in">
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/20 text-violet-400 border border-violet-500/40 shadow-sm">
+            <Camera className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight text-white">
+                Frame Sleuth
+              </h1>
+              {isAuthenticated && frameStreak > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-black text-orange-400 border border-orange-500/30">
+                  <Flame className="h-3 w-3 fill-orange-400" />
+                  <span>{frameStreak}d</span>
                 </span>
-                {isAuthenticated && frameStreak > 0 && (
-                  <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-black text-orange-400 border border-orange-500/30">
-                    <Flame className="h-3 w-3 fill-orange-400" />
-                    <span>{frameStreak}d Streak</span>
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-cinema-muted">
-                Deduce the secret cinema masterpiece from 6 progressive scene stills
-              </p>
+              )}
             </div>
+            <p className="text-xs text-slate-400">
+              Identify the secret film from 6 progressive scene stills.
+            </p>
           </div>
         </div>
 
-        {/* Date Navigator & Controls */}
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <DailyDateNavigator
             currentDate={activeDate}
             onSelectDate={(newDate) => {
               playClick();
               setActiveDate(newDate);
             }}
-          />
-
-          <button
-            onClick={() => {
+            onOpenArchive={() => {
               playClick();
               setShowArchiveModal(true);
             }}
-            className="flex items-center gap-1.5 rounded-xl border border-cinema-border/80 bg-cinema-surface/80 px-3 py-2 text-xs font-bold text-slate-300 hover:border-violet-500/60 hover:text-white transition shadow-sm"
-            title="Rewind to past challenges"
-          >
-            <Calendar className="h-3.5 w-3.5 text-violet-400" />
-            <span className="hidden sm:inline">Archive</span>
-          </button>
-
-          <button
-            onClick={() => {
+            onOpenHowToPlay={() => {
               playClick();
               setShowHowToPlay(true);
             }}
-            className="flex items-center gap-1.5 rounded-xl border border-cinema-border/80 bg-cinema-surface/80 p-2 text-xs font-bold text-slate-300 hover:border-violet-500/60 hover:text-white transition shadow-sm"
-            title="How to Play"
-          >
-            <HelpCircle className="h-4 w-4 text-violet-400" />
-          </button>
+            embedded={true}
+          />
 
           {gameStatus !== 'PLAYING' && (
             <button
+              type="button"
               onClick={() => {
                 playClick();
                 setShowResultModal(true);
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-violet-500/50 bg-violet-500/20 px-3 py-2 text-xs font-black text-violet-300 hover:bg-violet-500/30 transition shadow-sm"
+              className="flex h-8 sm:h-9 items-center gap-1.5 rounded-xl border border-violet-500/50 bg-violet-500/20 px-3 text-xs font-black text-violet-300 hover:bg-violet-500/30 transition shadow-sm"
             >
               <Trophy className="h-3.5 w-3.5 text-gold" />
               <span>Result</span>
@@ -577,11 +551,11 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                         </div>
 
                         {alreadyGuessed ? (
-                          <span className="text-[10px] uppercase font-bold text-cinema-muted">
+                          <span className="text-[11px] uppercase font-bold text-cinema-muted">
                             Guessed
                           </span>
                         ) : (
-                          <span className="rounded-lg bg-violet-500/20 px-2 py-0.5 text-[10px] font-black text-violet-300 border border-violet-500/40">
+                          <span className="rounded-lg bg-violet-500/20 px-2 py-0.5 text-[11px] font-black text-violet-300 border border-violet-500/40">
                             Guess
                           </span>
                         )}
@@ -758,32 +732,32 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               Reel Still #{viewedFrameIndex + 1} of 6
             </span>
             {viewedFrameIndex === 0 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-300 border border-amber-500/30 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-amber-300 border border-amber-500/30 backdrop-blur-md hidden sm:inline">
                 Difficulty: Hardest (Ambience & Setting)
               </span>
             )}
             {viewedFrameIndex === 1 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-amber-200 border border-amber-400/30 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-amber-200 border border-amber-400/30 backdrop-blur-md hidden sm:inline">
                 Environment & World
               </span>
             )}
             {viewedFrameIndex === 2 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-sky-300 border border-sky-500/30 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-sky-300 border border-sky-500/30 backdrop-blur-md hidden sm:inline">
                 Scene & Objects
               </span>
             )}
             {viewedFrameIndex === 3 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-indigo-300 border border-indigo-500/30 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-indigo-300 border border-indigo-500/30 backdrop-blur-md hidden sm:inline">
                 Action & Supporting Context
               </span>
             )}
             {viewedFrameIndex === 4 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30 backdrop-blur-md hidden sm:inline">
                 Recognizable Scene
               </span>
             )}
             {viewedFrameIndex === 5 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[10px] font-extrabold uppercase text-emerald-400 border border-emerald-500/40 backdrop-blur-md hidden sm:inline">
+              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-emerald-400 border border-emerald-500/40 backdrop-blur-md hidden sm:inline">
                 Final Clue: Iconic Hero Shot
               </span>
             )}
@@ -802,7 +776,49 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-6 gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
+          canUnlockDecadeGenres
+            ? 'border-violet-500/40 bg-violet-500/10 text-white'
+            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
+        }`}>
+          {canUnlockDecadeGenres ? (
+            <>
+              <Sparkles className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+              <span className="font-bold text-violet-300">Era &amp; Genre:</span>
+              <span className="font-semibold text-white">
+                {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
+              </span>
+            </>
+          ) : (
+            <>
+              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+              <span>Era &amp; Genre unlocks at Frame 3 ({2 - guesses.length} left)</span>
+            </>
+          )}
+        </div>
+
+        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
+          canUnlockDirector
+            ? 'border-gold/40 bg-gold/10 text-white'
+            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
+        }`}>
+          {canUnlockDirector ? (
+            <>
+              <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
+              <span className="font-bold text-gold">Director:</span>
+              <span className="font-bold text-white">{targetMovie.director}</span>
+            </>
+          ) : (
+            <>
+              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+              <span>Director unlocks at Frame 5 ({4 - guesses.length} left)</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {Array.from({ length: MAX_FRAMES }).map((_, idx) => {
           const g = guesses[idx];
           const isCurrent = idx === guesses.length && gameStatus === 'PLAYING';
@@ -823,7 +839,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               }`}
             >
               <div className="flex items-center justify-center gap-1 mb-1">
-                <span className="text-[10px] font-black uppercase">
+                <span className="text-[11px] font-black uppercase">
                   #{idx + 1}
                 </span>
                 {g?.won ? (
@@ -846,67 +862,13 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         })}
       </div>
 
-      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/85 p-3.5 sm:p-4 shadow-xl space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-violet-400" />
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-              Investigation Clues
-            </h3>
-          </div>
-          <span className="text-[10px] text-cinema-muted font-bold">
-            {isPro ? '🌟 PRO: All Clues Unlocked' : 'Unlocks as frames advance'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {/* Clue 1: Decade & Genres */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-                Clue #1: Era & Genres
-              </span>
-              <span className="text-[9px] text-cinema-muted">Frame 3+</span>
-            </div>
-            {canUnlockDecadeGenres ? (
-              <p className="text-xs font-bold text-white">
-                {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
-              </p>
-            ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{2 - guesses.length} more attempts</strong>.
-              </p>
-            )}
-          </div>
-
-          {/* Clue 2: Director */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-                Clue #2: Director
-              </span>
-              <span className="text-[9px] text-cinema-muted">Frame 5+</span>
-            </div>
-            {canUnlockDirector ? (
-              <p className="text-xs font-bold text-white">
-                Directed by <strong className="text-gold">{targetMovie.director}</strong>
-              </p>
-            ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{4 - guesses.length} more attempts</strong>.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-
       {guesses.length > 0 && (
         <div className="rounded-2xl border border-cinema-border/70 bg-cinema-card/90 p-4 space-y-2.5 shadow-xl">
           <div className="flex items-center justify-between border-b border-cinema-border/50 pb-2">
             <span className="text-xs font-black uppercase tracking-wider text-slate-300">
               Investigation Log ({guesses.length}/{MAX_FRAMES})
             </span>
-            <span className="text-[10px] text-cinema-muted">
+            <span className="text-[11px] text-cinema-muted">
               Reverse-chronological
             </span>
           </div>
@@ -927,7 +889,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="rounded-lg bg-black/40 px-2 py-0.5 font-mono text-[10px] font-black border border-white/10">
+                    <span className="rounded-lg bg-black/40 px-2 py-0.5 font-mono text-[11px] font-black border border-white/10">
                       Frame #{g.attemptNum}
                     </span>
                     <span className="text-sm font-extrabold text-white">
@@ -940,16 +902,16 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
 
                   <div>
                     {g.won ? (
-                      <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-black text-emerald-300 border border-emerald-500/40">
+                      <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-black text-emerald-300 border border-emerald-500/40">
                         <Check className="h-3 w-3" />
                         CORRECT
                       </span>
                     ) : g.skipped ? (
-                      <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-slate-300">
+                      <span className="rounded-full bg-slate-700 px-2.5 py-0.5 text-[11px] font-bold text-slate-300">
                         SKIPPED
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-black text-rose-300 border border-rose-500/40">
+                      <span className="flex items-center gap-1 rounded-full bg-rose-500/20 px-2.5 py-0.5 text-[11px] font-black text-rose-300 border border-rose-500/40">
                         <X className="h-3 w-3" />
                         INCORRECT
                       </span>
@@ -1052,7 +1014,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                 className="h-28 w-20 rounded-xl object-cover border border-violet-500/40 shrink-0 shadow-md"
               />
               <div className="min-w-0 space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-violet-400 tracking-wider">
+                <span className="text-[11px] font-extrabold uppercase text-violet-400 tracking-wider">
                   Target Film
                 </span>
                 <h4 className="text-base font-black text-white leading-tight">
@@ -1072,7 +1034,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                   {(targetMovie.genres || []).map((g, gIdx) => (
                     <span
                       key={gIdx}
-                      className="rounded-md bg-cinema-card px-1.5 py-0.5 text-[9px] font-bold text-slate-300 border border-cinema-border"
+                      className="rounded-md bg-cinema-card px-2 py-0.5 text-[11px] font-bold text-slate-300 border border-cinema-border"
                     >
                       {g}
                     </span>
@@ -1084,7 +1046,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             {/* Synopsis */}
             {targetMovie.overview && (
               <div className="rounded-xl border border-cinema-border/50 bg-black/40 p-3 text-xs text-slate-300 leading-relaxed max-h-24 overflow-y-auto">
-                <span className="text-[10px] font-bold uppercase text-cinema-muted block mb-0.5">
+                <span className="text-[11px] font-bold uppercase text-cinema-muted block mb-0.5">
                   Synopsis
                 </span>
                 {targetMovie.overview}
@@ -1094,7 +1056,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             {/* Cast Chips */}
             {targetMovie.cast && (
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase text-cinema-muted block">
+                <span className="text-[11px] font-bold uppercase text-cinema-muted block">
                   Top Cast
                 </span>
                 <div className="flex flex-wrap gap-1.5">

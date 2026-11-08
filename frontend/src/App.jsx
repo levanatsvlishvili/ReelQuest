@@ -26,7 +26,7 @@ import { CheckoutSuccessModal } from './components/CheckoutSuccessModal';
 import { useAuth } from './context/AuthContext';
 import { confirmPaymentOrder } from './api/auth';
 import { activateSubscriptionWithCard } from './utils/billingService';
-import { Film, Play } from 'lucide-react';
+import { Film } from 'lucide-react';
 
 export default function App() {
   const {
@@ -66,8 +66,9 @@ export default function App() {
   } = useGameSession();
 
   const { user, isAuthenticated, setProStatus } = useAuth();
-  const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard' | 'profile'
-  const [profileUser, setProfileUser] = useState(null); // null = own profile
+  const [currentView, setCurrentView] = useState('game');
+  const [profileUser, setProfileUser] = useState(null);
+  const [profileTabRequest, setProfileTabRequest] = useState({ tab: 'overview', seq: 0 });
   const [activeMode, setActiveMode] = useState('six-degrees');
   const [isDuelMode, setIsDuelMode] = useState(false);
   const [checkoutSuccessNotice, setCheckoutSuccessNotice] = useState(null);
@@ -127,6 +128,11 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
+        currentView={currentView}
+        onNavigateHome={() => {
+          setProfileUser(null);
+          setCurrentView('game');
+        }}
         onOpenLeaderboard={() => {
           setProfileUser(null);
           setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard');
@@ -136,20 +142,24 @@ export default function App() {
         onOpenPro={() => setIsProModalOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => {
-          if (currentView === 'profile' && !profileUser) {
-            setCurrentView('game');
-          } else {
-            setProfileUser(null);
-            setCurrentView('profile');
-          }
+          setProfileTabRequest((prev) => ({ tab: 'overview', seq: prev.seq + 1 }));
+          setProfileUser(null);
+          setCurrentView('profile');
+        }}
+        onOpenBilling={() => {
+          setProfileTabRequest((prev) => ({ tab: 'billing', seq: prev.seq + 1 }));
+          setProfileUser(null);
+          setCurrentView('profile');
         }}
         isProfileActive={currentView === 'profile' && !profileUser}
       />
 
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-5">
         {currentView === 'profile' ? (
           <UserProfileView
+            key={profileUser?.id || 'self'}
             targetUser={profileUser}
+            initialTabRequest={profileTabRequest}
             onBack={() => {
               const fromLeaderboard = Boolean(profileUser);
               setProfileUser(null);
@@ -255,37 +265,14 @@ export default function App() {
                 )}
 
                 {gameStatus === 'READY' ? (
-                  <div className="space-y-6">
-                    <OtaraChallengeCard
-                      challenge={challenge}
-                      gameStatus={gameStatus}
-                      moves={moves}
-                      timerSeconds={timerSeconds}
-                      onStart={startGame}
-                      onOpenDuel={() => setIsDuelMode(true)}
-                    />
-
-                    <div className="flex flex-col items-center justify-center p-8 sm:p-12 text-center rounded-2xl border border-cinema-border/60 bg-cinema-surface/40 backdrop-blur-sm space-y-3">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gold/10 text-gold border border-gold/30">
-                        <Film className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm sm:text-base font-bold text-white">
-                          Filmography Locked
-                        </h3>
-                        <p className="mt-1 text-xs text-cinema-muted max-w-md mx-auto">
-                          Click "Start Challenge" above to start the timer and reveal {challenge.startActor?.name}'s filmography.
-                        </p>
-                      </div>
-                      <button
-                        onClick={startGame}
-                        className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-gold to-amber-500 px-6 py-2.5 text-xs font-extrabold text-cinema-black shadow-gold-glow hover:opacity-90 transition active:scale-95"
-                      >
-                        <Play className="h-4 w-4 fill-cinema-black" />
-                        <span>Start Challenge</span>
-                      </button>
-                    </div>
-                  </div>
+                  <OtaraChallengeCard
+                    challenge={challenge}
+                    gameStatus={gameStatus}
+                    moves={moves}
+                    timerSeconds={timerSeconds}
+                    onStart={startGame}
+                    onOpenDuel={() => setIsDuelMode(true)}
+                  />
                 ) : (
                   <>
                     <ChallengeHeader
@@ -300,16 +287,18 @@ export default function App() {
                       onOpenHint={() => setIsHintOpen(true)}
                     />
 
-                    <OtaraChallengeCard
-                      challenge={challenge}
-                      gameStatus={gameStatus}
-                      moves={moves}
-                      timerSeconds={timerSeconds}
-                      onStart={startGame}
-                      onOpenSummary={openVictoryModal}
-                      onOpenDuel={() => setIsDuelMode(true)}
-                      onOpenHint={() => setIsHintOpen(true)}
-                    />
+                    {gameStatus !== 'PLAYING' && (
+                      <OtaraChallengeCard
+                        challenge={challenge}
+                        gameStatus={gameStatus}
+                        moves={moves}
+                        timerSeconds={timerSeconds}
+                        onStart={startGame}
+                        onOpenSummary={openVictoryModal}
+                        onOpenDuel={() => setIsDuelMode(true)}
+                        onOpenHint={() => setIsHintOpen(true)}
+                      />
+                    )}
 
                     <VisualGraph
                       chain={chain}

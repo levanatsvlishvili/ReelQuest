@@ -18,7 +18,6 @@ import {
   ArrowRight,
   User,
   Calendar,
-  Layers,
   Camera,
   TrendingUp,
   Shield,
@@ -29,10 +28,11 @@ import {
   AlertTriangle,
   Upload,
   Trash2,
-  Mail,
-  Receipt
+  Receipt,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { calculateGameStreak } from '../api/auth';
 import { getTmdbImageUrl } from '../api/client';
 import { getDetailedMatchHistory, fetchAndMergeUserHistory } from '../api/matchHistory';
 import {
@@ -76,13 +76,11 @@ const ICON_COMPONENTS = {
   TrendingUp
 };
 
-export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
-  const { user: currentUser, stats: currentStats, updateUserProfile } = useAuth();
+export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialTabRequest = null }) {
+  const { user: currentUser, stats: currentStats, updateUserProfile, setProStatus } = useAuth();
 
-  // Determine if viewing own profile or someone else's public profile
   const isOwnProfile = !targetUser || (currentUser && targetUser.id === currentUser.id);
 
-  // Active user data
   const profileUser = useMemo(() => {
     if (isOwnProfile) {
       return currentUser || { username: 'Guest Cinephile', id: 'guest', isPro: false };
@@ -95,13 +93,19 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     }
   }, [isOwnProfile, currentUser, targetUser]);
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'trophies' | 'history' | 'billing' | 'edit'
+  const resolveRequestedTab = (tabName) => {
+    if (!tabName) return 'overview';
+    if (!isOwnProfile && (tabName === 'billing' || tabName === 'edit')) return 'overview';
+    return tabName;
+  };
+
+  const [activeTab, setActiveTab] = useState(() => resolveRequestedTab(initialTabRequest?.tab));
   const [trophyFilter, setTrophyFilter] = useState('all');
   const [historyFilter, setHistoryFilter] = useState('all');
+  const [visibleMatchCount, setVisibleMatchCount] = useState(10);
   const [matchHistory, setMatchHistory] = useState(() => getDetailedMatchHistory(profileUser?.id));
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  // Edit form state
   const [editAvatarId, setEditAvatarId] = useState(profileUser?.avatarId || 'avatar-director');
   const [customAvatarUrl, setCustomAvatarUrl] = useState(profileUser?.customAvatarUrl || null);
   const [uploadError, setUploadError] = useState(null);
@@ -117,7 +121,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const [editFavoriteGenre, setEditFavoriteGenre] = useState(profileUser?.favoriteGenre || 'Sci-Fi');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Subscription & Billing state
   const [subscription, setSubscription] = useState(() =>
     getSubscription(profileUser?.id, profileUser?.email, profileUser?.isPro)
   );
@@ -129,7 +132,15 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const [cardExp, setCardExp] = useState('');
   const [cardCvc, setCardCvc] = useState('');
 
-  // Keep form in sync when profileUser changes
+  useEffect(() => {
+    if (!initialTabRequest?.tab) return;
+    setActiveTab(resolveRequestedTab(initialTabRequest.tab));
+  }, [initialTabRequest?.tab, initialTabRequest?.seq, isOwnProfile]);
+
+  useEffect(() => {
+    setVisibleMatchCount(10);
+  }, [historyFilter, profileUser?.id]);
+
   useEffect(() => {
     if (profileUser) {
       setEditAvatarId(profileUser.avatarId || 'avatar-director');
@@ -142,13 +153,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
       setEditFavoriteDirector(profileUser.favoriteDirector || '');
       setEditFavoriteMovie(profileUser.favoriteMovie || '');
       setEditFavoriteGenre(profileUser.favoriteGenre || 'Sci-Fi');
+      setCardHolder(profileUser.username || 'Cinephile');
 
       const sub = getSubscription(profileUser.id, profileUser.email, profileUser.isPro);
       setSubscription(sub);
     }
   }, [profileUser]);
 
-  // Load and merge match history
   useEffect(() => {
     const userId = profileUser?.id || 'guest';
     const localMatches = getDetailedMatchHistory(userId);
@@ -166,7 +177,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     }
   }, [profileUser?.id]);
 
-  // Dynamic user stats
   const activeStats = useMemo(() => {
     if (isOwnProfile) return currentStats || {};
     return {
@@ -177,12 +187,27 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     };
   }, [isOwnProfile, currentStats, targetUser, matchHistory]);
 
-  // Calculate Cinema Level & Progression
+  const perGameStreaks = useMemo(() => {
+    if (!isOwnProfile || !profileUser?.id || profileUser.id === 'guest') {
+      return [];
+    }
+    return [
+      { id: 'six-degrees', label: 'Beat Otara', streak: calculateGameStreak('six-degrees', profileUser.id), accent: 'text-gold border-gold/30 bg-gold/10' },
+      { id: 'spotle', label: 'Spotle', streak: calculateGameStreak('spotle', profileUser.id), accent: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
+      { id: 'frame-sleuth', label: 'Frame Sleuth', streak: calculateGameStreak('frame-sleuth', profileUser.id), accent: 'text-violet-300 border-violet-500/30 bg-violet-500/10' },
+      { id: 'box-office', label: 'Box Office', streak: calculateGameStreak('box-office', profileUser.id), accent: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' }
+    ];
+  }, [isOwnProfile, profileUser?.id, matchHistory]);
+
+  const bestDisplayStreak = useMemo(() => {
+    const maxModeStreak = perGameStreaks.reduce((max, s) => Math.max(max, s.streak || 0), 0);
+    return Math.max(activeStats?.streak || 0, maxModeStreak);
+  }, [activeStats?.streak, perGameStreaks]);
+
   const levelInfo = useMemo(() => {
     return calculateCinemaLevel(activeStats, matchHistory);
   }, [activeStats, matchHistory]);
 
-  // Evaluate dynamic achievements
   const trophyData = useMemo(() => {
     return evaluateAchievements(profileUser?.id, profileUser, activeStats, matchHistory);
   }, [profileUser, activeStats, matchHistory]);
@@ -190,28 +215,41 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   const avatar = getAvatarById(isOwnProfile ? (profileUser?.avatarId || editAvatarId) : profileUser?.avatarId);
   const activeCountry = getCountryByCode(profileUser?.countryCode || editCountryCode);
 
-  // Filtered achievements
-  const filteredAchievements = trophyData.achievements.filter(ach => {
-    if (trophyFilter === 'all') return true;
-    return ach.gameMode === trophyFilter;
-  });
+  const filteredAchievements = useMemo(() => {
+    return trophyData.achievements
+      .filter(ach => {
+        if (trophyFilter === 'all') return true;
+        return ach.gameMode === trophyFilter;
+      })
+      .sort((a, b) => {
+        if (a.isComingSoon !== b.isComingSoon) return a.isComingSoon ? 1 : -1;
+        if (a.isUnlocked !== b.isUnlocked) return a.isUnlocked ? -1 : 1;
+        const pctA = a.maxProgress > 0 ? (a.progress || 0) / a.maxProgress : 0;
+        const pctB = b.maxProgress > 0 ? (b.progress || 0) / b.maxProgress : 0;
+        return pctB - pctA;
+      });
+  }, [trophyData.achievements, trophyFilter]);
 
-  // Filtered matches
-  const filteredMatches = matchHistory.filter(m => {
-    if (historyFilter === 'all') return true;
-    if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
-    if (historyFilter === 'spotle') return m.gameMode === 'spotle';
-    if (historyFilter === 'frame-sleuth') return m.gameMode === 'frame-sleuth';
-    if (historyFilter === 'box-office') return m.gameMode === 'box-office';
-    if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
-    if (historyFilter === 'duels') return m.gameMode === 'duels';
-    return m.gameMode === historyFilter;
-  });
+  const filteredMatches = useMemo(() => {
+    return matchHistory.filter(m => {
+      if (historyFilter === 'all') return true;
+      if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
+      if (historyFilter === 'spotle') return m.gameMode === 'spotle';
+      if (historyFilter === 'frame-sleuth') return m.gameMode === 'frame-sleuth';
+      if (historyFilter === 'box-office') return m.gameMode === 'box-office';
+      if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
+      if (historyFilter === 'duels') return m.gameMode === 'duels';
+      return m.gameMode === historyFilter;
+    });
+  }, [matchHistory, historyFilter]);
+
+  const visibleMatches = useMemo(() => {
+    return filteredMatches.slice(0, visibleMatchCount);
+  }, [filteredMatches, visibleMatchCount]);
 
   const unlockedShowcase = trophyData.achievements.filter(a => a.isUnlocked && !a.isComingSoon).slice(0, 3);
   const winRate = activeStats?.gamesPlayed > 0 ? Math.round((activeStats.gamesWon / activeStats.gamesPlayed) * 100) : 0;
 
-  // Custom Avatar File Upload Handler
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -260,10 +298,9 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     setTimeout(() => {
       setSaveSuccess(false);
       setActiveTab('overview');
-    }, 1200);
+    }, 1000);
   };
 
-  // Billing Actions
   const handleUpdateCardSubmit = (e) => {
     e.preventDefault();
     const cleanNumber = cardNumber.replace(/\D/g, '');
@@ -311,7 +348,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
     const res = processSubscriptionCharge(profileUser.id, profileUser.email, { isRetry: true });
     setSubscription(res.subscription);
     if (res.success) {
-      setProStatus(true);
+      setProStatus?.(true);
       setBillingNotice({ type: 'success', text: 'Payment successful! Monthly PRO subscription has been restored.' });
     } else {
       setBillingNotice({
@@ -352,7 +389,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
   return (
     <div className="space-y-6 animate-fade-in pb-12">
-      {/* Return to Leaderboard Link (Only shown when inspecting someone else's public profile) */}
       {!isOwnProfile && (
         <div className="flex items-center justify-between border-b border-cinema-border/70 pb-3">
           <button
@@ -362,18 +398,40 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Leaderboard</span>
           </button>
-          <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300">
+          <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
             Viewing Public Cinephile Profile
           </span>
+        </div>
+      )}
+
+      {isOwnProfile && (subscription?.status === 'PAST_DUE' || subscription?.status === 'SUSPENDED') && activeTab !== 'billing' && (
+        <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border p-4 shadow-lg ${
+          subscription.status === 'SUSPENDED'
+            ? 'border-red-500/45 bg-red-500/10 text-red-200'
+            : 'border-amber-500/45 bg-amber-500/10 text-amber-200'
+        }`}>
+          <div className="flex items-center gap-2.5 text-xs font-bold">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>
+              {subscription.status === 'SUSPENDED'
+                ? 'Your PRO subscription is suspended due to failed billing retries.'
+                : `Your monthly PRO payment failed (${subscription.dunningNotice?.attempt || subscription.retryCount || 1}/3). Update your card or retry now.`}
+            </span>
+          </div>
+          <button
+            onClick={() => setActiveTab('billing')}
+            className="shrink-0 rounded-xl bg-gold px-3.5 py-1.5 text-xs font-black text-cinema-black hover:opacity-90 transition"
+          >
+            Open PRO & Billing
+          </button>
         </div>
       )}
 
       <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-6 sm:p-7 shadow-2xl">
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-start sm:items-center gap-5">
-            {/* Avatar Badge: Custom Photo OR Preset Avatar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-start sm:items-center gap-5 min-w-0">
             <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl overflow-hidden ${
               customAvatarUrl ? 'border-gold shadow-gold-glow bg-black/60' : avatar.bgGradient
             }`}>
@@ -386,8 +444,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               ) : (
                 <span className="text-4xl sm:text-5xl select-none">{avatar.emoji}</span>
               )}
-              <span className="absolute -bottom-1 rounded-full bg-cinema-black/95 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
-                Lv. {levelInfo.level}
+              <span className="absolute -bottom-1 rounded-full bg-cinema-black/95 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
+                Lv.{levelInfo.level}
               </span>
             </div>
 
@@ -397,33 +455,34 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   {profileUser.username}
                 </h2>
 
-                {/* Country Flag Badge (195 Sovereign Countries) */}
                 <span className="flex items-center gap-1.5 rounded-full bg-cinema-surface/90 border border-cinema-border px-2.5 py-0.5 text-xs font-bold text-slate-200" title={activeCountry.name}>
                   <span className="text-base">{activeCountry.flag}</span>
                   <span className="text-[11px] font-semibold">{activeCountry.name}</span>
                 </span>
 
                 {profileUser.isPro ? (
-                  <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-gold/25 to-amber-500/25 px-2.5 py-0.5 text-[10px] font-extrabold text-gold border border-gold/40 shadow-gold-glow">
+                  <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-gold/25 to-amber-500/25 px-2.5 py-0.5 text-[11px] font-extrabold text-gold border border-gold/40 shadow-gold-glow">
                     <Crown className="h-3 w-3 fill-gold" />
-                    PRO VIP ($3/mo)
+                    PRO VIP
                   </span>
                 ) : (
-                  <span className="rounded-full bg-cinema-border px-2.5 py-0.5 text-[10px] font-semibold text-cinema-muted">
+                  <span className="rounded-full bg-cinema-border px-2.5 py-0.5 text-[11px] font-semibold text-cinema-muted">
                     Cinephile
                   </span>
                 )}
 
-                <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold border ${levelInfo.badgeColor}`}>
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${levelInfo.badgeColor}`}>
                   {levelInfo.title}
                 </span>
               </div>
 
-              {(profileUser.firstName || profileUser.lastName) && (
-                <p className="text-xs font-bold text-slate-200">
-                  {profileUser.firstName} {profileUser.lastName}
-                  {profileUser.email && (
-                    <span className="text-cinema-muted font-normal ml-2">({profileUser.email})</span>
+              {(profileUser.firstName || profileUser.lastName || (isOwnProfile && profileUser.email)) && (
+                <p className="text-xs font-semibold text-slate-200">
+                  {`${profileUser.firstName || ''} ${profileUser.lastName || ''}`.trim()}
+                  {isOwnProfile && profileUser.email && (
+                    <span className={`text-cinema-muted font-normal ${profileUser.firstName || profileUser.lastName ? 'ml-2' : ''}`}>
+                      {profileUser.firstName || profileUser.lastName ? `• ${profileUser.email}` : profileUser.email}
+                    </span>
                   )}
                 </p>
               )}
@@ -438,77 +497,64 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 </p>
               )}
 
-              {/* Cinema Favorites Tags */}
-              <div className="flex items-center gap-2 flex-wrap pt-1 text-[11px]">
-                {profileUser.favoriteDirector && (
-                  <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2 py-0.5 text-cinema-muted">
-                    🎬 <strong className="text-slate-200">{profileUser.favoriteDirector}</strong>
-                  </span>
-                )}
-                {profileUser.favoriteMovie && (
-                  <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2 py-0.5 text-cinema-muted">
-                    🍿 <strong className="text-slate-200">{profileUser.favoriteMovie}</strong>
-                  </span>
-                )}
-                {profileUser.favoriteGenre && (
-                  <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2 py-0.5 text-cinema-muted">
-                    🎞️ <strong className="text-slate-200">{profileUser.favoriteGenre}</strong>
-                  </span>
-                )}
-              </div>
+              {(profileUser.favoriteDirector || profileUser.favoriteMovie || profileUser.favoriteGenre) && (
+                <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
+                  {profileUser.favoriteDirector && (
+                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
+                      🎬 <strong className="text-white">{profileUser.favoriteDirector}</strong>
+                    </span>
+                  )}
+                  {profileUser.favoriteMovie && (
+                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
+                      🍿 <strong className="text-white">{profileUser.favoriteMovie}</strong>
+                    </span>
+                  )}
+                  {profileUser.favoriteGenre && (
+                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
+                      🎞️ <strong className="text-white">{profileUser.favoriteGenre}</strong>
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
-            <div className="rounded-xl border border-cinema-border bg-cinema-card/80 p-3 text-center">
-              <span className="text-[10px] uppercase font-bold text-cinema-muted block">Total XP</span>
-              <span className="text-sm sm:text-base font-black text-gold">{levelInfo.totalXp.toLocaleString()}</span>
-            </div>
-
-            <div className="rounded-xl border border-cinema-border bg-cinema-card/80 p-3 text-center">
-              <span className="text-[10px] uppercase font-bold text-cinema-muted block">Streak</span>
-              <span className="text-sm sm:text-base font-black text-orange-400 flex items-center justify-center gap-1">
-                <Flame className="h-4 w-4 fill-orange-400" />
-                {activeStats?.streak || 0}d
-              </span>
-            </div>
-
-            <div className="rounded-xl border border-cinema-border bg-cinema-card/80 p-3 text-center">
-              <span className="text-[10px] uppercase font-bold text-cinema-muted block">Win Rate</span>
-              <span className="text-sm sm:text-base font-black text-emerald-400">{winRate}%</span>
-            </div>
-
-            <div className="rounded-xl border border-cinema-border bg-cinema-card/80 p-3 text-center">
-              <span className="text-[10px] uppercase font-bold text-cinema-muted block">Trophies</span>
-              <span className="text-sm sm:text-base font-black text-purple-300">
-                {trophyData.unlockedCount}
-              </span>
-            </div>
-          </div>
+          {isOwnProfile && (
+            <button
+              onClick={() => setActiveTab(activeTab === 'edit' ? 'overview' : 'edit')}
+              className={`self-start md:self-center shrink-0 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition ${
+                activeTab === 'edit'
+                  ? 'border-gold bg-gold text-cinema-black shadow-gold-glow'
+                  : 'border-cinema-border bg-cinema-surface text-white hover:border-gold hover:text-gold'
+              }`}
+            >
+              <Edit3 className="h-3.5 w-3.5" />
+              <span>{activeTab === 'edit' ? 'Viewing Editor' : 'Edit Profile'}</span>
+            </button>
+          )}
         </div>
 
-        {/* Cinema Level XP Progress Bar */}
         <div className="mt-6 pt-5 border-t border-cinema-border/60">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs mb-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-extrabold text-white">
                 Level {levelInfo.level} — <span className="text-gold">{levelInfo.title}</span>
               </span>
               {levelInfo.streakShieldActive && (
-                <span className="flex items-center gap-1 rounded-full bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-[10px] font-bold text-blue-300" title="Daily Streak Protected">
+                <span className="flex items-center gap-1 rounded-full bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-[11px] font-bold text-blue-300" title="Daily Streak Protected">
                   <Shield className="h-3 w-3 text-blue-400" />
                   Streak Shield
                 </span>
               )}
               {levelInfo.streakMultiplier > 1 && (
-                <span className="flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                <span className="flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
                   <Flame className="h-3 w-3 text-amber-400" />
                   1.5x XP Bonanza
                 </span>
               )}
             </div>
 
-            <div className="text-cinema-muted text-[11px]">
+            <div className="text-cinema-muted text-xs">
               <strong className="text-white font-mono">{levelInfo.currentLevelProgressXp.toLocaleString()}</strong>
               {' / '}
               <span className="font-mono">{levelInfo.neededForNext.toLocaleString()} XP to Level {levelInfo.level + 1}</span>
@@ -536,22 +582,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
           }`}
         >
           <User className="h-4 w-4" />
-          <span>Overview</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('trophies')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
-            activeTab === 'trophies'
-              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
-          }`}
-        >
-          <Trophy className="h-4 w-4" />
-          <span>Trophies</span>
-          <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300 font-mono">
-            {trophyData.unlockedCount}/{trophyData.totalCount}
-          </span>
+          <span>Overview & Stats</span>
         </button>
 
         <button
@@ -563,12 +594,27 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
           }`}
         >
           <History className="h-4 w-4" />
-          <span>Matches</span>
+          <span>Match History</span>
           {matchHistory.length > 0 && (
-            <span className="rounded-full bg-cinema-border px-1.5 py-0.2 text-[10px] text-slate-300 font-mono">
+            <span className="rounded-full bg-cinema-border px-1.5 py-0.5 text-[11px] text-slate-200 font-mono">
               {matchHistory.length}
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('trophies')}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+            activeTab === 'trophies'
+              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
+              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+          }`}
+        >
+          <Trophy className="h-4 w-4" />
+          <span>Achievements</span>
+          <span className="rounded-full bg-cinema-border px-1.5 py-0.5 text-[11px] text-slate-200 font-mono">
+            {trophyData.unlockedCount}/{trophyData.totalCount}
+          </span>
         </button>
 
         {isOwnProfile && (
@@ -581,30 +627,61 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             }`}
           >
             <CreditCard className="h-4 w-4" />
-            <span>Pro & Billing</span>
-            {subscription?.status === 'PAST_DUE' && (
-              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+            <span>PRO & Billing</span>
+            {(subscription?.status === 'PAST_DUE' || subscription?.status === 'SUSPENDED') && (
+              <span className={`h-2 w-2 rounded-full ${subscription.status === 'SUSPENDED' ? 'bg-red-400' : 'bg-amber-400'} animate-ping`} />
             )}
-          </button>
-        )}
-
-        {isOwnProfile && (
-          <button
-            onClick={() => setActiveTab('edit')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
-              activeTab === 'edit'
-                ? 'bg-gold text-cinema-black shadow-gold-glow'
-                : 'bg-cinema-surface/70 border border-cinema-border text-slate-200 hover:border-gold hover:text-gold'
-            }`}
-          >
-            <Edit3 className="h-4 w-4" />
-            <span>Edit Profile</span>
           </button>
         )}
       </div>
 
       {activeTab === 'overview' && (
         <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
+              <span className="text-xs font-semibold text-cinema-muted block">Total XP</span>
+              <span className="text-xl font-black text-gold mt-1 block">{levelInfo.totalXp.toLocaleString()} XP</span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">Level {levelInfo.level} {levelInfo.title}</span>
+            </div>
+
+            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
+              <span className="text-xs font-semibold text-cinema-muted block">Games Won</span>
+              <span className="text-xl font-black text-white mt-1 block">{activeStats?.gamesWon || 0}</span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">{activeStats?.gamesPlayed || 0} total played</span>
+            </div>
+
+            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
+              <span className="text-xs font-semibold text-cinema-muted block">Active Best Streak</span>
+              <span className="text-xl font-black text-orange-400 mt-1 flex items-center gap-1.5">
+                <Flame className="h-5 w-5 fill-orange-400" />
+                {bestDisplayStreak} {bestDisplayStreak === 1 ? 'Day' : 'Days'}
+              </span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">Record: {activeStats?.longestStreak || bestDisplayStreak}d</span>
+            </div>
+
+            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
+              <span className="text-xs font-semibold text-cinema-muted block">Win Rate</span>
+              <span className="text-xl font-black text-emerald-400 mt-1 block">{winRate}%</span>
+              <span className="text-[11px] text-slate-400 mt-0.5 block">{trophyData.unlockedCount} trophies earned</span>
+            </div>
+          </div>
+
+          {perGameStreaks.length > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              {perGameStreaks.map((mode) => (
+                <div key={mode.id} className="flex items-center justify-between rounded-xl border border-cinema-border/70 bg-cinema-surface/60 px-3.5 py-2.5">
+                  <span className="text-xs font-bold text-slate-200">{mode.label}</span>
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-extrabold ${
+                    mode.streak > 0 ? mode.accent : 'border-cinema-border bg-cinema-card text-cinema-muted'
+                  }`}>
+                    <Flame className="h-3 w-3" />
+                    {mode.streak}d
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
           <CinemaActivityHeatmap matchHistory={matchHistory} />
 
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
@@ -626,8 +703,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Full Name</span>
-                <span className="font-bold text-white text-sm">
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Full Name</span>
+                <span className="font-bold text-white text-sm mt-0.5 block">
                   {profileUser.firstName || profileUser.lastName
                     ? `${profileUser.firstName || ''} ${profileUser.lastName || ''}`.trim()
                     : 'Not Specified'}
@@ -635,23 +712,25 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Email Address</span>
-                <span className="font-bold text-white truncate block text-sm" title={profileUser.email}>
-                  {profileUser.email || 'guest@reelquest.io'}
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">
+                  {isOwnProfile ? 'Email Address' : 'Username'}
+                </span>
+                <span className="font-bold text-white truncate block text-sm mt-0.5" title={isOwnProfile ? profileUser.email : profileUser.username}>
+                  {isOwnProfile ? (profileUser.email || 'guest@reelquest.io') : profileUser.username}
                 </span>
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Nationality</span>
-                <span className="font-bold text-white flex items-center gap-1.5 text-sm">
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Nationality</span>
+                <span className="font-bold text-white flex items-center gap-1.5 text-sm mt-0.5">
                   <span className="text-base">{activeCountry.flag}</span>
                   <span>{activeCountry.name}</span>
                 </span>
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Subscription Tier</span>
-                <span className="font-extrabold text-sm flex items-center gap-1 text-gold">
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Subscription Tier</span>
+                <span className="font-extrabold text-sm flex items-center gap-1 text-gold mt-0.5">
                   <Crown className="h-3.5 w-3.5" />
                   <span>{profileUser.isPro ? 'Pro VIP ($3/mo)' : 'Free Member'}</span>
                 </span>
@@ -682,9 +761,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           )}
 
-          {/* Unlocked Trophies Showcase & Recent Matches Side-by-Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Trophies Showcase */}
             <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
                 <div className="flex items-center gap-2">
@@ -717,7 +794,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                           <h5 className="truncate text-xs font-bold text-white">{ach.title}</h5>
                           <p className="text-[11px] text-slate-300 truncate">{ach.description}</p>
                         </div>
-                        <span className={`text-[10px] font-extrabold uppercase shrink-0 ${tier.textColor}`}>
+                        <span className={`text-[11px] font-extrabold uppercase shrink-0 ${tier.textColor}`}>
                           {tier.points} PTS
                         </span>
                       </div>
@@ -731,7 +808,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               )}
             </div>
 
-            {/* Recent Matches Showcase */}
             <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
                 <div className="flex items-center gap-2">
@@ -779,16 +855,16 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                                 : m.gameMode === 'frame-sleuth'
                                 ? `Frame Sleuth: ${m.targetMovie?.title || 'Movie'}`
                                 : m.gameMode === 'box-office'
-                                ? `Box Office Clash`
+                                ? 'Box Office Clash'
                                 : `Beat Otara: ${m.startActor?.name || 'Star'} → ${m.targetActor?.name || 'Star'}`}
                             </h5>
-                            <span className="text-[10px] text-cinema-muted">
+                            <span className="text-[11px] text-cinema-muted">
                               {formatMatchDate(m.date || m.timestamp)} • {m.durationSeconds || 0}s
                             </span>
                           </div>
                         </div>
 
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-extrabold border ${
+                        <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${
                           isWin
                             ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
                             : 'bg-slate-700/40 border-slate-600/40 text-slate-300'
@@ -836,7 +912,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Game Mode Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {GAME_MODE_FILTERS.map(f => (
               <button
@@ -894,25 +969,24 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <h5 className="text-xs font-bold text-white truncate">{ach.title}</h5>
                         {isComingSoon ? (
-                          <span className="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-indigo-300 border border-indigo-500/30">
+                          <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-[11px] font-extrabold text-indigo-300 border border-indigo-500/30">
                             {ach.comingSoonTag || 'COMING SOON'}
                           </span>
                         ) : (
-                          <span className={`rounded px-1.5 py-0.5 text-[9px] font-extrabold uppercase ${tier.badgeBg}`}>
+                          <span className={`rounded px-2 py-0.5 text-[11px] font-extrabold uppercase ${tier.badgeBg}`}>
                             {tier.name} • {tier.points} PTS
                           </span>
                         )}
                       </div>
-                      <p className="mt-1 text-[11px] leading-relaxed text-slate-300">
+                      <p className="mt-1 text-xs leading-relaxed text-slate-300">
                         {ach.description}
                       </p>
                     </div>
                   </div>
 
-                  {/* Progress Bar for Locked */}
                   {!isComingSoon && !isUnlocked && ach.maxProgress > 1 && (
                     <div className="mt-3 pt-2.5 border-t border-cinema-border/40">
-                      <div className="flex justify-between text-[10px] text-cinema-muted mb-1">
+                      <div className="flex justify-between text-[11px] text-cinema-muted mb-1">
                         <span>Progress</span>
                         <span className="font-mono">{ach.progress || 0} / {ach.maxProgress}</span>
                       </div>
@@ -927,8 +1001,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
                   {isUnlocked && (
                     <div className="mt-3 pt-2 border-t border-cinema-border/40 flex items-center justify-end">
-                      <span className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-400">
-                        <Check className="h-3 w-3" />
+                      <span className="flex items-center gap-1 text-[11px] font-extrabold text-emerald-400">
+                        <Check className="h-3.5 w-3.5" />
                         UNLOCKED
                       </span>
                     </div>
@@ -941,35 +1015,40 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
       )}
 
       {activeTab === 'history' && (
-        <div className="space-y-6">
-          {/* History Mode Filter Pills */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {[
-              { id: 'all', label: 'All Modes' },
-              { id: 'daily', label: 'Beat Otara Daily' },
-              { id: 'spotle', label: 'Spotle' },
-              { id: 'frame-sleuth', label: 'Frame Sleuth' },
-              { id: 'box-office', label: 'Box Office Clash' },
-              { id: 'duels', label: '1v1 Duels' },
-              { id: 'archive', label: 'Archive Runs' }
-            ].map(f => (
-              <button
-                key={f.id}
-                onClick={() => setHistoryFilter(f.id)}
-                className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
-                  historyFilter === f.id
-                    ? 'bg-gold text-cinema-black shadow-gold-glow'
-                    : 'bg-cinema-surface border border-cinema-border text-cinema-muted hover:text-white'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {[
+                { id: 'all', label: 'All Modes' },
+                { id: 'daily', label: 'Beat Otara Daily' },
+                { id: 'spotle', label: 'Spotle' },
+                { id: 'frame-sleuth', label: 'Frame Sleuth' },
+                { id: 'box-office', label: 'Box Office Clash' },
+                { id: 'duels', label: '1v1 Duels' },
+                { id: 'archive', label: 'Archive Runs' }
+              ].map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setHistoryFilter(f.id)}
+                  className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                    historyFilter === f.id
+                      ? 'bg-gold text-cinema-black shadow-gold-glow'
+                      : 'bg-cinema-surface border border-cinema-border text-cinema-muted hover:text-white'
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            {historyLoading && (
+              <span className="text-xs text-cinema-muted">Syncing history...</span>
+            )}
           </div>
 
-          {filteredMatches.length > 0 ? (
+          {visibleMatches.length > 0 ? (
             <div className="space-y-3">
-              {filteredMatches.map((m, idx) => {
+              {visibleMatches.map((m, idx) => {
                 const isWin = m.won;
                 const isSpotle = m.gameMode === 'spotle';
                 const isFrameSleuth = m.gameMode === 'frame-sleuth';
@@ -986,46 +1065,46 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                         : 'border-cinema-border bg-cinema-surface/40 hover:border-cinema-border/80'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5">
+                    <div className="flex items-center justify-between gap-2 border-b border-cinema-border/40 pb-2.5 flex-wrap">
                       <div className="flex items-center gap-2">
                         {isBoxOffice ? (
-                          <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-300 border border-emerald-500/30">
+                          <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-300 border border-emerald-500/30">
                             <TrendingUp className="h-3 w-3 text-emerald-400" />
                             BOX OFFICE {m.subMode === 'streak' ? 'STREAK' : 'DAILY 5-ROUND'}
                           </span>
                         ) : isFrameSleuth ? (
-                          <span className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-violet-300 border border-violet-500/30">
+                          <span className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-violet-300 border border-violet-500/30">
                             <Camera className="h-3 w-3 text-violet-400" />
                             FRAME SLEUTH {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
                           </span>
                         ) : isSpotle ? (
-                          <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-500/30">
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-300 border border-amber-500/30">
                             <Film className="h-3 w-3 text-gold" />
                             SPOTLE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
                           </span>
                         ) : isDuel ? (
-                          <span className="flex items-center gap-1 rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-cyan-300 border border-cyan-500/30">
+                          <span className="flex items-center gap-1 rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-cyan-300 border border-cyan-500/30">
                             <Swords className="h-3 w-3" />
                             1v1 DUEL
                           </span>
                         ) : isArchive ? (
-                          <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-amber-300 border border-amber-500/30">
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-300 border border-amber-500/30">
                             <History className="h-3 w-3" />
                             ARCHIVE RUN
                           </span>
                         ) : (
-                          <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-[10px] font-extrabold text-gold border border-gold/30">
+                          <span className="flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-[11px] font-extrabold text-gold border border-gold/30">
                             <Calendar className="h-3 w-3" />
                             BEAT OTARA DAILY
                           </span>
                         )}
 
-                        <span className="text-[11px] text-cinema-muted">
+                        <span className="text-xs text-cinema-muted">
                           {formatMatchDate(m.date || m.timestamp)}
                         </span>
                       </div>
 
-                      <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-extrabold border ${
+                      <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold border ${
                         isWin
                           ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
                           : 'bg-slate-700/60 border-slate-600/50 text-slate-300'
@@ -1043,13 +1122,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                           </div>
                           <div>
                             <h4 className="text-xs font-bold text-white">Box Office Clash Run</h4>
-                            <span className="text-[10px] text-cinema-muted">
+                            <span className="text-[11px] text-cinema-muted">
                               {m.subMode === 'streak' ? 'Endless Streak Challenge' : 'Daily 5-Round Global Showdown'}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] uppercase font-bold text-cinema-muted block">Score</span>
+                          <span className="text-[11px] uppercase font-bold text-cinema-muted block">Score</span>
                           <span className="text-xs font-black text-emerald-400 font-mono">
                             {m.subMode === 'streak' ? `${m.hops || 0} 🔥` : `${m.hops || 0}/5`}
                           </span>
@@ -1074,7 +1153,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                               {m.targetMovie.title} {m.targetMovie.year ? `(${m.targetMovie.year})` : ''}
                             </h4>
                             {m.targetMovie.director && (
-                              <span className="text-[10px] text-cinema-muted truncate block">
+                              <span className="text-[11px] text-cinema-muted truncate block">
                                 Dir. {m.targetMovie.director}
                               </span>
                             )}
@@ -1082,7 +1161,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="text-[10px] uppercase font-bold text-cinema-muted block">
+                          <span className="text-[11px] uppercase font-bold text-cinema-muted block">
                             {isFrameSleuth ? 'Frames' : 'Guesses'}
                           </span>
                           <span className="text-xs font-black text-gold">
@@ -1107,7 +1186,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                           <span className="truncate text-xs font-bold text-white">{m.startActor?.name}</span>
                         </div>
 
-                        <div className="flex items-center gap-1 text-[11px] font-bold text-gold shrink-0 px-2">
+                        <div className="flex items-center gap-1 text-xs font-bold text-gold shrink-0 px-2">
                           <span>{m.hops} hops</span>
                           <ArrowRight className="h-3.5 w-3.5" />
                         </div>
@@ -1129,21 +1208,32 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                       </div>
                     )}
 
-                    <div className="mt-2.5 flex items-center justify-between text-[11px] text-cinema-muted">
+                    <div className="mt-2.5 flex items-center justify-between text-xs text-cinema-muted">
                       <span className="flex items-center gap-1 text-slate-300">
                         <Clock className="h-3.5 w-3.5 text-cinema-muted" />
                         <span>{m.durationSeconds || 0}s duration</span>
                       </span>
 
                       {m.optimalHops && (
-                        <span className="text-[10px] text-cinema-muted">
-                          (Par: {m.optimalHops} hops)
+                        <span className="text-[11px] text-cinema-muted">
+                          Par: {m.optimalHops} hops
                         </span>
                       )}
                     </div>
                   </div>
                 );
               })}
+
+              {filteredMatches.length > visibleMatchCount && (
+                <div className="pt-2 text-center">
+                  <button
+                    onClick={() => setVisibleMatchCount(prev => prev + 10)}
+                    className="rounded-xl border border-cinema-border bg-cinema-surface px-5 py-2.5 text-xs font-bold text-slate-200 hover:border-gold hover:text-gold transition"
+                  >
+                    Show More ({filteredMatches.length - visibleMatchCount} remaining)
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-16 text-cinema-muted space-y-2">
@@ -1198,7 +1288,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           )}
 
-          {/* Suspended Alert */}
           {subscription?.status === 'SUSPENDED' && (
             <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-5 shadow-xl space-y-3">
               <div className="flex items-center gap-2.5 text-red-400 font-extrabold text-sm">
@@ -1228,12 +1317,12 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
           <div className="rounded-2xl border border-gold/40 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 sm:p-6 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/60 pb-4">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-gold">
+                <span className="text-[11px] font-black uppercase tracking-wider text-gold">
                   Current Billing Plan
                 </span>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <h3 className="text-lg font-black text-white">ReelQuest Pro Monthly</h3>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase border ${
+                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase border ${
                     subscription?.status === 'ACTIVE'
                       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                       : subscription?.status === 'PAST_DUE'
@@ -1258,11 +1347,10 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
             </div>
 
-            {/* Next Billing Date & Renewal Status */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Next Billing Date</span>
-                <span className="font-bold text-white text-sm">
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Next Billing Date</span>
+                <span className="font-bold text-white text-sm mt-0.5 block">
                   {subscription?.currentPeriodEnd
                     ? formatMatchDate(subscription.currentPeriodEnd)
                     : 'N/A'}
@@ -1270,15 +1358,15 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Auto-Renewal</span>
-                <span className={`font-bold text-sm ${subscription?.cancelAtPeriodEnd ? 'text-rose-400' : 'text-emerald-400'}`}>
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Auto-Renewal</span>
+                <span className={`font-bold text-sm mt-0.5 block ${subscription?.cancelAtPeriodEnd ? 'text-rose-400' : 'text-emerald-400'}`}>
                   {subscription?.cancelAtPeriodEnd ? 'Cancels at Period End' : 'Active (Automatic)'}
                 </span>
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Default Charge Card</span>
-                <span className="font-bold text-white text-sm flex items-center gap-1.5 truncate">
+                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Default Charge Card</span>
+                <span className="font-bold text-white text-sm flex items-center gap-1.5 truncate mt-0.5">
                   <CreditCard className="h-4 w-4 text-gold shrink-0" />
                   <span className="truncate">
                     {getDefaultCard(subscription)
@@ -1309,7 +1397,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
           </div>
 
-          {/* Saved Cards / Payment Methods Management */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
               <div className="flex items-center gap-2">
@@ -1318,7 +1405,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
               <button
                 onClick={() => setShowCardModal(true)}
-                className="flex items-center gap-1 text-[11px] font-bold text-gold hover:underline"
+                className="flex items-center gap-1 text-xs font-bold text-gold hover:underline"
               >
                 + Add Card
               </button>
@@ -1339,21 +1426,21 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
-                          <div className="h-8 w-11 rounded-lg bg-black/60 border border-cinema-border/80 flex items-center justify-center font-bold text-[10px] text-white">
+                          <div className="h-8 w-12 rounded-lg bg-black/60 border border-cinema-border/80 flex items-center justify-center font-bold text-[11px] text-white">
                             {card.brand?.toUpperCase().slice(0, 4) || 'CARD'}
                           </div>
                           <div>
                             <span className="font-mono font-black text-sm text-white block">
                               •••• •••• •••• {card.last4}
                             </span>
-                            <span className="text-[10px] text-cinema-muted block">
+                            <span className="text-[11px] text-cinema-muted block">
                               Expires {String(card.expMonth).padStart(2, '0')}/{card.expYear} • {card.cardholderName}
                             </span>
                           </div>
                         </div>
 
                         {isDefault && (
-                          <span className="rounded-full bg-gold/20 border border-gold/40 px-2 py-0.5 text-[9px] font-black uppercase text-gold">
+                          <span className="rounded-full bg-gold/20 border border-gold/40 px-2.5 py-0.5 text-[11px] font-black uppercase text-gold">
                             DEFAULT
                           </span>
                         )}
@@ -1364,7 +1451,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                           <button
                             type="button"
                             onClick={() => handleSetDefaultCard(card.id)}
-                            className="text-[10px] font-bold text-gold hover:underline px-2 py-1 rounded hover:bg-gold/10 transition"
+                            className="text-[11px] font-bold text-gold hover:underline px-2 py-1 rounded hover:bg-gold/10 transition"
                           >
                             Set as Default
                           </button>
@@ -1397,14 +1484,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             )}
           </div>
 
-          {/* Billing & Invoice History Table */}
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-3">
             <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
               <div className="flex items-center gap-2">
                 <Receipt className="h-4 w-4 text-gold" />
                 <h3 className="text-sm font-extrabold text-white">Payment & Invoice History</h3>
               </div>
-              <span className="text-[10px] text-cinema-muted">
+              <span className="text-[11px] text-cinema-muted">
                 {subscription?.invoices?.length || 0} Invoices Recorded
               </span>
             </div>
@@ -1413,7 +1499,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead>
-                    <tr className="border-b border-cinema-border/60 text-cinema-muted text-[10px] uppercase font-bold">
+                    <tr className="border-b border-cinema-border/60 text-cinema-muted text-[11px] uppercase font-bold">
                       <th className="py-2.5 px-3">Invoice ID</th>
                       <th className="py-2.5 px-3">Date</th>
                       <th className="py-2.5 px-3">Description</th>
@@ -1430,19 +1516,19 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                         <td className="py-3 px-3 font-semibold text-white">{inv.description}</td>
                         <td className="py-3 px-3 font-mono font-extrabold text-gold">{inv.amount}</td>
                         <td className="py-3 px-3">
-                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-black uppercase border ${
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-black uppercase border ${
                             inv.status === 'PAID'
                               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
                               : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
                           }`}>
-                            {inv.status === 'PAID' ? <Check className="h-2.5 w-2.5" /> : <AlertTriangle className="h-2.5 w-2.5" />}
+                            {inv.status === 'PAID' ? <Check className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
                             {inv.status}
                           </span>
                         </td>
                         <td className="py-3 px-3 text-right">
                           <button
                             onClick={() => alert(`ReelQuest Electronic Receipt\nInvoice: ${inv.id}\nDate: ${inv.date}\nAmount: ${inv.amount}\nStatus: ${inv.status}\nCustomer: ${profileUser.email}`)}
-                            className="text-[11px] font-bold text-gold hover:underline"
+                            className="text-xs font-bold text-gold hover:underline"
                           >
                             View
                           </button>
@@ -1463,6 +1549,18 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
       {isOwnProfile && activeTab === 'edit' && (
         <form onSubmit={handleSaveProfile} className="space-y-6">
+          <div className="flex items-center justify-between rounded-2xl border border-gold/30 bg-gold/10 px-4 py-3">
+            <span className="text-xs font-bold text-gold">Editing Your Cinephile Passport</span>
+            <button
+              type="button"
+              onClick={() => setActiveTab('overview')}
+              className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-gold hover:text-white transition"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>Back to Overview</span>
+            </button>
+          </div>
+
           <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-cinema-border/60 pb-3">
               <div>
@@ -1488,7 +1586,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-5">
-              {/* Preview Box */}
               <div className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border-2 border-gold shadow-gold-glow bg-black/60 overflow-hidden">
                 {customAvatarUrl ? (
                   <img
@@ -1499,7 +1596,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 ) : (
                   <div className="text-center p-2 text-cinema-muted">
                     <User className="h-8 w-8 mx-auto opacity-50" />
-                    <span className="text-[9px] block mt-1">No Custom Photo</span>
+                    <span className="text-[11px] block mt-1">Preset Mode</span>
                   </div>
                 )}
               </div>
@@ -1573,8 +1670,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
                     <div className="w-full">
                       <h4 className="text-xs font-extrabold text-white truncate">{av.name}</h4>
-                      <span className="text-[10px] font-semibold text-gold block truncate">{av.title}</span>
-                      <p className="mt-1 text-[10px] text-cinema-muted line-clamp-2 leading-tight">
+                      <span className="text-[11px] font-semibold text-gold block truncate">{av.title}</span>
+                      <p className="mt-1 text-[11px] text-cinema-muted line-clamp-2 leading-tight">
                         {av.description}
                       </p>
                     </div>
@@ -1631,7 +1728,6 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 />
               </div>
 
-              {/* Searchable Sovereign Country Dropdown */}
               <div>
                 <CountrySelect
                   value={editCountryCode}
@@ -1695,7 +1791,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   className="w-full rounded-xl border border-cinema-border bg-cinema-surface px-3.5 py-2.5 text-xs text-white placeholder-cinema-muted focus:border-gold focus:outline-none"
                   placeholder="Share a short quote, your cinema philosophy, or what movies mean to you..."
                 />
-                <span className="text-[10px] text-cinema-muted text-right block mt-1">
+                <span className="text-[11px] text-cinema-muted text-right block mt-1">
                   {editBio.length} / 140 characters
                 </span>
               </div>

@@ -9,7 +9,34 @@ export const GAME_MODES = [
     subtitle: 'Cinema Oracle Duel',
     icon: GitFork,
     status: 'ACTIVE',
-    badge: 'LIVE',
+    badge: null,
+    hasStreak: true
+  },
+  {
+    id: 'spotle',
+    title: 'Spotle',
+    subtitle: 'Daily Movie Mystery',
+    icon: Film,
+    status: 'ACTIVE',
+    badge: null,
+    hasStreak: true
+  },
+  {
+    id: 'frame-sleuth',
+    title: 'Frame Sleuth',
+    subtitle: '6-Frame Mystery',
+    icon: Camera,
+    status: 'ACTIVE',
+    badge: null,
+    hasStreak: true
+  },
+  {
+    id: 'box-office',
+    title: 'Box Office',
+    subtitle: 'Higher or Lower',
+    icon: TrendingUp,
+    status: 'ACTIVE',
+    badge: null,
     hasStreak: true
   },
   {
@@ -19,34 +46,7 @@ export const GAME_MODES = [
     icon: Sparkles,
     status: 'ACTIVE',
     badge: 'PRO',
-    hasStreak: false // Custom Path Finder is a sandbox tool, not a game — no streak
-  },
-  {
-    id: 'spotle',
-    title: 'Spotle',
-    subtitle: 'Daily Movie Mystery',
-    icon: Film,
-    status: 'ACTIVE',
-    badge: 'NEW',
-    hasStreak: true
-  },
-  {
-    id: 'frame-sleuth',
-    title: 'Frame Sleuth',
-    subtitle: '6-Frame Mystery',
-    icon: Camera,
-    status: 'ACTIVE',
-    badge: 'NEW',
-    hasStreak: true
-  },
-  {
-    id: 'box-office',
-    title: 'Box Office',
-    subtitle: 'Higher or Lower',
-    icon: TrendingUp,
-    status: 'ACTIVE',
-    badge: 'NEW',
-    hasStreak: true
+    hasStreak: false
   }
 ];
 
@@ -56,8 +56,8 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
   return (
     <div className="w-full overflow-x-auto pb-1 scrollbar-none">
       <div className="flex items-center gap-2 border-b border-cinema-border/50 pb-3 min-w-max">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-cinema-muted mr-1 hidden sm:inline">
-          Game Modes:
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-1 hidden sm:inline">
+          Modes:
         </span>
 
         {GAME_MODES.map((mode) => {
@@ -68,36 +68,29 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
           return (
             <button
               key={mode.id}
+              type="button"
               onClick={() => onSelectMode(mode.id)}
-              className={`group flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+              className={`group flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
                 isActive
-                  ? 'border border-gold/50 bg-gold/15 text-gold shadow-gold-glow/20'
-                  : 'border border-cinema-border/60 bg-cinema-surface/60 text-slate-300 hover:border-cinema-muted hover:text-white'
+                  ? 'border border-gold/60 bg-gold/15 text-gold shadow-gold-glow/20'
+                  : 'border border-cinema-border/70 bg-cinema-surface/70 text-slate-300 hover:border-slate-500 hover:text-white'
               }`}
             >
-              <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-gold' : 'text-cinema-muted group-hover:text-slate-200'}`} />
+              <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-gold' : 'text-slate-400 group-hover:text-slate-200'}`} />
               <span>{mode.title}</span>
 
-              {mode.status === 'ACTIVE' ? (
-                <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider border ${
-                  mode.id === 'custom-path'
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-                }`}>
-                  {mode.badge}
-                </span>
-              ) : (
-                <span className="rounded-full bg-cinema-border/80 px-1.5 py-0.2 text-[9px] font-medium text-cinema-muted">
-                  Soon
+              {mode.badge === 'PRO' && (
+                <span className="rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-amber-300 border border-amber-500/35 leading-none">
+                  PRO
                 </span>
               )}
 
               {isAuthenticated && mode.hasStreak && mode.status === 'ACTIVE' && modeStreak > 0 && (
                 <span
-                  className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border border-orange-500/40 bg-orange-500/15 text-orange-400 shadow-sm transition"
+                  className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold border border-orange-500/40 bg-orange-500/15 text-orange-400 shadow-sm transition leading-none"
                   title={`${modeStreak} Day Streak in ${mode.title}`}
                 >
-                  <Flame className="h-3 w-3 fill-orange-400 text-orange-400 animate-pulse" />
+                  <Flame className="h-3 w-3 fill-orange-400 text-orange-400" />
                   <span>{modeStreak}d</span>
                 </span>
               )}
