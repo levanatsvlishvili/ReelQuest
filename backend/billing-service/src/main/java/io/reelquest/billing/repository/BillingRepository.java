@@ -97,11 +97,23 @@ public class BillingRepository {
         }
 
         Map<String, AttributeValue> item = response.item();
+        String uId = item.containsKey("userId") ? item.get("userId").s() :
+                (item.containsKey("PK") ? item.get("PK").s().replace("USER#", "") : userId);
+        String uName = item.containsKey("username") ? item.get("username").s() : "Cinephile";
+        String uEmail = item.containsKey("email") ? item.get("email").s() : uId + "@reelquest.io";
+        String tierStr = item.containsKey("tier") ? item.get("tier").s() : "FREE";
+        SubscriptionTier tier;
+        try {
+            tier = SubscriptionTier.valueOf(tierStr);
+        } catch (Exception e) {
+            tier = SubscriptionTier.FREE;
+        }
+
         return Optional.of(new UserProfile(
-                item.get("userId").s(),
-                item.get("username").s(),
-                item.get("email").s(),
-                SubscriptionTier.valueOf(item.getOrDefault("tier", AttributeValue.fromS("FREE")).s()),
+                uId,
+                uName,
+                uEmail,
+                tier,
                 item.containsKey("gamesPlayed") ? Integer.parseInt(item.get("gamesPlayed").n()) : 0,
                 item.containsKey("gamesWon") ? Integer.parseInt(item.get("gamesWon").n()) : 0,
                 item.containsKey("streak") ? Integer.parseInt(item.get("streak").n()) : 0,

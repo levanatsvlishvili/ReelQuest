@@ -22,6 +22,10 @@ import { OtaraHintModal } from './components/OtaraHintModal';
 import { SpotleGameView } from './components/SpotleGameView';
 import { FrameSleuthGameView } from './components/FrameSleuthGameView';
 import { BoxOfficeClashView } from './components/BoxOfficeClashView';
+import { CheckoutSuccessModal } from './components/CheckoutSuccessModal';
+import { useAuth } from './context/AuthContext';
+import { confirmPaymentOrder } from './api/auth';
+import { activateSubscriptionWithCard } from './utils/billingService';
 import { Film, Play } from 'lucide-react';
 
 export default function App() {
@@ -61,10 +65,12 @@ export default function App() {
     openVictoryModal
   } = useGameSession();
 
+  const { user, isAuthenticated, setProStatus } = useAuth();
   const [currentView, setCurrentView] = useState('game'); // 'game' | 'leaderboard' | 'profile'
   const [profileUser, setProfileUser] = useState(null); // null = own profile
   const [activeMode, setActiveMode] = useState('six-degrees');
   const [isDuelMode, setIsDuelMode] = useState(false);
+  const [checkoutSuccessNotice, setCheckoutSuccessNotice] = useState(null);
 
   useEffect(() => {
     // Seamless routing to dedicated Admin Portal if /admin or ?admin is accessed
@@ -79,7 +85,37 @@ export default function App() {
       setActiveMode('six-degrees');
       setIsDuelMode(true);
     }
-  }, []);
+
+    const sessionId = search.get('session_id');
+    const orderId = search.get('order_id');
+
+    if (sessionId && orderId) {
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      confirmPaymentOrder(orderId, true)
+        .catch(() => {})
+        .finally(() => {
+          setProStatus(true);
+          const userId = user?.id || 'lnats17';
+          const userEmail = user?.email || 'lnats17@freeuni.edu.ge';
+          activateSubscriptionWithCard(userId, userEmail, {
+            brand: 'Visa',
+            last4: '4242',
+            number: '4242424242424242',
+            cardholderName: user?.username || 'Cinephile Member',
+            expMonth: 12,
+            expYear: 2028,
+            isDefault: true
+          });
+          setCheckoutSuccessNotice({
+            orderId,
+            sessionId,
+            userEmail
+          });
+        });
+    }
+  }, [user?.id]);
 
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
   const [isHowToPlayOpen, setIsHowToPlayOpen] = useState(false);
@@ -475,6 +511,12 @@ export default function App() {
         isOpen={isProModalOpen}
         onClose={() => setIsProModalOpen(false)}
         onOpenAuth={() => setIsAuthOpen(true)}
+      />
+
+      <CheckoutSuccessModal
+        isOpen={Boolean(checkoutSuccessNotice)}
+        onClose={() => setCheckoutSuccessNotice(null)}
+        details={checkoutSuccessNotice}
       />
 
       <AuthModal

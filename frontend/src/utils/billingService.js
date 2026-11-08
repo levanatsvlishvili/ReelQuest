@@ -190,7 +190,7 @@ export function removePaymentMethod(userId, cardId) {
 export function processSubscriptionCharge(userId, userEmail, options = {}) {
   const current = getSubscription(userId, userEmail, true);
   const now = new Date();
-  const idempotencyKey = options.idempotencyKey || `idem_charge_${userId}_${now.toISOString().slice(0, 10)}`;
+  const idempotencyKey = options.idempotencyKey || `idem_charge_${userId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
   const idemKeyStore = getIdempotencyKeyMap(userId);
   try {
@@ -200,6 +200,7 @@ export function processSubscriptionCharge(userId, userEmail, options = {}) {
       return {
         success: keys[idempotencyKey].success,
         subscription: current,
+        invoiceId: keys[idempotencyKey].invoiceId,
         cached: true,
         message: 'Idempotent request recognized. Reusing previous transaction.'
       };
@@ -212,11 +213,13 @@ export function processSubscriptionCharge(userId, userEmail, options = {}) {
     ? current.cards.find(c => c.id === options.cardId)
     : getDefaultCard(current);
 
-  const cardDesc = cardToCharge
-    ? `${cardToCharge.brand} •••• ${cardToCharge.last4}`
+  const cardDataToUse = options.cardData || cardToCharge;
+  const cardDesc = cardDataToUse
+    ? `${cardDataToUse.brand || 'Card'} •••• ${cardDataToUse.last4 || '4242'}`
     : 'No Card on File';
 
-  const shouldDecline = options.forceDecline || (cardToCharge?.last4 === '0002');
+  const isDeclineCard = cardDataToUse?.last4 === '0002' || (typeof cardDataToUse?.number === 'string' && cardDataToUse.number.endsWith('0002'));
+  const shouldDecline = options.forceDecline || (options.forceSuccess === false) || isDeclineCard || !cardDataToUse;
 
   const invoiceId = `inv_${Date.now().toString().slice(-6)}`;
   let updatedSub;
