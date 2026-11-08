@@ -379,8 +379,20 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         map.put("role", item.containsKey("role") ? item.get("role").s() : "PLAYER");
         map.put("tier", item.containsKey("tier") ? item.get("tier").s() : "FREE");
         map.put("status", item.containsKey("status") ? item.get("status").s() : "ACTIVE");
-        map.put("streak", item.containsKey("streak") ? Integer.parseInt(item.get("streak").n()) : 0);
-        map.put("longestStreak", item.containsKey("longestStreak") ? Integer.parseInt(item.get("longestStreak").n()) : 0);
+        LocalDate todayUtc = LocalDate.now(ZoneOffset.UTC);
+        String todayStr = todayUtc.toString();
+        String yesterdayStr = todayUtc.minusDays(1).toString();
+        String lastCompletedDate = item.containsKey("lastCompletedDate") ? item.get("lastCompletedDate").s() : null;
+
+        int rawStreak = item.containsKey("streak") ? Integer.parseInt(item.get("streak").n()) : 0;
+        int activeStreak = rawStreak;
+        if (lastCompletedDate == null || (!lastCompletedDate.equals(todayStr) && !lastCompletedDate.equals(yesterdayStr))) {
+            activeStreak = 0;
+        }
+
+        map.put("streak", activeStreak);
+        map.put("longestStreak", item.containsKey("longestStreak") ? Integer.parseInt(item.get("longestStreak").n()) : rawStreak);
+        map.put("lastCompletedDate", lastCompletedDate != null ? lastCompletedDate : "");
         map.put("gamesPlayed", item.containsKey("gamesPlayed") ? Integer.parseInt(item.get("gamesPlayed").n()) : 0);
         map.put("gamesWon", item.containsKey("gamesWon") ? Integer.parseInt(item.get("gamesWon").n()) : 0);
         map.put("duelsWon", item.containsKey("duelsWon") ? Integer.parseInt(item.get("duelsWon").n()) : 0);

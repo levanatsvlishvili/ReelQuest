@@ -18,6 +18,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { calculateGameStreak } from '../api/auth';
 import { getTmdbImageUrl } from '../api/client';
 import { saveDetailedMatch } from '../api/matchHistory';
 import { recordLeaderboardScore } from '../api/leaderboardService';
@@ -43,6 +44,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
+  const boDailyStreak = calculateGameStreak('box-office', user?.id);
   const isToday = activeDate === todayStr;
 
   const [currentStreak, setCurrentStreak] = useState(0);
@@ -314,39 +316,34 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const activeDailyMatchup = dailyMatchups[dailyRound] || dailyMatchups[0];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 pb-12 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-cinema-border/70 pb-5">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  Box Office Clash
-                </h1>
-                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-300 border border-emerald-500/40">
-                  NEW
+    <div className="mx-auto max-w-4xl space-y-5 pb-12 animate-fade-in">
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm">
+            <TrendingUp className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-black tracking-tight text-white">
+                Box Office Clash
+              </h1>
+              {isAuthenticated && boDailyStreak > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-black text-orange-400 border border-orange-500/30">
+                  <Flame className="h-3 w-3 fill-orange-400" />
+                  <span>{boDailyStreak}d</span>
                 </span>
-                {isAuthenticated && (stats?.streak || 0) > 0 && (
-                  <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-black text-orange-400 border border-orange-500/30">
-                    <Flame className="h-3 w-3 fill-orange-400" />
-                    <span>{stats.streak}d Streak</span>
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-cinema-muted">
-                Which film dominated the global box office? Guess Higher or Lower!
-              </p>
+              )}
             </div>
+            <p className="text-xs text-slate-400">
+              Which film dominated the global box office? Guess Higher or Lower!
+            </p>
           </div>
         </div>
 
-        {/* Sub-Mode Switcher Tabs */}
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <div className="flex items-center rounded-xl border border-cinema-border bg-cinema-surface/90 p-1 shadow-sm">
             <button
+              type="button"
               onClick={() => {
                 playClick();
                 setSubMode('endless');
@@ -354,13 +351,14 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition ${
                 subMode === 'endless'
                   ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-cinema-muted hover:text-white'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <Flame className="h-3.5 w-3.5" />
-              <span>Endless Streak</span>
+              <span>Endless</span>
             </button>
             <button
+              type="button"
               onClick={() => {
                 playClick();
                 setSubMode('daily');
@@ -368,7 +366,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition ${
                 subMode === 'daily'
                   ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-cinema-muted hover:text-white'
+                  : 'text-slate-400 hover:text-white'
               }`}
             >
               <Calendar className="h-3.5 w-3.5" />
@@ -377,11 +375,12 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
           </div>
 
           <button
+            type="button"
             onClick={() => {
               playClick();
               setShowHowToPlay(true);
             }}
-            className="flex items-center gap-1.5 rounded-xl border border-cinema-border/80 bg-cinema-surface/80 p-2 text-xs font-bold text-slate-300 hover:border-emerald-500/60 hover:text-white transition shadow-sm"
+            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-cinema-border/80 bg-cinema-surface/80 text-xs font-bold text-slate-300 hover:border-emerald-500/60 hover:text-white transition shadow-sm"
             title="How to Play"
           >
             <HelpCircle className="h-4 w-4 text-emerald-400" />
@@ -397,35 +396,32 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               <span className="text-xs font-bold uppercase tracking-wider">Current Streak:</span>
               <span className="font-mono text-base font-black text-white">{currentStreak}</span>
             </div>
-            <div className="text-xs text-cinema-muted hidden sm:block">
+            <div className="text-xs text-slate-400 hidden sm:block">
               Best Streak: <strong className="text-gold font-mono">{bestStreak}</strong>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={handleStartNewEndless}
             className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            <span>Reset / New Game</span>
+            <span>New Run</span>
           </button>
         </div>
       ) : (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-cinema-border/70 bg-cinema-card/80 p-3 sm:p-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <DailyDateNavigator
-              currentDate={activeDate}
-              onSelectDate={(newDate) => {
-                playClick();
-                setActiveDate(newDate);
-              }}
-            />
-            <span className="text-xs font-bold text-slate-300 hidden sm:inline">
-              Daily Challenge #{activeDate}
-            </span>
-          </div>
+          <DailyDateNavigator
+            currentDate={activeDate}
+            onSelectDate={(newDate) => {
+              playClick();
+              setActiveDate(newDate);
+            }}
+            compact={true}
+            embedded={true}
+          />
 
-          {/* 5-Round Progress Dots */}
           <div className="flex items-center gap-1.5">
             {Array.from({ length: 5 }).map((_, idx) => {
               const guess = dailyGuesses[idx];
@@ -441,7 +437,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                         ? 'border-rose-500 bg-rose-500/20 text-rose-300'
                         : isCurrent
                           ? 'border-gold bg-gold/20 text-gold ring-2 ring-gold/30'
-                          : 'border-cinema-border/60 bg-cinema-surface/50 text-cinema-muted opacity-60'
+                          : 'border-cinema-border/60 bg-cinema-surface/50 text-slate-400 opacity-70'
                   }`}
                 >
                   {guess?.correct ? (
@@ -467,14 +463,12 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
           : dailyGuesses[dailyRound]?.correct ? 'CORRECT' : dailyRevealed ? 'WRONG' : null;
 
         return (
-          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 transition-all duration-300">
-            {/* VS Badge in the center */}
+          <div className="relative grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch transition-all duration-300">
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-30 hidden md:flex h-12 w-12 items-center justify-center rounded-full bg-cinema-card border-2 border-gold shadow-2xl text-gold font-black text-sm">
               VS
             </div>
 
-            <div className="relative overflow-hidden rounded-3xl border border-cinema-border/80 bg-cinema-card shadow-2xl flex flex-col justify-between min-h-[380px] sm:min-h-[440px] group">
-              {/* Background Poster Artwork */}
+            <div className="relative overflow-hidden rounded-3xl border border-cinema-border/80 bg-cinema-card shadow-2xl flex flex-col justify-between h-full min-h-[380px] sm:min-h-[430px] group">
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-30 transition duration-500 group-hover:scale-105"
                 style={{
@@ -485,11 +479,11 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40 z-10" />
 
-              <div className="relative z-20 p-5 sm:p-6 space-y-2">
-                <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-gold border border-gold/30">
+              <div className="relative z-20 p-5 sm:p-6 space-y-2 flex-1">
+                <span className="inline-block rounded-full bg-gold/20 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-gold border border-gold/30">
                   Benchmark Film
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-2">
                   {movieA?.title}
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -499,22 +493,21 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                 </div>
               </div>
 
-              {/* Bottom Revenue Display */}
-              <div className="relative z-20 p-5 sm:p-6 text-center space-y-1 border-t border-white/10 bg-black/60 backdrop-blur-md">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-cinema-muted block">
+              <div className="relative z-20 p-5 sm:p-6 text-center flex flex-col items-center justify-center min-h-[168px] space-y-1 border-t border-white/10 bg-black/65 backdrop-blur-md">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 block">
                   Worldwide Box Office Gross
                 </span>
                 <div className="text-2xl sm:text-4xl font-black font-mono text-gold drop-shadow-md">
                   {formatFullRevenue(movieA?.revenue)}
                 </div>
-                <span className="text-[10px] text-slate-400 font-semibold block">
+                <span className="text-xs text-slate-300 font-semibold block">
                   ({formatShortRevenue(movieA?.revenue)})
                 </span>
               </div>
             </div>
 
             <div
-              className={`relative overflow-hidden rounded-3xl border shadow-2xl flex flex-col justify-between min-h-[380px] sm:min-h-[440px] transition-all duration-300 ${
+              className={`relative overflow-hidden rounded-3xl border shadow-2xl flex flex-col justify-between h-full min-h-[380px] sm:min-h-[430px] transition-all duration-300 ${
                 isRevealed && lastResult === 'CORRECT'
                   ? 'border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20'
                   : isRevealed && lastResult === 'WRONG'
@@ -522,7 +515,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                     : 'border-cinema-border/80 bg-cinema-card'
               }`}
             >
-              {/* Background Poster Artwork */}
               <div
                 className="absolute inset-0 bg-cover bg-center opacity-30 transition duration-500"
                 style={{
@@ -533,11 +525,11 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-black/40 z-10" />
 
-              <div className="relative z-20 p-5 sm:p-6 space-y-2">
-                <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
+              <div className="relative z-20 p-5 sm:p-6 space-y-2 flex-1">
+                <span className="inline-block rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
                   The Contender
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                <h3 className="text-xl sm:text-2xl font-black text-white leading-tight line-clamp-2">
                   {movieB?.title}
                 </h3>
                 <div className="flex items-center gap-2 text-xs text-slate-300">
@@ -547,7 +539,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                 </div>
               </div>
 
-              <div className="relative z-20 p-5 sm:p-6 border-t border-white/10 bg-black/60 backdrop-blur-md flex flex-col items-center justify-center min-h-[160px]">
+              <div className="relative z-20 p-5 sm:p-6 border-t border-white/10 bg-black/65 backdrop-blur-md flex flex-col items-center justify-center min-h-[168px]">
                 {!isRevealed ? (
                   <div className="w-full space-y-3">
                     <span className="text-xs font-black uppercase tracking-wider text-slate-300 text-center block">
@@ -556,6 +548,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
 
                     <div className="grid grid-cols-2 gap-3 w-full">
                       <button
+                        type="button"
                         onClick={() => {
                           if (subMode === 'endless') handleEndlessGuess('HIGHER');
                           else handleDailyGuess('HIGHER');
@@ -564,10 +557,11 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                       >
                         <ArrowUpCircle className="h-6 w-6 text-white group-hover:scale-110 transition" />
                         <span className="text-sm font-black uppercase tracking-wider">HIGHER</span>
-                        <span className="text-[10px] text-emerald-200">More than {formatShortRevenue(movieA?.revenue)}</span>
+                        <span className="text-[11px] text-emerald-100">More than {formatShortRevenue(movieA?.revenue)}</span>
                       </button>
 
                       <button
+                        type="button"
                         onClick={() => {
                           if (subMode === 'endless') handleEndlessGuess('LOWER');
                           else handleDailyGuess('LOWER');
@@ -576,14 +570,13 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
                       >
                         <ArrowDownCircle className="h-6 w-6 text-white group-hover:scale-110 transition" />
                         <span className="text-sm font-black uppercase tracking-wider">LOWER</span>
-                        <span className="text-[10px] text-rose-200">Less than {formatShortRevenue(movieA?.revenue)}</span>
+                        <span className="text-[11px] text-rose-100">Less than {formatShortRevenue(movieA?.revenue)}</span>
                       </button>
                     </div>
                   </div>
                 ) : (
-                  /* Revealed Revenue Animation */
                   <div className="text-center space-y-2 animate-fade-in w-full">
-                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-cinema-muted block">
+                    <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-300 block">
                       Worldwide Box Office Gross
                     </span>
 
@@ -610,6 +603,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
 
                     {subMode === 'daily' && !dailyComplete && (
                       <button
+                        type="button"
                         onClick={handleNextDailyRound}
                         className="mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-gold hover:bg-gold/90 text-cinema-black font-black text-xs px-5 py-2.5 transition active:scale-95 shadow-md mx-auto"
                       >

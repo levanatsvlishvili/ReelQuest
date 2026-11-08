@@ -4,7 +4,6 @@ import {
   Search,
   Calendar,
   History,
-  RotateCcw,
   Sparkles,
   Trophy,
   ArrowUp,
@@ -14,11 +13,9 @@ import {
   Share2,
   Clock,
   Lightbulb,
-  ChevronLeft,
-  ChevronRight,
+  Lock,
   User,
   Star,
-  Info,
   Flag
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -28,6 +25,7 @@ import { recordLeaderboardScore } from '../api/leaderboardService';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
 import { SpotleArchiveModal } from './SpotleArchiveModal';
+import { DailyDateNavigator } from './DailyDateNavigator';
 import {
   playClick,
   playNodeConnect,
@@ -52,7 +50,7 @@ function CastMemberChip({ actor, isMatch }) {
       onClick={() => setShowTooltip((prev) => !prev)}
     >
       <span
-        className={`flex items-center justify-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-bold cursor-pointer transition select-none truncate w-full ${
+        className={`flex items-center justify-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-bold cursor-pointer transition select-none truncate w-full ${
           isMatch
             ? 'bg-black/50 text-emerald-300 border border-emerald-300/50 shadow-sm'
             : 'bg-black/25 text-slate-300 hover:text-white border border-white/5'
@@ -69,12 +67,12 @@ function CastMemberChip({ actor, isMatch }) {
           </div>
           <div className="mt-1">
             {isMatch ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-extrabold text-emerald-400 border border-emerald-500/30">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[11px] font-extrabold text-emerald-400 border border-emerald-500/30">
                 <Check className="h-2.5 w-2.5" />
                 Matched Star
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full bg-cinema-surface px-1.5 py-0.5 text-[9px] font-medium text-cinema-muted border border-cinema-border">
+              <span className="inline-flex items-center gap-1 rounded-full bg-cinema-surface px-2 py-0.5 text-[11px] font-medium text-cinema-muted border border-cinema-border">
                 Different Cast
               </span>
             )}
@@ -389,133 +387,76 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
   return (
     <div className="space-y-4 animate-fade-in max-w-4xl mx-auto pb-12">
-      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
-        {/* Brand & Mode Tag */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber-600 text-cinema-black shadow-gold-glow">
+      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-gold to-amber-600 text-cinema-black shadow-gold-glow">
             <Film className="h-5 w-5 fill-cinema-black" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-white">
-                Spotle <span className="text-gold">Cinema</span>
-              </h1>
-              <span className="rounded-full bg-gold/15 px-2 py-0.2 text-[9px] font-extrabold uppercase text-gold border border-gold/30">
-                DAILY PUZZLE
-              </span>
-            </div>
-            <p className="text-[11px] text-cinema-muted">
+            <h1 className="text-lg font-black tracking-tight text-white">
+              Spotle <span className="text-gold">Cinema</span>
+            </h1>
+            <p className="text-xs text-slate-400">
               Guess the secret film in 10 tries using attribute clue tiles.
             </p>
           </div>
         </div>
 
-        {/* Date Controls & Legend Toggle */}
-        <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={() => shiftDay(-1)}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white transition active:scale-95"
-            title="Previous Day"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-
-          <div className="flex items-center gap-1.5 rounded-lg border border-cinema-border bg-cinema-black/70 px-2.5 py-1 text-xs">
-            <Calendar className="h-3 w-3 text-gold shrink-0" />
-            <span className="font-extrabold text-white text-[11px]">
-              {new Date(activeDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric'
-              })}
-            </span>
-            {isToday && (
-              <span className="text-[8px] font-bold uppercase text-emerald-400">
-                • Live
-              </span>
-            )}
-          </div>
-
-          <button
-            onClick={() => shiftDay(1)}
-            disabled={isToday}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:border-gold/50 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition active:scale-95"
-            title="Next Day"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-
-          {!isToday && (
-            <button
-              onClick={() => {
-                playClick();
-                setActiveDate(todayStr);
-              }}
-              className="flex items-center gap-1 rounded-lg border border-gold/40 bg-gold/15 px-2.5 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95"
-              title="Return to Today"
-            >
-              <RotateCcw className="h-3 w-3" />
-              <span className="hidden sm:inline text-[11px]">Today</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              playClick();
-              setIsArchiveModalOpen(true);
-            }}
-            className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1 text-xs font-semibold text-slate-200 hover:border-gold/50 hover:text-gold transition active:scale-95"
-            title="Archive Calendar"
-          >
-            <History className="h-3 w-3" />
-            <span className="hidden sm:inline text-[11px]">Archive</span>
-          </button>
-
-          <button
-            onClick={() => setShowLegend((prev) => !prev)}
-            className="flex items-center justify-center h-8 w-8 rounded-lg border border-cinema-border bg-cinema-surface text-slate-300 hover:text-gold transition"
-            title="How to Play / Clue Legend"
-          >
-            <Info className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <DailyDateNavigator
+          currentDate={activeDate}
+          onSelectDate={(newDate) => {
+            playClick();
+            setActiveDate(newDate);
+          }}
+          onPrevDay={() => shiftDay(-1)}
+          onNextDay={() => shiftDay(1)}
+          onResetToToday={() => {
+            playClick();
+            setActiveDate(todayStr);
+          }}
+          onOpenArchive={() => {
+            playClick();
+            setIsArchiveModalOpen(true);
+          }}
+          onOpenHowToPlay={() => setShowLegend((prev) => !prev)}
+          embedded={true}
+        />
       </div>
 
-      {/* CLUE LEGEND MODAL / POPDOWN (HOW TO PLAY)                             */}
       {showLegend && (
         <div className="rounded-xl border border-gold/30 bg-cinema-card/95 p-3.5 text-xs text-slate-300 shadow-xl space-y-2 animate-fade-in">
           <div className="flex items-center justify-between border-b border-cinema-border/50 pb-2">
-            <span className="font-black text-white uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <span className="font-black text-white uppercase tracking-wider text-xs flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-gold" />
               Spotle Tile Guide
             </span>
-            <button onClick={() => setShowLegend(false)} className="text-cinema-muted hover:text-white">
+            <button onClick={() => setShowLegend(false)} className="text-slate-400 hover:text-white">
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-[11px]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
             <div className="flex items-center gap-2">
-              <span className="h-5 w-5 rounded bg-emerald-600 font-black text-white flex items-center justify-center text-[10px]">🟩</span>
+              <span className="h-5 w-5 rounded bg-emerald-600 font-black text-white flex items-center justify-center text-[11px]">🟩</span>
               <span><strong>Green:</strong> Exact match for this attribute</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-5 w-5 rounded bg-amber-600 font-black text-white flex items-center justify-center text-[10px]">🟨</span>
+              <span className="h-5 w-5 rounded bg-amber-600 font-black text-white flex items-center justify-center text-[11px]">🟨</span>
               <span><strong>Yellow:</strong> Close (Year within 3y, partial cast/genre)</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="h-5 w-5 rounded bg-[#212534] font-black text-slate-300 flex items-center justify-center text-[10px]">⬛</span>
+              <span className="h-5 w-5 rounded bg-[#212534] font-black text-slate-300 flex items-center justify-center text-[11px]">⬛</span>
               <span><strong>Dark:</strong> No match</span>
             </div>
           </div>
-          <p className="text-[10px] text-cinema-muted pt-1 border-t border-cinema-border/40">
+          <p className="text-[11px] text-slate-400 pt-1 border-t border-cinema-border/40">
             Arrows (<strong>↑ Newer / Higher</strong> or <strong>↓ Older / Lower</strong>) guide your release year, score, and runtime.
           </p>
         </div>
       )}
 
       {gameStatus === 'PLAYING' && (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {/* Search Input Bar */}
             <div className="relative z-20 flex-1 min-w-0">
               <div className="relative rounded-2xl border-2 border-gold/50 bg-cinema-card/95 p-1.5 sm:p-2 shadow-gold-glow/20 focus-within:border-gold focus-within:shadow-gold-glow transition flex items-center gap-2">
                 <div className="flex items-center gap-2.5 px-3 flex-1 min-w-0">
@@ -532,12 +473,12 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     onFocus={() => setDropdownOpen(true)}
                     onKeyDown={handleKeyDown}
                     placeholder={`Type a movie title (Guess ${guesses.length + 1} of ${MAX_GUESSES})...`}
-                    className="w-full bg-transparent py-2 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
+                    className="w-full bg-transparent py-2 text-sm sm:text-base font-semibold text-white placeholder-slate-400 focus:outline-none"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="rounded-lg p-1 text-cinema-muted hover:text-white"
+                      className="rounded-lg p-1 text-slate-400 hover:text-white"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -557,7 +498,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                 </button>
               </div>
 
-              {/* Suggestions Dropdown */}
               {dropdownOpen && suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto z-40">
                   {suggestions.map((movie, idx) => {
@@ -585,14 +525,14 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="flex h-full w-full items-center justify-center text-[7px] text-cinema-muted">
+                              <div className="flex h-full w-full items-center justify-center text-[11px] text-slate-400">
                                 FILM
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
                             <h4 className="text-xs sm:text-sm font-extrabold truncate text-white">{movie.title}</h4>
-                            <p className="text-[10px] sm:text-[11px] text-cinema-muted truncate">
+                            <p className="text-[11px] text-slate-400 truncate">
                               {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
                             </p>
                           </div>
@@ -600,9 +540,9 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
                         <div className="shrink-0 pl-2">
                           {alreadyGuessed ? (
-                            <span className="text-[9px] uppercase font-bold text-cinema-muted">Guessed</span>
+                            <span className="text-[11px] uppercase font-bold text-slate-400">Guessed</span>
                           ) : (
-                            <span className="rounded-lg bg-gold/15 px-2 py-0.5 text-[9px] font-extrabold text-gold border border-gold/30">
+                            <span className="rounded-lg bg-gold/15 px-2 py-0.5 text-[11px] font-extrabold text-gold border border-gold/30">
                               Select
                             </span>
                           )}
@@ -630,78 +570,58 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               </button>
             </div>
           </div>
-        </div>
-      )}
 
-      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/85 p-3.5 sm:p-4 shadow-xl space-y-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-gold fill-gold" />
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider">
-              Mystery Clues
-            </h3>
-          </div>
-          <span className="text-[10px] text-cinema-muted font-bold">
-            {isPro ? '🌟 PRO: All Clues Unlocked' : 'Unlocks at Guess 3 & 6'}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {/* Clue 1: Tagline */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                Clue #1: Tagline
-              </span>
-              <span className="text-[9px] text-cinema-muted">Unlock: 3 Guesses</span>
-            </div>
-
+          <div className="flex flex-wrap items-center gap-2">
             {revealedClues.tagline ? (
-              <p className="text-xs text-slate-200 italic font-medium leading-relaxed">
-                „{targetMovie.tagline || targetMovie.overview.slice(0, 90) + '...'}“
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/10 px-3.5 py-2 text-xs">
+                <Lightbulb className="h-3.5 w-3.5 text-gold shrink-0" />
+                <span className="font-bold text-gold">Tagline:</span>
+                <span className="text-slate-100 italic">
+                  &ldquo;{targetMovie.tagline || targetMovie.overview.slice(0, 90) + '...'}&rdquo;
+                </span>
+              </div>
             ) : canUnlockTagline ? (
               <button
+                type="button"
                 onClick={() => handleUnlockClue('tagline')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-gold/50 bg-gold/15 py-1 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
+                className="inline-flex items-center gap-2 rounded-xl border border-gold/50 bg-gold/15 px-3.5 py-2 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition active:scale-95"
               >
-                <span>Reveal Movie Tagline</span>
+                <Lightbulb className="h-3.5 w-3.5" />
+                <span>Reveal Tagline Clue</span>
               </button>
             ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{3 - guesses.length} more guesses</strong>.
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-cinema-border/80 bg-cinema-surface/80 px-3.5 py-2 text-xs text-slate-400">
+                <Lock className="h-3.5 w-3.5 text-slate-500" />
+                <span>Tagline Clue unlocks in <strong className="text-slate-200">{3 - guesses.length}</strong> guesses</span>
+              </div>
             )}
-          </div>
-
-          {/* Clue 2: Star Actor */}
-          <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/70 p-2.5 sm:p-3 space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">
-                Clue #2: Lead Co-Star
-              </span>
-              <span className="text-[9px] text-cinema-muted">Unlock: 6 Guesses</span>
-            </div>
 
             {revealedClues.cast ? (
-              <p className="text-xs text-slate-200 font-medium">
-                Starring <strong className="text-white">{targetMovie.cast[0]}</strong> alongside <strong className="text-white">{targetMovie.cast[1]}</strong>
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-3.5 py-2 text-xs">
+                <User className="h-3.5 w-3.5 text-indigo-300 shrink-0" />
+                <span className="font-bold text-indigo-300">Cast:</span>
+                <span className="text-slate-100 font-semibold">
+                  {targetMovie.cast[0]} &amp; {targetMovie.cast[1]}
+                </span>
+              </div>
             ) : canUnlockCast ? (
               <button
+                type="button"
                 onClick={() => handleUnlockClue('cast')}
-                className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/50 bg-indigo-500/15 py-1 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition"
+                className="inline-flex items-center gap-2 rounded-xl border border-indigo-500/50 bg-indigo-500/15 px-3.5 py-2 text-xs font-bold text-indigo-300 hover:bg-indigo-600 hover:text-white transition active:scale-95"
               >
-                <span>Reveal Lead Co-Star</span>
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Reveal Lead Co-Star Clue</span>
               </button>
             ) : (
-              <p className="text-xs text-cinema-muted">
-                Locked. Make <strong>{6 - guesses.length} more guesses</strong>.
-              </p>
+              <div className="inline-flex items-center gap-2 rounded-xl border border-cinema-border/80 bg-cinema-surface/80 px-3.5 py-2 text-xs text-slate-400">
+                <Lock className="h-3.5 w-3.5 text-slate-500" />
+                <span>Lead Cast Clue unlocks in <strong className="text-slate-200">{6 - guesses.length}</strong> guesses</span>
+              </div>
             )}
           </div>
         </div>
-      </div>
+      )}
 
       <div className="w-full overflow-x-auto pb-4 scrollbar-none perspective-1000">
         <div className="min-w-[760px] max-w-4xl mx-auto space-y-2">
@@ -763,13 +683,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     )}
                   </div>
                   <div className="min-w-0 flex-1 pr-1">
-                    <span className="text-[9px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
+                    <span className="text-[11px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
                       #{attemptNum}
                     </span>
                     <h4 className="text-xs font-black truncate leading-tight text-white">
                       {g.guessedMovie.title}
                     </h4>
-                    <span className="text-[10px] text-slate-300 block truncate mt-0.5">
+                    <span className="text-[11px] text-slate-300 block truncate mt-0.5">
                       {g.guessedMovie.year}
                     </span>
                   </div>
@@ -790,7 +710,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                     {a.director.value}
                   </span>
                   {a.director.status === 'EXACT' && (
-                    <span className="mt-1 flex items-center gap-0.5 text-[9px] font-extrabold text-emerald-200 bg-black/30 px-1.5 py-0.5 rounded-full">
+                    <span className="mt-1 flex items-center gap-0.5 text-[11px] font-extrabold text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full">
                       <Check className="h-2.5 w-2.5" /> Match
                     </span>
                   )}
@@ -814,17 +734,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </span>
                   <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.year.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowUp className="h-3 w-3 animate-bounce" /> Newer
                       </span>
                     )}
                     {a.year.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowDown className="h-3 w-3 animate-bounce" /> Older
                       </span>
                     )}
                     {a.year.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
                         <Check className="h-3 w-3" /> Exact
                       </span>
                     )}
@@ -850,7 +770,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                       return (
                         <span
                           key={gIdx}
-                          className={`rounded px-1.5 py-0.5 text-[9px] font-black truncate max-w-[85px] ${
+                          className={`rounded px-1.5 py-0.5 text-[11px] font-black truncate max-w-[92px] ${
                             isMatch
                               ? 'bg-black/50 text-emerald-300 border border-emerald-300/40 shadow-sm'
                               : 'bg-black/25 text-slate-300 border border-white/5'
@@ -909,17 +829,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </div>
                   <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.rating.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowUp className="h-3 w-3" /> Higher
                       </span>
                     )}
                     {a.rating.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowDown className="h-3 w-3" /> Lower
                       </span>
                     )}
                     {a.rating.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
                         <Check className="h-3 w-3" /> Match
                       </span>
                     )}
@@ -944,17 +864,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   </span>
                   <div className="flex items-center gap-1 mt-1 font-black text-xs">
                     {a.runtime.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowUp className="h-3 w-3" /> Longer
                       </span>
                     )}
                     {a.runtime.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
                         <ArrowDown className="h-3 w-3" /> Shorter
                       </span>
                     )}
                     {a.runtime.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[10px]">
+                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
                         <Check className="h-3 w-3" /> Match
                       </span>
                     )}
@@ -1025,7 +945,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                 className="h-20 w-14 rounded-lg object-cover border border-gold/40 shrink-0"
               />
               <div className="min-w-0 space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-gold block">
+                <span className="text-[11px] font-extrabold uppercase text-gold block">
                   {targetMovie.genres.join(' • ')}
                 </span>
                 <p className="text-xs text-slate-300 line-clamp-3 leading-snug">

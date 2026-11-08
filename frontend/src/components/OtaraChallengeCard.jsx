@@ -99,19 +99,17 @@ export function OtaraChallengeCard({
                 <Sparkles className="h-3 w-3 fill-gold animate-pulse" />
                 Otara
               </span>
-              <span className="text-[9px] text-cinema-muted block">The Cinema Oracle</span>
+              <span className="text-[11px] text-slate-400 block">The Cinema Oracle</span>
             </div>
           </div>
 
-          {/* Dialog & Challenge Briefing */}
           <div className="flex-1 space-y-4 text-center lg:text-left">
-            {/* Speech bubble */}
             <div className="relative rounded-2xl border border-gold/40 bg-cinema-black/60 p-4 sm:p-5 shadow-inner">
               <div className="flex items-center gap-2 mb-1 justify-center lg:justify-start">
-                <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-gold border border-gold/40">
+                <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-widest text-gold border border-gold/40">
                   Otara's Challenge
                 </span>
-                <span className="text-xs text-cinema-muted">Daily Hollywood Duel</span>
+                <span className="text-xs text-slate-400">Daily Hollywood Duel</span>
               </div>
 
               <h2 className="text-base sm:text-xl font-extrabold text-white leading-snug">
@@ -122,17 +120,16 @@ export function OtaraChallengeCard({
               </p>
             </div>
 
-            {/* Target Actor Matchup Pill */}
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-1">
               <div className="flex items-center gap-2 rounded-xl border border-cinema-border bg-cinema-surface/80 px-3 py-1.5 text-xs text-slate-200">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted">Start:</span>
+                <span className="text-[11px] uppercase font-bold text-slate-400">Start:</span>
                 <span className="font-bold text-white">{challenge.startActor?.name}</span>
               </div>
 
               <ArrowRight className="h-4 w-4 text-gold shrink-0 hidden sm:block" />
 
               <div className="flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/10 px-3 py-1.5 text-xs text-gold">
-                <span className="text-[10px] uppercase font-bold text-gold/80">Target:</span>
+                <span className="text-[11px] uppercase font-bold text-gold/80">Target:</span>
                 <span className="font-extrabold text-white">{challenge.targetActor?.name}</span>
               </div>
 
@@ -190,7 +187,7 @@ export function OtaraChallengeCard({
 
           <div className="flex-1 text-center sm:text-left space-y-1">
             <div className="flex items-center gap-2 justify-center sm:justify-start">
-              <span className="text-[10px] font-black uppercase tracking-wider text-gold flex items-center gap-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-gold flex items-center gap-1">
                 <Sparkles className="h-3 w-3 fill-gold animate-pulse" />
                 {isImpressed ? '🌟 Otara is Impressed!' : "🤝 Otara's Verdict"}
               </span>
@@ -298,7 +295,7 @@ export function OtaraChallengeCard({
                 'Otara is Watching'
               )}
             </span>
-            <span className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold tracking-wider border ${
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-extrabold tracking-wider border ${
               activeEmotion === 'IMPRESSED'
                 ? 'bg-gold/20 border-gold/40 text-gold'
                 : activeEmotion === 'ENCOURAGING'
@@ -307,7 +304,7 @@ export function OtaraChallengeCard({
             }`}>
               {activeEmotion === 'OBSERVING' ? 'LIVE EYE TRACKING' : activeEmotion}
             </span>
-            <span className="hidden sm:inline-block rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[9px] font-bold text-gold">
+            <span className="hidden sm:inline-block rounded-full bg-gold/15 border border-gold/30 px-2.5 py-0.5 text-[11px] font-bold text-gold">
               ORACLE
             </span>
           </div>

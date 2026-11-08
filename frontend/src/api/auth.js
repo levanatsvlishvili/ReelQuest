@@ -1,4 +1,4 @@
-import { saveDetailedMatch } from './matchHistory';
+import { saveDetailedMatch, getStoredMatchHistory } from './matchHistory';
 
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
 const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
@@ -242,6 +242,39 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
   return streak;
 }
 
+export function calculateGameStreak(gameMode, userId, todayStr = new Date().toISOString().slice(0, 10)) {
+  if (!userId || userId === 'guest') return 0;
+
+  try {
+    const history = getStoredMatchHistory(userId);
+    if (!Array.isArray(history) || history.length === 0) return 0;
+
+    let targetMode = gameMode;
+    if (gameMode === 'six-degrees' || gameMode === 'beat-otara') targetMode = 'six-degrees';
+
+    const dailyWins = history
+      .filter(m => {
+        const modeMatches = m.gameMode === targetMode || (targetMode === 'six-degrees' && (!m.gameMode || m.gameMode === 'six-degrees'));
+        const isDailyWin = m.won && (m.subMode === 'daily' || !m.subMode);
+        return modeMatches && isDailyWin;
+      })
+      .map(m => m.date)
+      .filter(Boolean);
+
+    if (targetMode === 'six-degrees') {
+      const stats = getUserStats(userId);
+      if (Array.isArray(stats?.dailyWins)) {
+        dailyWins.push(...stats.dailyWins);
+      }
+    }
+
+    const uniqueWins = Array.from(new Set(dailyWins));
+    return calculateStreak(uniqueWins, todayStr);
+  } catch {
+    return 0;
+  }
+}
+
 export function getUserStats(userId) {
   if (!userId || userId === 'guest') {
     return {
@@ -270,10 +303,12 @@ export function getUserStats(userId) {
           .map(h => h.date);
       }
       const calculatedStreak = calculateStreak(dailyWins, todayStr);
+      const longestStreak = Math.max(parsed.longestStreak || 0, parsed.streak || 0, calculatedStreak);
       return {
         ...parsed,
         dailyWins,
-        streak: Math.max(calculatedStreak, parsed.streak || 0)
+        streak: calculatedStreak,
+        longestStreak
       };
     }
   } catch {

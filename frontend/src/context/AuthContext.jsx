@@ -46,10 +46,19 @@ export function AuthProvider({ children }) {
             }
             setStats(prev => {
               const localStreak = prev?.streak ?? 0;
-              const profileStreak = profile.streak ?? 0;
+              let profileStreak = profile.streak ?? 0;
+              if (profile.lastCompletedDate) {
+                const today = new Date().toISOString().slice(0, 10);
+                const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+                if (profile.lastCompletedDate !== today && profile.lastCompletedDate !== yesterday) {
+                  profileStreak = 0;
+                }
+              }
+              const activeStreak = localStreak > 0 ? localStreak : profileStreak;
               return {
                 ...prev,
-                streak: Math.max(localStreak, profileStreak),
+                streak: activeStreak,
+                longestStreak: Math.max(prev?.longestStreak || 0, profile.longestStreak || 0, activeStreak),
                 gamesPlayed: profile.gamesPlayed ?? prev?.gamesPlayed ?? 0,
                 gamesWon: profile.gamesWon ?? prev?.gamesWon ?? 0,
                 bestHops: profile.bestHops ?? prev?.bestHops ?? 0,
@@ -92,8 +101,18 @@ export function AuthProvider({ children }) {
           if (profile.tier === 'PRO') {
             setProStatus(true);
           }
+          let profileStreak = profile.streak ?? 0;
+          if (profile.lastCompletedDate) {
+            const today = new Date().toISOString().slice(0, 10);
+            const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+            if (profile.lastCompletedDate !== today && profile.lastCompletedDate !== yesterday) {
+              profileStreak = 0;
+            }
+          }
+          const activeStreak = (initialStats.streak || 0) > 0 ? initialStats.streak : profileStreak;
           setStats({
-            streak: Math.max(initialStats.streak || 0, profile.streak || 0),
+            streak: activeStreak,
+            longestStreak: Math.max(initialStats.longestStreak || 0, profile.longestStreak || 0, activeStreak),
             gamesPlayed: typeof profile.gamesPlayed === 'number' ? profile.gamesPlayed : (initialStats.gamesPlayed || 0),
             gamesWon: typeof profile.gamesWon === 'number' ? profile.gamesWon : (initialStats.gamesWon || 0),
             bestHops: typeof profile.bestHops === 'number' ? profile.bestHops : (initialStats.bestHops || 0),

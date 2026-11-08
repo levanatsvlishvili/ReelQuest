@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Film, User, Star, Search, Sparkles, X, RotateCcw } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 
@@ -18,30 +18,49 @@ export function ChainBuilder({
   previousActor = null
 }) {
   const [movieFilter, setMovieFilter] = useState('');
+  const [movieSort, setMovieSort] = useState('popular');
   const [castFilter, setCastFilter] = useState('');
+  const [castSort, setCastSort] = useState('popular');
 
-  const filteredMovies = availableMovies.filter(m =>
-    m.title.toLowerCase().includes(movieFilter.toLowerCase())
-  );
+  const filteredMovies = useMemo(() => {
+    const query = movieFilter.toLowerCase().trim();
+    const list = availableMovies.filter((m) =>
+      m.title.toLowerCase().includes(query)
+    );
+    if (movieSort === 'newest') {
+      return [...list].sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+    }
+    if (movieSort === 'az') {
+      return [...list].sort((a, b) => a.title.localeCompare(b.title));
+    }
+    return list;
+  }, [availableMovies, movieFilter, movieSort]);
 
-  const filteredCast = availableCast.filter(a =>
-    a.name.toLowerCase().includes(castFilter.toLowerCase()) ||
-    (a.character && a.character.toLowerCase().includes(castFilter.toLowerCase()))
-  );
+  const filteredCast = useMemo(() => {
+    const query = castFilter.toLowerCase().trim();
+    const list = availableCast.filter(
+      (a) =>
+        a.name.toLowerCase().includes(query) ||
+        (a.character && a.character.toLowerCase().includes(query))
+    );
+    if (castSort === 'az') {
+      return [...list].sort((a, b) => a.name.localeCompare(b.name));
+    }
+    return list;
+  }, [availableCast, castFilter, castSort]);
 
   return (
-    <div className="space-y-6">
-      {/* If no movie is selected, show filmography of current actor */}
+    <div className="space-y-5">
       {!selectedMovie ? (
         <section className="space-y-4">
-          {/* Step-Back Action Bar */}
           {canUndo && previousActor && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-2.5 shadow-sm">
               <div className="flex items-center gap-2 text-xs text-slate-200">
                 <span className="font-bold text-gold">Decided on another path?</span>
-                <span className="text-cinema-muted hidden sm:inline">You can step back one hop without resetting.</span>
+                <span className="text-slate-300 hidden sm:inline">Step back one hop without resetting.</span>
               </div>
               <button
+                type="button"
                 onClick={onUndo}
                 className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-cinema-card px-3 py-1.5 text-xs font-bold text-gold shadow-sm transition hover:bg-gold hover:text-cinema-black"
               >
@@ -51,31 +70,53 @@ export function ChainBuilder({
             </div>
           )}
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky top-[4.25rem] z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-cinema-border/80 bg-cinema-card/95 backdrop-blur-md p-3.5 shadow-lg">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold shrink-0">
                   1
                 </span>
-                <h3 className="text-base font-bold text-white sm:text-lg">
+                <h3 className="text-sm sm:text-base font-bold text-white">
                   Select a film featuring <span className="text-gold">{currentActor?.name}</span>
                 </h3>
               </div>
-              <p className="text-xs text-cinema-muted">
-                Choose a movie from their filmography to branch out to new co-stars.
+              <p className="text-xs text-slate-400 mt-0.5">
+                {availableMovies.length} verified films • Click any poster to reveal co-stars
               </p>
             </div>
 
-            {availableMovies.length > 4 && (
-              <div className="relative w-full sm:w-60">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted" />
-                <input
-                  type="text"
-                  placeholder="Filter movies..."
-                  value={movieFilter}
-                  onChange={e => setMovieFilter(e.target.value)}
-                  className="w-full rounded-lg border border-cinema-border bg-cinema-surface py-1.5 pl-8 pr-3 text-xs text-slate-100 placeholder-cinema-muted outline-none focus:border-gold"
-                />
+            {availableMovies.length > 0 && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-52">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Filter filmography..."
+                    value={movieFilter}
+                    onChange={(e) => setMovieFilter(e.target.value)}
+                    className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-1.5 pl-8 pr-7 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-gold"
+                  />
+                  {movieFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setMovieFilter('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={movieSort}
+                  onChange={(e) => setMovieSort(e.target.value)}
+                  className="rounded-xl border border-cinema-border bg-cinema-surface py-1.5 px-2.5 text-xs font-semibold text-slate-200 outline-none focus:border-gold cursor-pointer"
+                  aria-label="Sort films"
+                >
+                  <option value="popular">Popular</option>
+                  <option value="newest">Newest</option>
+                  <option value="az">A–Z</option>
+                </select>
               </div>
             )}
           </div>
@@ -83,12 +124,13 @@ export function ChainBuilder({
           {moviesLoading ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-3">
               <div className="h-8 w-8 rounded-full border-2 border-gold/30 border-t-gold animate-spin" />
-              <p className="text-xs text-cinema-muted">Loading filmography...</p>
+              <p className="text-xs text-slate-400">Loading filmography...</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {filteredMovies.map(movie => (
+              {filteredMovies.map((movie) => (
                 <button
+                  type="button"
                   key={movie.id}
                   onClick={() => onSelectMovie(movie)}
                   className="group flex flex-col overflow-hidden rounded-xl border border-cinema-border bg-cinema-card text-left transition hover:border-gold/60 hover:shadow-gold-glow"
@@ -107,8 +149,8 @@ export function ChainBuilder({
                       </div>
                     )}
                     {movie.rating && (
-                      <div className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/80 px-1.5 py-0.5 text-[10px] font-bold text-amber-300 backdrop-blur-sm border border-amber-500/30">
-                        <Star className="h-2.5 w-2.5 fill-amber-300" />
+                      <div className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/85 px-1.5 py-0.5 text-[11px] font-bold text-amber-300 backdrop-blur-sm border border-amber-500/30">
+                        <Star className="h-3 w-3 fill-amber-300" />
                         <span>{movie.rating.toFixed(1)}</span>
                       </div>
                     )}
@@ -118,7 +160,7 @@ export function ChainBuilder({
                     <h4 className="text-xs font-semibold text-slate-100 line-clamp-1 group-hover:text-gold">
                       {movie.title}
                     </h4>
-                    <span className="text-[10px] text-cinema-muted">{movie.year}</span>
+                    <span className="text-[11px] text-slate-400">{movie.year}</span>
                   </div>
                 </button>
               ))}
@@ -128,20 +170,19 @@ export function ChainBuilder({
           {!moviesLoading && filteredMovies.length === 0 && (
             <div className="rounded-xl border border-cinema-border bg-cinema-surface/50 p-8 text-center">
               <Film className="mx-auto h-8 w-8 text-cinema-muted" />
-              <p className="mt-2 text-xs text-cinema-muted">No films match your search filter.</p>
+              <p className="mt-2 text-xs text-slate-400">No films match your search filter.</p>
             </div>
           )}
         </section>
       ) : (
-        /* Movie is selected, pick co-star */
         <section className="space-y-4">
-          {/* Step-Back Action Bar for Movie Selection */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 shadow-sm">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-gold/30 bg-gold/10 px-4 py-2.5 shadow-sm">
             <div className="flex items-center gap-2 text-xs text-slate-200">
               <span className="font-bold text-gold">Want to pick another film?</span>
-              <span className="text-cinema-muted hidden sm:inline">You can step back to {currentActor?.name}&apos;s full filmography anytime.</span>
+              <span className="text-slate-300 hidden sm:inline">Step back to {currentActor?.name}&apos;s full filmography anytime.</span>
             </div>
             <button
+              type="button"
               onClick={onUndo}
               className="flex items-center gap-1.5 rounded-lg border border-gold/50 bg-cinema-card px-3 py-1.5 text-xs font-bold text-gold shadow-sm transition hover:bg-gold hover:text-cinema-black"
             >
@@ -166,51 +207,72 @@ export function ChainBuilder({
                 )}
               </div>
               <div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-gold">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-gold">
                   Selected Movie
                 </span>
                 <h4 className="text-sm font-bold text-white sm:text-base">{selectedMovie.title} ({selectedMovie.year})</h4>
-                <p className="text-xs text-cinema-muted">
+                <p className="text-xs text-slate-400">
                   Starring <strong className="text-slate-200">{currentActor?.name}</strong>
                 </p>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={onClearMovie}
-              className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1 text-xs font-medium text-slate-300 transition hover:border-cinema-muted hover:text-white"
+              className="flex items-center gap-1 rounded-lg border border-cinema-border bg-cinema-surface px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:border-slate-500 hover:text-white"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
               <span>Change Film</span>
             </button>
           </div>
 
-          {/* Co-star selection */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky top-[4.25rem] z-20 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-cinema-border/80 bg-cinema-card/95 backdrop-blur-md p-3.5 shadow-lg">
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold shrink-0">
                   2
                 </span>
-                <h3 className="text-base font-bold text-white sm:text-lg">
+                <h3 className="text-sm sm:text-base font-bold text-white">
                   Pick a co-star from <span className="text-gold">{selectedMovie.title}</span>
                 </h3>
               </div>
-              <p className="text-xs text-cinema-muted">
-                Connect through any co-star to continue your journey toward <strong className="text-gold">{targetActor?.name}</strong>.
+              <p className="text-xs text-slate-400 mt-0.5">
+                Connect through any co-star toward <strong className="text-gold">{targetActor?.name}</strong>
               </p>
             </div>
 
-            {availableCast.length > 4 && (
-              <div className="relative w-full sm:w-60">
-                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-cinema-muted" />
-                <input
-                  type="text"
-                  placeholder="Filter cast..."
-                  value={castFilter}
-                  onChange={e => setCastFilter(e.target.value)}
-                  className="w-full rounded-lg border border-cinema-border bg-cinema-surface py-1.5 pl-8 pr-3 text-xs text-slate-100 placeholder-cinema-muted outline-none focus:border-gold"
-                />
+            {availableCast.length > 0 && (
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-52">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Filter cast..."
+                    value={castFilter}
+                    onChange={(e) => setCastFilter(e.target.value)}
+                    className="w-full rounded-xl border border-cinema-border bg-cinema-surface py-1.5 pl-8 pr-7 text-xs text-slate-100 placeholder-slate-400 outline-none focus:border-gold"
+                  />
+                  {castFilter && (
+                    <button
+                      type="button"
+                      onClick={() => setCastFilter('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={castSort}
+                  onChange={(e) => setCastSort(e.target.value)}
+                  className="rounded-xl border border-cinema-border bg-cinema-surface py-1.5 px-2.5 text-xs font-semibold text-slate-200 outline-none focus:border-gold cursor-pointer"
+                  aria-label="Sort cast"
+                >
+                  <option value="popular">Featured</option>
+                  <option value="az">A–Z</option>
+                </select>
               </div>
             )}
           </div>
@@ -218,15 +280,16 @@ export function ChainBuilder({
           {castLoading ? (
             <div className="flex flex-col items-center justify-center py-16 space-y-3">
               <div className="h-8 w-8 rounded-full border-2 border-gold/30 border-t-gold animate-spin" />
-              <p className="text-xs text-cinema-muted">Loading co-stars...</p>
+              <p className="text-xs text-slate-400">Loading co-stars...</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {filteredCast.map(actor => {
+              {filteredCast.map((actor) => {
                 const isTarget = targetActor && actor.id === targetActor.id;
 
                 return (
                   <button
+                    type="button"
                     key={actor.id}
                     onClick={() => onSelectActor(actor)}
                     className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition ${
@@ -236,7 +299,7 @@ export function ChainBuilder({
                     }`}
                   >
                     {isTarget && (
-                      <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-md bg-gold px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-cinema-black shadow-md">
+                      <div className="absolute left-2 top-2 z-10 flex items-center gap-1 rounded-md bg-gold px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-cinema-black shadow-md">
                         <Sparkles className="h-3 w-3" />
                         <span>Target Goal</span>
                       </div>
@@ -259,13 +322,15 @@ export function ChainBuilder({
 
                     <div className="flex flex-1 flex-col justify-between p-2.5">
                       <div>
-                        <h4 className={`text-xs font-semibold line-clamp-1 ${
-                          isTarget ? 'text-gold font-bold' : 'text-slate-100 group-hover:text-gold'
-                        }`}>
+                        <h4
+                          className={`text-xs font-semibold line-clamp-1 ${
+                            isTarget ? 'text-gold font-bold' : 'text-slate-100 group-hover:text-gold'
+                          }`}
+                        >
                           {actor.name}
                         </h4>
                         {actor.character && (
-                          <p className="text-[10px] text-cinema-muted line-clamp-1">
+                          <p className="text-[11px] text-slate-400 line-clamp-1">
                             as {actor.character}
                           </p>
                         )}
@@ -280,7 +345,7 @@ export function ChainBuilder({
           {!castLoading && filteredCast.length === 0 && (
             <div className="rounded-xl border border-cinema-border bg-cinema-surface/50 p-8 text-center">
               <User className="mx-auto h-8 w-8 text-cinema-muted" />
-              <p className="mt-2 text-xs text-cinema-muted">No co-stars match your search filter.</p>
+              <p className="mt-2 text-xs text-slate-400">No co-stars match your search filter.</p>
             </div>
           )}
         </section>

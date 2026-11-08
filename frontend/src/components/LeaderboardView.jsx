@@ -1,8 +1,22 @@
 import { useState, useEffect } from 'react';
-import { 
-  Trophy, Crown, ArrowLeft, RefreshCw, Calendar, Flame, Medal, Footprints, 
-  Clock, Play, Sparkles, User, LogIn, Lock, Swords, Zap, Search, Image, 
-  TrendingUp, Award, Film
+import {
+  Trophy,
+  Crown,
+  ArrowLeft,
+  RefreshCw,
+  Calendar,
+  Medal,
+  Footprints,
+  Clock,
+  Play,
+  User,
+  LogIn,
+  Lock,
+  Zap,
+  Search,
+  Image,
+  TrendingUp,
+  Award
 } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 import { fetchMultiGameLeaderboard } from '../api/leaderboardService';
@@ -17,8 +31,8 @@ const GAME_MODES = [
   { id: 'global-xp', name: 'Global Hall of Fame', icon: Crown, color: 'text-amber-400', badge: 'All-Around', description: 'Top Cinephiles by Cinema XP & Level' }
 ];
 
-export function LeaderboardView({ 
-  onBackToGame, 
+export function LeaderboardView({
+  onBackToGame,
   activeChallenge,
   activeDate,
   onSelectDate,
@@ -27,7 +41,7 @@ export function LeaderboardView({
   onViewUserProfile
 }) {
   const { user, isAuthenticated } = useAuth();
-  const [activeTab, setActiveTab] = useState('daily'); // 'daily' | 'all-time'
+  const [activeTab, setActiveTab] = useState('daily');
   const [selectedGameMode, setSelectedGameMode] = useState('six-degrees');
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +64,13 @@ export function LeaderboardView({
 
   const top3 = leaderboard.slice(0, 3);
   const restLeaderboard = leaderboard.slice(3);
+
+  const currentUserEntry = isAuthenticated && user
+    ? leaderboard.find(entry => entry.userId === user.id || entry.username === user.username)
+    : null;
+  const currentUserRank = currentUserEntry
+    ? (currentUserEntry.rank || leaderboard.indexOf(currentUserEntry) + 1)
+    : null;
 
   function shiftDateStr(dateStr, days) {
     if (!dateStr || dateStr === 'Custom') return new Date().toISOString().slice(0, 10);
@@ -81,7 +102,6 @@ export function LeaderboardView({
       );
     }
 
-    // Daily Mode metrics
     switch (selectedGameMode) {
       case 'spotle':
         return (
@@ -165,7 +185,7 @@ export function LeaderboardView({
         <div className="flex items-center gap-1.5">
           {entry.countryFlag && <span className="text-sm">{entry.countryFlag}</span>}
           {entry.isPro && (
-            <span className="flex items-center gap-0.5 rounded-full bg-gold/20 px-2.5 py-0.5 text-[10px] font-bold text-gold border border-gold/40">
+            <span className="flex items-center gap-0.5 rounded-full bg-gold/20 px-2.5 py-0.5 text-[11px] font-bold text-gold border border-gold/40">
               PRO
             </span>
           )}
@@ -179,7 +199,7 @@ export function LeaderboardView({
             ? `${currentGame.name} Champion`
             : `${currentGame.name} Hall of Fame`}
         </span>
-        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
+        <span className="block text-[11px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-gold/30 pt-3 text-xs">
@@ -202,7 +222,7 @@ export function LeaderboardView({
         <div className="flex items-center gap-1.5">
           {entry.countryFlag && <span className="text-sm">{entry.countryFlag}</span>}
           {entry.isPro && (
-            <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
+            <span className="flex items-center gap-0.5 rounded bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold border border-gold/30">
               <Crown className="h-3 w-3" />
               PRO
             </span>
@@ -212,8 +232,8 @@ export function LeaderboardView({
 
       <div className="my-4 text-center">
         <h4 className="text-base sm:text-lg font-bold text-white truncate hover:text-gold transition">{entry.username}</h4>
-        <span className="text-[11px] text-cinema-muted">Rank #2 Cinephile</span>
-        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
+        <span className="text-xs text-cinema-muted">Rank #2 Cinephile</span>
+        <span className="block text-[11px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
@@ -236,7 +256,7 @@ export function LeaderboardView({
         <div className="flex items-center gap-1.5">
           {entry.countryFlag && <span className="text-sm">{entry.countryFlag}</span>}
           {entry.isPro && (
-            <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1.5 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
+            <span className="flex items-center gap-0.5 rounded bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold border border-gold/30">
               <Crown className="h-3 w-3" />
               PRO
             </span>
@@ -246,8 +266,8 @@ export function LeaderboardView({
 
       <div className="my-4 text-center">
         <h4 className="text-base sm:text-lg font-bold text-white truncate hover:text-gold transition">{entry.username}</h4>
-        <span className="text-[11px] text-cinema-muted">Rank #3 Cinephile</span>
-        <span className="block text-[10px] text-cinema-muted mt-1 underline">View Profile →</span>
+        <span className="text-xs text-cinema-muted">Rank #3 Cinephile</span>
+        <span className="block text-[11px] text-cinema-muted mt-1 underline">View Profile →</span>
       </div>
 
       <div className="flex items-center justify-between border-t border-cinema-border/50 pt-3 text-xs">
@@ -257,7 +277,7 @@ export function LeaderboardView({
   );
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
+    <div className="space-y-5 animate-fade-in pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-cinema-border/70 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-4 sm:p-5 shadow-xl">
         <div className="flex items-center gap-3">
           <button
@@ -267,7 +287,7 @@ export function LeaderboardView({
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
             <span>Back to Game</span>
           </button>
-          
+
           <div className="h-5 w-px bg-cinema-border hidden sm:block" />
 
           <div>
@@ -322,7 +342,7 @@ export function LeaderboardView({
             >
               <Icon className={`h-4 w-4 ${isSelected ? mode.color : 'text-cinema-muted'}`} />
               <span>{mode.name}</span>
-              <span className={`rounded-full px-1.5 py-0.2 text-[9px] font-bold border ${
+              <span className={`hidden lg:inline-flex rounded-full px-2 py-0.5 text-[11px] font-bold border ${
                 isSelected
                   ? 'bg-gold/20 text-gold border-gold/30'
                   : 'bg-cinema-border/60 text-cinema-muted border-cinema-border'
@@ -335,7 +355,7 @@ export function LeaderboardView({
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="inline-flex rounded-xl border border-cinema-border bg-cinema-surface p-1 shadow-sm">
+        <div className="inline-flex rounded-xl border border-cinema-border bg-cinema-surface p-1 shadow-sm self-start">
           {selectedGameMode !== 'global-xp' && (
             <button
               onClick={() => setActiveTab('daily')}
@@ -364,7 +384,7 @@ export function LeaderboardView({
         </div>
 
         {activeTab === 'daily' && selectedGameMode !== 'global-xp' && (
-          <div className="w-full sm:w-auto">
+          <div className="self-start sm:self-auto">
             <DailyDateNavigator
               currentDate={activeDate}
               onSelectDate={onSelectDate}
@@ -374,19 +394,17 @@ export function LeaderboardView({
               }}
               onResetToToday={() => onSelectDate(todayStr)}
               compact={true}
+              embedded={true}
             />
           </div>
         )}
       </div>
 
       {activeTab === 'daily' && selectedGameMode === 'six-degrees' && activeChallenge && (
-        <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
-          <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
-          
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-            {/* Start Actor */}
-            <div className="flex items-center gap-3 w-full sm:w-auto">
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-gold/40 bg-cinema-border shadow-md">
+        <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-cinema-card/90 px-4 py-3.5 shadow-lg">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto min-w-0">
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-gold/40 bg-cinema-border shadow-md">
                 {activeChallenge.startActor?.profilePath ? (
                   <img
                     src={getTmdbImageUrl(activeChallenge.startActor.profilePath)}
@@ -395,35 +413,30 @@ export function LeaderboardView({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gold">
-                    <User className="h-6 w-6" />
+                    <User className="h-5 w-5" />
                   </div>
                 )}
               </div>
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cinema-muted">Start Star</span>
-                <h3 className="text-base font-bold text-white">{activeChallenge.startActor?.name}</h3>
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-cinema-muted block">Start Star</span>
+                <h3 className="text-sm font-bold text-white truncate">{activeChallenge.startActor?.name}</h3>
               </div>
             </div>
 
-            {/* Connecting Bridge */}
-            <div className="flex flex-col items-center gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gold bg-gold/10 border border-gold/30 rounded-full px-2.5 py-0.5">
-                Target: {activeChallenge.optimalHops || 2} Hops
+            <div className="flex items-center gap-2 shrink-0">
+              <div className="hidden sm:block h-px w-8 bg-cinema-border" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gold bg-gold/10 border border-gold/30 rounded-full px-3 py-1">
+                Par: {activeChallenge.optimalHops || 2} Hops
               </span>
-              <div className="flex items-center gap-2 text-cinema-muted">
-                <div className="h-px w-8 bg-cinema-border" />
-                <Footprints className="h-4 w-4 text-gold/80" />
-                <div className="h-px w-8 bg-cinema-border" />
-              </div>
+              <div className="hidden sm:block h-px w-8 bg-cinema-border" />
             </div>
 
-            {/* Target Actor */}
-            <div className="flex items-center justify-end gap-3 w-full sm:w-auto text-right">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-gold">Destination</span>
-                <h3 className="text-base font-bold text-white">{activeChallenge.targetActor?.name}</h3>
+            <div className="flex items-center justify-end gap-3 w-full sm:w-auto text-right min-w-0">
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-gold block">Destination</span>
+                <h3 className="text-sm font-bold text-white truncate">{activeChallenge.targetActor?.name}</h3>
               </div>
-              <div className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 border-gold/40 bg-cinema-border shadow-md">
+              <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-gold/40 bg-cinema-border shadow-md">
                 {activeChallenge.targetActor?.profilePath ? (
                   <img
                     src={getTmdbImageUrl(activeChallenge.targetActor.profilePath)}
@@ -432,7 +445,7 @@ export function LeaderboardView({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gold">
-                    <User className="h-6 w-6" />
+                    <User className="h-5 w-5" />
                   </div>
                 )}
               </div>
@@ -442,21 +455,20 @@ export function LeaderboardView({
       )}
 
       {activeTab === 'daily' && selectedGameMode === 'spotle' && (
-        <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black px-4 py-3.5 shadow-lg">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                <Search className="h-6 w-6" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                <Search className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">Daily Mystery Film</span>
-                <h3 className="text-base font-bold text-white">Spotle Deduction Challenge ({activeDate})</h3>
-                <p className="text-xs text-cinema-muted">Ranked by fewest guesses used to identify the hidden movie.</p>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-400">Daily Mystery Film • {activeDate}</span>
+                <p className="text-xs text-slate-300">Spotle Deduction Challenge — Ranked by fewest guesses used.</p>
               </div>
             </div>
             <button
               onClick={() => onPlayChallenge(activeDate, 'spotle')}
-              className="hidden sm:flex items-center gap-1.5 rounded-xl bg-cyan-500/20 border border-cyan-500/40 px-3.5 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/30 transition"
+              className="hidden sm:flex shrink-0 items-center gap-1.5 rounded-xl bg-cyan-500/20 border border-cyan-500/40 px-3.5 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/30 transition"
             >
               <Play className="h-3.5 w-3.5" />
               <span>Deduce Now</span>
@@ -466,21 +478,20 @@ export function LeaderboardView({
       )}
 
       {activeTab === 'daily' && selectedGameMode === 'frame-sleuth' && (
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black px-4 py-3.5 shadow-lg">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                <Image className="h-6 w-6" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                <Image className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Daily 6-Frame Mystery</span>
-                <h3 className="text-base font-bold text-white">Frame Sleuth Visual Guess ({activeDate})</h3>
-                <p className="text-xs text-cinema-muted">Ranked by earliest frame guessed (Frame 1 = Master Sleuth 100 XP).</p>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Daily 6-Frame Mystery • {activeDate}</span>
+                <p className="text-xs text-slate-300">Frame Sleuth Visual Guess — Ranked by earliest frame solved.</p>
               </div>
             </div>
             <button
               onClick={() => onPlayChallenge(activeDate, 'frame-sleuth')}
-              className="hidden sm:flex items-center gap-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition"
+              className="hidden sm:flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/40 px-3.5 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 transition"
             >
               <Play className="h-3.5 w-3.5" />
               <span>Investigate Now</span>
@@ -490,21 +501,20 @@ export function LeaderboardView({
       )}
 
       {activeTab === 'daily' && selectedGameMode === 'box-office' && (
-        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-5 shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black px-4 py-3.5 shadow-lg">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                <TrendingUp className="h-6 w-6" />
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                <TrendingUp className="h-5 w-5" />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">Daily Higher or Lower</span>
-                <h3 className="text-base font-bold text-white">Box Office Clash (5-Round Daily)</h3>
-                <p className="text-xs text-cinema-muted">Ranked by score out of 5 and quickest resolution speed.</p>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-400">Daily Higher or Lower • {activeDate}</span>
+                <p className="text-xs text-slate-300">Box Office Clash (5-Round Daily) — Ranked by score out of 5 and speed.</p>
               </div>
             </div>
             <button
               onClick={() => onPlayChallenge(activeDate, 'box-office')}
-              className="hidden sm:flex items-center gap-1.5 rounded-xl bg-purple-500/20 border border-purple-500/40 px-3.5 py-2 text-xs font-bold text-purple-300 hover:bg-purple-500/30 transition"
+              className="hidden sm:flex shrink-0 items-center gap-1.5 rounded-xl bg-purple-500/20 border border-purple-500/40 px-3.5 py-2 text-xs font-bold text-purple-300 hover:bg-purple-500/30 transition"
             >
               <Play className="h-3.5 w-3.5" />
               <span>Clash Now</span>
@@ -523,7 +533,7 @@ export function LeaderboardView({
               <h4 className="text-xs sm:text-sm font-bold text-white">
                 Only Registered Cinephiles Compete on the Leaderboard
               </h4>
-              <p className="text-[11px] text-cinema-muted">
+              <p className="text-xs text-cinema-muted">
                 Sign in or register for free to lock in your score, track your streak, and claim your place in the Hall of Fame.
               </p>
             </div>
@@ -536,6 +546,35 @@ export function LeaderboardView({
             <LogIn className="h-3.5 w-3.5" />
             <span>Sign In to Compete</span>
           </button>
+        </div>
+      )}
+
+      {currentUserEntry && currentUserRank > 10 && (
+        <div
+          onClick={() => onViewUserProfile?.({
+            id: currentUserEntry.userId,
+            username: currentUserEntry.username,
+            isPro: currentUserEntry.isPro,
+            score: currentUserEntry.score,
+            moves: currentUserEntry.moves,
+            streak: currentUserEntry.streak
+          })}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-gold/50 bg-gradient-to-r from-gold/15 via-cinema-card to-cinema-surface px-5 py-3.5 shadow-gold-glow/20 cursor-pointer transition hover:border-gold"
+          title="View your profile"
+        >
+          <div className="flex items-center gap-3">
+            <span className="rounded-lg bg-gold/20 border border-gold/40 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-gold">
+              Your Current Standing
+            </span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-gold/50 bg-gold/20 text-xs font-black text-gold">
+              #{currentUserRank}
+            </span>
+            <span className="text-sm font-bold text-white">{currentUserEntry.username}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {renderMetric(currentUserEntry)}
+          </div>
         </div>
       )}
 
@@ -582,31 +621,31 @@ export function LeaderboardView({
                   }`}
                   title={`View ${entry.username}'s profile`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-cinema-border bg-cinema-surface text-xs font-bold text-cinema-muted">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cinema-border bg-cinema-surface text-xs font-bold text-cinema-muted">
                       {rank}
                     </span>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-wrap">
                       {entry.countryFlag && <span className="text-xs">{entry.countryFlag}</span>}
-                      <span className="text-xs sm:text-sm font-bold text-white hover:text-gold transition">
+                      <span className="text-xs sm:text-sm font-bold text-white hover:text-gold transition truncate">
                         {entry.username}
                       </span>
                       {entry.isPro && (
-                        <span className="flex items-center gap-0.5 rounded bg-gold/15 px-1 py-0.2 text-[9px] font-bold text-gold border border-gold/30">
-                          <Crown className="h-2.5 w-2.5" />
+                        <span className="flex items-center gap-0.5 rounded bg-gold/15 px-2 py-0.5 text-[11px] font-bold text-gold border border-gold/30">
+                          <Crown className="h-3 w-3" />
                           PRO
                         </span>
                       )}
                       {isCurrentUser && (
-                        <span className="rounded bg-gold/20 px-1.5 py-0.2 text-[9px] font-extrabold text-gold">
+                        <span className="rounded bg-gold/20 px-2 py-0.5 text-[11px] font-extrabold text-gold">
                           YOU
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-right">
+                  <div className="flex items-center gap-4 text-right shrink-0">
                     {renderMetric(entry)}
                   </div>
                 </div>
