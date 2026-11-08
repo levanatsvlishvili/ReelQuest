@@ -49,7 +49,11 @@ import { getCountryByCode } from '../utils/countries';
 import { CountrySelect } from './CountrySelect';
 import {
   getSubscription,
-  updatePaymentMethod,
+  getDefaultCard,
+  addPaymentMethod,
+  setDefaultPaymentMethod,
+  removePaymentMethod,
+  processSubscriptionCharge,
   setAutoRenew
 } from '../utils/billingService';
 import { processAvatarImage } from '../utils/imageUpload';
@@ -119,6 +123,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   );
   const [billingNotice, setBillingNotice] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [makeDefaultCheck, setMakeDefaultCheck] = useState(true);
   const [cardHolder, setCardHolder] = useState(profileUser?.username || 'Cinephile');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExp, setCardExp] = useState('');
@@ -261,22 +266,60 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
   // Billing Actions
   const handleUpdateCardSubmit = (e) => {
     e.preventDefault();
-    const last4 = cardNumber.replace(/\D/g, '').slice(-4) || '4242';
+    const cleanNumber = cardNumber.replace(/\D/g, '');
+    const last4 = cleanNumber.slice(-4) || '4242';
     const brand = cardNumber.startsWith('3') ? 'Amex' : cardNumber.startsWith('5') ? 'Mastercard' : 'Visa';
     const [expMonth, expYear] = cardExp.split('/').map(s => s.trim());
 
-    const updated = updatePaymentMethod(profileUser.id, {
+    const { updatedSubscription } = addPaymentMethod(profileUser.id, profileUser.email, {
       cardholderName: cardHolder,
       brand,
       last4,
+      number: cleanNumber,
       expMonth: parseInt(expMonth, 10) || 12,
       expYear: parseInt(expYear, 10) || 2028
-    });
+    }, makeDefaultCheck);
 
-    setSubscription(updated);
+    setSubscription(updatedSubscription);
     setShowCardModal(false);
-    setBillingNotice({ type: 'success', text: `Payment method updated to ${brand} ending in ${last4}!` });
+    setCardNumber('');
+    setCardExp('');
+    setCardCvc('');
+    setBillingNotice({
+      type: 'success',
+      text: `Saved card ${brand} ending in ${last4} ${makeDefaultCheck ? 'as your default charge card' : ''}!`
+    });
     setTimeout(() => setBillingNotice(null), 4000);
+  };
+
+  const handleSetDefaultCard = (cardId) => {
+    const updated = setDefaultPaymentMethod(profileUser.id, cardId);
+    setSubscription(updated);
+    setBillingNotice({ type: 'success', text: 'Default payment card updated.' });
+    setTimeout(() => setBillingNotice(null), 3500);
+  };
+
+  const handleRemoveCard = (cardId) => {
+    if (!window.confirm('Are you sure you want to remove this saved card?')) return;
+    const updated = removePaymentMethod(profileUser.id, cardId);
+    setSubscription(updated);
+    setBillingNotice({ type: 'info', text: 'Card removed from your saved payment methods.' });
+    setTimeout(() => setBillingNotice(null), 3500);
+  };
+
+  const handleRetryBilling = () => {
+    const res = processSubscriptionCharge(profileUser.id, profileUser.email, { isRetry: true });
+    setSubscription(res.subscription);
+    if (res.success) {
+      setProStatus(true);
+      setBillingNotice({ type: 'success', text: 'Payment successful! Monthly PRO subscription has been restored.' });
+    } else {
+      setBillingNotice({
+        type: 'error',
+        text: `Payment attempt failed (${res.subscription.retryCount}/3). ${res.subscription.status === 'SUSPENDED' ? 'Subscription is now SUSPENDED.' : 'Please update your card.'}`
+      });
+    }
+    setTimeout(() => setBillingNotice(null), 4500);
   };
 
   const handleToggleAutoRenew = () => {
@@ -1130,21 +1173,26 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
           )}
 
           {subscription?.status === 'PAST_DUE' && subscription?.dunningNotice && (
-            <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 shadow-xl space-y-2">
+            <div className="rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 shadow-xl space-y-3">
               <div className="flex items-center gap-2.5 text-amber-400 font-extrabold text-sm">
                 <AlertTriangle className="h-5 w-5" />
                 <span>Payment Notice: Monthly $3.00 Charge Failed (Attempt {subscription.dunningNotice.attempt}/3)</span>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed">
-                We were unable to charge your saved card for this billing cycle. A warning notification has been sent to <strong>{profileUser.email}</strong>.
-                An automatic retry is scheduled. If 3 consecutive attempts fail, your Pro perks will be suspended.
+                We were unable to charge your default saved card for this billing cycle. An automatic retry is scheduled. If 3 consecutive attempts fail, your Pro perks will be suspended.
               </p>
-              <div className="pt-2">
+              <div className="flex items-center gap-3 pt-1 flex-wrap">
+                <button
+                  onClick={handleRetryBilling}
+                  className="rounded-xl bg-gold px-4 py-2 text-xs font-black text-cinema-black hover:opacity-95 shadow-gold-glow transition"
+                >
+                  Retry Charge with Default Card
+                </button>
                 <button
                   onClick={() => setShowCardModal(true)}
-                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black text-cinema-black hover:bg-amber-400 transition"
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-4 py-2 text-xs font-bold text-amber-300 hover:bg-amber-500/25 transition"
                 >
-                  Update Payment Method
+                  + Add New Card
                 </button>
               </div>
             </div>
@@ -1152,20 +1200,26 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
           {/* Suspended Alert */}
           {subscription?.status === 'SUSPENDED' && (
-            <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-5 shadow-xl space-y-2">
+            <div className="rounded-2xl border border-red-500/50 bg-red-500/10 p-5 shadow-xl space-y-3">
               <div className="flex items-center gap-2.5 text-red-400 font-extrabold text-sm">
                 <AlertTriangle className="h-5 w-5" />
                 <span>Subscription Suspended</span>
               </div>
               <p className="text-xs text-slate-200 leading-relaxed">
-                Your monthly Pro subscription was suspended after 3 unsuccessful payment attempts. Please provide a valid payment method below to reactivate your Pro status and resume unlimited hints and graph perks.
+                Your monthly Pro subscription was suspended after 3 unsuccessful payment attempts. Please provide a valid default card and retry payment to restore your Pro status and unlimited hints.
               </p>
-              <div className="pt-2">
+              <div className="flex items-center gap-3 pt-1 flex-wrap">
+                <button
+                  onClick={handleRetryBilling}
+                  className="rounded-xl bg-gold px-4 py-2 text-xs font-black text-cinema-black hover:opacity-95 shadow-gold-glow transition"
+                >
+                  Retry Payment Now
+                </button>
                 <button
                   onClick={() => setShowCardModal(true)}
                   className="rounded-xl bg-red-500 px-4 py-2 text-xs font-black text-white hover:bg-red-400 transition"
                 >
-                  Reactivate with New Card
+                  + Add New Card & Reactivate
                 </button>
               </div>
             </div>
@@ -1199,7 +1253,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   <span className="text-xs text-cinema-muted">/ month (Auto-Renewing)</span>
                 </div>
                 <span className="text-[11px] text-cinema-muted">
-                  Billed monthly via Stripe recurring payments
+                  Billed monthly on the same day via Stripe
                 </span>
               </div>
             </div>
@@ -1223,13 +1277,13 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
               </div>
 
               <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Payment Method</span>
-                <span className="font-bold text-white text-sm flex items-center gap-1.5">
-                  <CreditCard className="h-4 w-4 text-gold" />
-                  <span>
-                    {subscription?.paymentMethod
-                      ? `${subscription.paymentMethod.brand} •••• ${subscription.paymentMethod.last4}`
-                      : 'No Card on File'}
+                <span className="text-[10px] uppercase font-bold text-cinema-muted block">Default Charge Card</span>
+                <span className="font-bold text-white text-sm flex items-center gap-1.5 truncate">
+                  <CreditCard className="h-4 w-4 text-gold shrink-0" />
+                  <span className="truncate">
+                    {getDefaultCard(subscription)
+                      ? `${getDefaultCard(subscription).brand} •••• ${getDefaultCard(subscription).last4}`
+                      : 'No Default Card'}
                   </span>
                 </span>
               </div>
@@ -1241,7 +1295,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 className="flex items-center gap-2 rounded-xl border border-gold/40 bg-gold/15 px-4 py-2.5 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow/20 transition active:scale-95"
               >
                 <CreditCard className="h-4 w-4" />
-                <span>Update / Change Card</span>
+                <span>+ Add / Manage Cards</span>
               </button>
 
               {subscription?.status === 'ACTIVE' && (
@@ -1253,6 +1307,94 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Saved Cards / Payment Methods Management */}
+          <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-gold" />
+                <h3 className="text-sm font-extrabold text-white">Saved Cards (Payment Methods)</h3>
+              </div>
+              <button
+                onClick={() => setShowCardModal(true)}
+                className="flex items-center gap-1 text-[11px] font-bold text-gold hover:underline"
+              >
+                + Add Card
+              </button>
+            </div>
+
+            {subscription?.cards && subscription.cards.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {subscription.cards.map((card) => {
+                  const isDefault = Boolean(card.isDefault);
+                  return (
+                    <div
+                      key={card.id}
+                      className={`relative rounded-xl border p-4 flex flex-col justify-between transition ${
+                        isDefault
+                          ? 'border-gold/60 bg-gradient-to-br from-gold/10 via-cinema-surface to-cinema-black shadow-gold-glow/20'
+                          : 'border-cinema-border/70 bg-cinema-surface/60 hover:border-cinema-muted'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="h-8 w-11 rounded-lg bg-black/60 border border-cinema-border/80 flex items-center justify-center font-bold text-[10px] text-white">
+                            {card.brand?.toUpperCase().slice(0, 4) || 'CARD'}
+                          </div>
+                          <div>
+                            <span className="font-mono font-black text-sm text-white block">
+                              •••• •••• •••• {card.last4}
+                            </span>
+                            <span className="text-[10px] text-cinema-muted block">
+                              Expires {String(card.expMonth).padStart(2, '0')}/{card.expYear} • {card.cardholderName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isDefault && (
+                          <span className="rounded-full bg-gold/20 border border-gold/40 px-2 py-0.5 text-[9px] font-black uppercase text-gold">
+                            DEFAULT
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-3 mt-2 border-t border-cinema-border/40">
+                        {!isDefault && (
+                          <button
+                            type="button"
+                            onClick={() => handleSetDefaultCard(card.id)}
+                            className="text-[10px] font-bold text-gold hover:underline px-2 py-1 rounded hover:bg-gold/10 transition"
+                          >
+                            Set as Default
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCard(card.id)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                          title="Remove Card"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-cinema-border/80 p-6 text-center space-y-2">
+                <p className="text-xs text-cinema-muted">
+                  No payment methods currently saved on your profile.
+                </p>
+                <button
+                  onClick={() => setShowCardModal(true)}
+                  className="rounded-xl bg-gold/15 border border-gold/40 px-4 py-1.5 text-xs font-bold text-gold hover:bg-gold hover:text-cinema-black transition"
+                >
+                  + Add First Card
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Billing & Invoice History Table */}
@@ -1591,10 +1733,10 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
 
             <div className="flex items-center gap-2.5">
               <CreditCard className="h-5 w-5 text-gold" />
-              <h3 className="text-base font-black text-white">Update Payment Method</h3>
+              <h3 className="text-base font-black text-white">Add Payment Card</h3>
             </div>
             <p className="text-xs text-cinema-muted">
-              Add a new credit or debit card for your monthly $3.00 Pro subscription.
+              Add a new card to your account for monthly Pro renewals ($3.00/mo).
             </p>
 
             <form onSubmit={handleUpdateCardSubmit} className="space-y-3 pt-1">
@@ -1666,6 +1808,19 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                 </div>
               </div>
 
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="makeDefaultCardCheckbox"
+                  checked={makeDefaultCheck}
+                  onChange={(e) => setMakeDefaultCheck(e.target.checked)}
+                  className="rounded border-cinema-border bg-cinema-surface text-gold focus:ring-gold"
+                />
+                <label htmlFor="makeDefaultCardCheckbox" className="text-xs text-slate-300 font-semibold cursor-pointer select-none">
+                  Make this my default card for monthly recurring charges ($3.00/mo)
+                </label>
+              </div>
+
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
@@ -1678,7 +1833,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro }) {
                   type="submit"
                   className="rounded-xl bg-gold px-5 py-2 text-xs font-black text-cinema-black hover:opacity-90 shadow-gold-glow"
                 >
-                  Save New Card
+                  Save Card
                 </button>
               </div>
             </form>

@@ -344,6 +344,167 @@ export async function resetUserStreak(userId, newStreak) {
   return { id: userId, streak: newStreak };
 }
 
+export async function fetchUserSubscription(userId, userEmail = '', isPro = false) {
+  const key = `reelquest_subscription_${userId}`;
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {
+    console.warn('Failed to parse subscription from storage:', e);
+  }
+
+  const now = new Date();
+  const nextMonth = new Date(now);
+  nextMonth.setMonth(now.getMonth() + 1);
+
+  if (isPro) {
+    return {
+      userId,
+      email: userEmail,
+      status: 'ACTIVE',
+      plan: { id: 'price_pro_monthly', name: 'ReelQuest Pro Monthly', amount: 3.00, currency: 'USD', formattedPrice: '$3.00' },
+      currentPeriodStart: now.toISOString(),
+      currentPeriodEnd: nextMonth.toISOString(),
+      cancelAtPeriodEnd: false,
+      retryCount: 0,
+      dunningNotice: null,
+      cards: [
+        {
+          id: `pm_${Date.now()}`,
+          brand: 'Visa',
+          last4: '4242',
+          expMonth: 12,
+          expYear: 2028,
+          cardholderName: userEmail ? userEmail.split('@')[0] : 'Cinephile',
+          isDefault: true,
+          createdAt: now.toISOString()
+        }
+      ],
+      invoices: [
+        {
+          id: `inv_${Date.now().toString().slice(-6)}`,
+          date: now.toISOString(),
+          amount: '$3.00',
+          currency: 'USD',
+          status: 'PAID',
+          description: 'ReelQuest Pro Monthly ($3.00/mo)',
+          paymentMethod: 'Visa •••• 4242'
+        }
+      ]
+    };
+  }
+
+  return {
+    userId,
+    email: userEmail,
+    status: 'INACTIVE',
+    plan: { id: 'price_pro_monthly', name: 'ReelQuest Pro Monthly', amount: 3.00, currency: 'USD', formattedPrice: '$3.00' },
+    currentPeriodStart: null,
+    currentPeriodEnd: null,
+    cancelAtPeriodEnd: false,
+    retryCount: 0,
+    dunningNotice: null,
+    cards: [],
+    invoices: []
+  };
+}
+
+export async function saveAdminSubscription(userId, data) {
+  const key = `reelquest_subscription_${userId}`;
+  localStorage.setItem(key, JSON.stringify(data));
+  return data;
+}
+
+export async function cancelUserSubscription(userId, immediate = false) {
+  const current = await fetchUserSubscription(userId);
+  const updated = {
+    ...current,
+    status: immediate ? 'CANCELED' : current.status,
+    cancelAtPeriodEnd: true,
+    canceledAt: new Date().toISOString()
+  };
+  return saveAdminSubscription(userId, updated);
+}
+
+export async function suspendUserSubscription(userId) {
+  const current = await fetchUserSubscription(userId);
+  const now = new Date().toISOString();
+  const updated = {
+    ...current,
+    status: 'SUSPENDED',
+    retryCount: 3,
+    dunningNotice: {
+      attempt: 3,
+      maxAttempts: 3,
+      lastAttemptDate: now,
+      suspended: true
+    }
+  };
+  return saveAdminSubscription(userId, updated);
+}
+
+export async function retryUserSubscriptionCharge(userId, userEmail, forceSuccess = true) {
+  const current = await fetchUserSubscription(userId, userEmail, true);
+  const now = new Date();
+  const nextMonth = new Date(now);
+  nextMonth.setMonth(now.getMonth() + 1);
+
+  const defaultCard = current.cards?.find(c => c.isDefault) || current.cards?.[0];
+  const cardDesc = defaultCard ? `${defaultCard.brand} •••• ${defaultCard.last4}` : 'Saved Card';
+
+  if (!forceSuccess) {
+    const nextRetry = (current.retryCount || 0) + 1;
+    const isSuspended = nextRetry >= 3;
+    const failedInvoice = {
+      id: `inv_${Date.now().toString().slice(-6)}`,
+      date: now.toISOString(),
+      amount: '$3.00',
+      currency: 'USD',
+      status: 'FAILED',
+      description: 'ReelQuest Pro Monthly ($3.00/mo)',
+      paymentMethod: cardDesc,
+      failureReason: 'Stripe Sandbox: Card declined (GenericDecline).'
+    };
+    const updated = {
+      ...current,
+      status: isSuspended ? 'SUSPENDED' : 'PAST_DUE',
+      retryCount: nextRetry,
+      dunningNotice: {
+        attempt: nextRetry,
+        maxAttempts: 3,
+        lastAttemptDate: now.toISOString(),
+        suspended: isSuspended
+      },
+      invoices: [failedInvoice, ...(current.invoices || [])]
+    };
+    return saveAdminSubscription(userId, updated);
+  }
+
+  const paidInvoice = {
+    id: `inv_${Date.now().toString().slice(-6)}`,
+    date: now.toISOString(),
+    amount: '$3.00',
+    currency: 'USD',
+    status: 'PAID',
+    description: 'ReelQuest Pro Monthly ($3.00/mo) - Admin Retry',
+    paymentMethod: cardDesc
+  };
+
+  const updated = {
+    ...current,
+    status: 'ACTIVE',
+    currentPeriodStart: now.toISOString(),
+    currentPeriodEnd: nextMonth.toISOString(),
+    cancelAtPeriodEnd: false,
+    retryCount: 0,
+    dunningNotice: null,
+    invoices: [paidInvoice, ...(current.invoices || [])]
+  };
+  return saveAdminSubscription(userId, updated);
+}
+
 export async function fetchGameHistory({
   userId = 'ALL',
   gameMode = 'ALL',

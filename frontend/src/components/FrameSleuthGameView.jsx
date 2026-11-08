@@ -25,6 +25,7 @@ import {
   Maximize2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { calculateGameStreak } from '../api/auth';
 import { getTmdbImageUrl } from '../api/client';
 import { saveDetailedMatch } from '../api/matchHistory';
 import { recordLeaderboardScore } from '../api/leaderboardService';
@@ -52,6 +53,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
   const isToday = activeDate === todayStr;
+  const frameStreak = calculateGameStreak('frame-sleuth', user?.id);
 
   // The secret mystery movie for this date
   const targetMovie = useMemo(() => {
@@ -424,10 +426,10 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                 <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-violet-300 border border-violet-500/40">
                   NEW
                 </span>
-                {isAuthenticated && (stats?.streak || 0) > 0 && (
+                {isAuthenticated && frameStreak > 0 && (
                   <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-black text-orange-400 border border-orange-500/30">
                     <Flame className="h-3 w-3 fill-orange-400" />
-                    <span>{stats.streak}d Streak</span>
+                    <span>{frameStreak}d Streak</span>
                   </span>
                 )}
               </div>

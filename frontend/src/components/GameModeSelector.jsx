@@ -1,5 +1,6 @@
 import { GitFork, Sparkles, Flame, Film, Camera, TrendingUp } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { calculateGameStreak } from '../api/auth';
 
 export const GAME_MODES = [
   {
@@ -50,8 +51,7 @@ export const GAME_MODES = [
 ];
 
 export function GameModeSelector({ activeMode, onSelectMode }) {
-  const { isAuthenticated, stats } = useAuth();
-  const currentStreak = stats?.streak ?? 0;
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <div className="w-full overflow-x-auto pb-1 scrollbar-none">
@@ -63,6 +63,7 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
         {GAME_MODES.map((mode) => {
           const Icon = mode.icon;
           const isActive = activeMode === mode.id;
+          const modeStreak = calculateGameStreak(mode.id, user?.id);
 
           return (
             <button
@@ -91,18 +92,13 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
                 </span>
               )}
 
-              {/* Game Streak Badge (Only for authenticated users and actual games — never Path Finder) */}
-              {isAuthenticated && mode.hasStreak && mode.status === 'ACTIVE' && (
+              {isAuthenticated && mode.hasStreak && mode.status === 'ACTIVE' && modeStreak > 0 && (
                 <span
-                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border transition ${
-                    currentStreak > 0
-                      ? 'border-orange-500/40 bg-orange-500/15 text-orange-400 shadow-sm'
-                      : 'border-cinema-border/70 bg-cinema-black/40 text-cinema-muted'
-                  }`}
-                  title={`${currentStreak} Day Streak in ${mode.title}`}
+                  className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold border border-orange-500/40 bg-orange-500/15 text-orange-400 shadow-sm transition"
+                  title={`${modeStreak} Day Streak in ${mode.title}`}
                 >
-                  <Flame className={`h-3 w-3 ${currentStreak > 0 ? 'fill-orange-400 text-orange-400 animate-pulse' : 'text-cinema-muted'}`} />
-                  <span>{currentStreak}d</span>
+                  <Flame className="h-3 w-3 fill-orange-400 text-orange-400 animate-pulse" />
+                  <span>{modeStreak}d</span>
                 </span>
               )}
             </button>

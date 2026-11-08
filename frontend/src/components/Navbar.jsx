@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Film, Trophy, Flame, Crown, LogIn, LogOut, Volume2, VolumeX } from 'lucide-react';
+import { Film, Trophy, Crown, LogIn, LogOut, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEffects';
 import { getAvatarById, calculateCinemaLevel } from '../utils/cinemaLevels';
@@ -25,7 +25,6 @@ export function Navbar({
     setMuted(next);
   };
 
-  const currentStreak = stats?.streak ?? 0;
   const userAvatar = getAvatarById(user?.avatarId);
   const matchHistory = user ? getDetailedMatchHistory(user.id) : [];
   const levelInfo = user ? calculateCinemaLevel(stats, matchHistory) : null;
@@ -52,13 +51,6 @@ export function Navbar({
         </div>
 
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {isAuthenticated && (
-            <div className="hidden sm:flex h-9 items-center gap-1.5 rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 text-xs font-semibold text-orange-400">
-              <Flame className="h-4 w-4 fill-orange-400/20" />
-              <span>{currentStreak} Day Streak</span>
-            </div>
-          )}
-
           <button
             onClick={onOpenLeaderboard}
             className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${

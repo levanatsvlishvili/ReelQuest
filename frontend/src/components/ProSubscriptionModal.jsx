@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { createCheckoutSession, confirmPaymentOrder } from '../api/auth';
-import { activateSubscription } from '../utils/billingService';
+import { activateSubscriptionWithCard } from '../utils/billingService';
 
 export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
   const { user, isAuthenticated, setProStatus } = useAuth();
@@ -99,9 +99,10 @@ export function ProSubscriptionModal({ isOpen, onClose, onOpenAuth }) {
 
       setProStatus(true);
       if (user?.id) {
-        activateSubscription(user.id, user.email, {
+        activateSubscriptionWithCard(user.id, user.email, {
           brand,
           last4,
+          number: cleanNum,
           cardholderName: cardholderName.trim() || 'Cinephile Member',
           expMonth: parseInt(expMonth, 10) || 12,
           expYear: parseInt(expYear, 10) || 2028
