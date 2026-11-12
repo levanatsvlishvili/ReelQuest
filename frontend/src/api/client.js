@@ -109,6 +109,20 @@ export async function fetchOptimalPath(startActorId, targetActorId) {
   return [];
 }
 
+function compareLeaderboardItems(a, b, mode = 'six-degrees', scope = 'daily') {
+  const aDur = (a.durationSeconds || 0) > 0 ? a.durationSeconds : 999999;
+  const bDur = (b.durationSeconds || 0) > 0 ? b.durationSeconds : 999999;
+  if (scope === 'all-time' || mode === 'global-xp') {
+    return (b.score || 0) - (a.score || 0) || (b.moves || b.hops || 0) - (a.moves || a.hops || 0) || aDur - bDur;
+  }
+  if (mode === 'box-office') {
+    return (b.score || 0) - (a.score || 0) || (b.hops || b.moves || 0) - (a.hops || a.moves || 0) || aDur - bDur;
+  }
+  const aHops = (a.hops || a.moves || 0) > 0 ? (a.hops || a.moves) : 99;
+  const bHops = (b.hops || b.moves || 0) > 0 ? (b.hops || b.moves) : 99;
+  return aHops - bHops || aDur - bDur || (b.score || 0) - (a.score || 0);
+}
+
 export async function submitGameScore(payload) {
   const token = getAuthToken();
   const cleanDate = String(payload.date || payload.challengeId || new Date().toISOString().slice(0, 10)).replace(/^daily-/, '');
@@ -116,14 +130,18 @@ export async function submitGameScore(payload) {
 
   const storageKey = mode === 'six-degrees' ? `reelquest_lb_${cleanDate}` : `reelquest_lb_${mode}`;
   const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  const hopsVal = payload.hops ?? payload.moves ?? 2;
+  const durVal = payload.durationSeconds || 0;
+  const defaultSixDegreesScore = Math.max(100, 10000 - Math.max(0, hopsVal - 1) * 1200 - Math.min(durVal * 20, 4000));
   const entry = {
     userId: payload.userId || 'guest-user',
     username: payload.username || 'Cinephile',
-    hops: payload.hops ?? payload.moves ?? 2,
-    moves: payload.hops ?? payload.moves ?? 2,
-    score: payload.score || Math.max(200, 1200 - ((payload.hops || 2) - 2) * 150 - (payload.durationSeconds || 0) * 2),
-    durationSeconds: payload.durationSeconds || 0,
+    hops: hopsVal,
+    moves: hopsVal,
+    score: payload.score || defaultSixDegreesScore,
+    durationSeconds: durVal,
     metricValue: payload.metricValue,
+    gameMode: mode,
     date: cleanDate,
     submittedAt: new Date().toISOString(),
     isPro: payload.isPro || false
@@ -131,7 +149,7 @@ export async function submitGameScore(payload) {
 
   const filteredLocal = existing.filter(e => !(e.userId === entry.userId && (mode === 'six-degrees' || e.date === cleanDate)));
   filteredLocal.push(entry);
-  filteredLocal.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.hops || 0) - (b.hops || 0) || (a.durationSeconds || 0) - (b.durationSeconds || 0));
+  filteredLocal.sort((a, b) => compareLeaderboardItems(a, b, mode, 'daily'));
   localStorage.setItem(storageKey, JSON.stringify(filteredLocal.slice(0, 100)));
 
   if (API_BASE_URL && (token || (payload.userId && !String(payload.userId).startsWith('guest')))) {
@@ -153,7 +171,7 @@ export async function submitGameScore(payload) {
           startActorId: payload.startActorId,
           targetActorId: payload.targetActorId,
           path: payload.path || [],
-          durationSeconds: payload.durationSeconds || 0,
+          durationSeconds: durVal,
           score: entry.score,
           moves: entry.moves,
           metricValue: payload.metricValue
@@ -212,9 +230,11 @@ export async function fetchLeaderboard(challengeId, scope = 'daily', mode = 'six
   }
 
   const storageKey = scope === 'all-time'
-    ? 'reelquest_lb_all_time'
+    ? `reelquest_lb_${mode}_all_time`
     : (mode === 'six-degrees' ? `reelquest_lb_${cleanDate}` : `reelquest_lb_${mode}`);
-  const legacyKey = mode === 'six-degrees' && scope !== 'all-time' ? `reelquest_lb_daily-${cleanDate}` : null;
+  const legacyKey = mode === 'six-degrees' && scope !== 'all-time'
+    ? `reelquest_lb_daily-${cleanDate}`
+    : (scope !== 'all-time' ? `reelquest_lb_${mode}_${cleanDate}` : null);
 
   const localRaw = [
     ...JSON.parse(localStorage.getItem(storageKey) || '[]'),
@@ -224,33 +244,37 @@ export async function fetchLeaderboard(challengeId, scope = 'daily', mode = 'six
   const localFiltered = localRaw.filter(item => {
     const isGuest = !item.userId || item.userId.startsWith('guest') || (item.username || '').toLowerCase().includes('guest');
     if (isGuest) return false;
-    if (scope !== 'all-time' && item.date && item.date !== cleanDate) return false;
+    if (item.gameMode && item.gameMode !== mode) return false;
+    if (scope !== 'all-time' && item.date && String(item.date).replace(/^daily-/, '') !== cleanDate) return false;
     return true;
   });
 
   const mergedMap = new Map();
   for (const r of remoteEntries) {
-    mergedMap.set(r.userId || r.username, r);
+    const key = (r.username || r.userId || '').toLowerCase();
+    mergedMap.set(key, r);
   }
   for (const l of localFiltered) {
-    const key = l.userId || l.username;
-    if (!mergedMap.has(key)) {
-      mergedMap.set(key, {
-        userId: l.userId,
-        username: l.username,
-        score: l.score || 0,
-        hops: l.hops ?? l.moves ?? 2,
-        moves: l.moves ?? l.hops ?? 2,
-        metricValue: l.metricValue,
-        durationSeconds: l.durationSeconds || 0,
-        isPro: Boolean(l.isPro),
-        date: cleanDate
-      });
+    const key = (l.username || l.userId || '').toLowerCase();
+    const candidate = {
+      userId: l.userId,
+      username: l.username,
+      score: l.score || 0,
+      hops: l.hops ?? l.moves ?? 2,
+      moves: l.moves ?? l.hops ?? 2,
+      metricValue: l.metricValue,
+      durationSeconds: l.durationSeconds || 0,
+      isPro: Boolean(l.isPro),
+      date: cleanDate
+    };
+    const prev = mergedMap.get(key);
+    if (!prev || compareLeaderboardItems(candidate, prev, mode, scope) < 0) {
+      mergedMap.set(key, candidate);
     }
   }
 
   const combined = Array.from(mergedMap.values());
-  combined.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.hops || 0) - (b.hops || 0) || (a.durationSeconds || 0) - (b.durationSeconds || 0));
+  combined.sort((a, b) => compareLeaderboardItems(a, b, mode, scope));
   return combined.map((item, idx) => ({ ...item, rank: idx + 1 }));
 }
 

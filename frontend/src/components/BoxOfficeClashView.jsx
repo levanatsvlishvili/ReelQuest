@@ -59,18 +59,19 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const [endlessMovieA, setEndlessMovieA] = useState(() => BOX_OFFICE_MOVIES[0]);
   const [endlessMovieB, setEndlessMovieB] = useState(() => BOX_OFFICE_MOVIES[1]);
   const [endlessRevealed, setEndlessRevealed] = useState(false);
-  const [endlessLastResult, setEndlessLastResult] = useState(null); // 'CORRECT' | 'WRONG'
+  const [endlessLastResult, setEndlessLastResult] = useState(null);
   const [endlessGameOver, setEndlessGameOver] = useState(false);
-  const [endlessHistory, setEndlessHistory] = useState([]); // Array of previous matchups
+  const [endlessHistory, setEndlessHistory] = useState([]);
 
   const dailyMatchups = useMemo(() => {
     return getDailyBoxOfficeMatchups(activeDate);
   }, [activeDate]);
 
-  const [dailyRound, setDailyRound] = useState(0); // 0 to 4 (5 rounds)
-  const [dailyGuesses, setDailyGuesses] = useState([]); // [{ round, chosen: 'HIGHER'|'LOWER', correct: boolean, movieA, movieB }]
+  const [dailyRound, setDailyRound] = useState(0);
+  const [dailyGuesses, setDailyGuesses] = useState([]);
   const [dailyRevealed, setDailyRevealed] = useState(false);
   const [dailyComplete, setDailyComplete] = useState(false);
+  const [dailyTimerSeconds, setDailyTimerSeconds] = useState(0);
 
   const [showHowToPlay, setShowHowToPlay] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -86,22 +87,32 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         setDailyGuesses(parsed.guesses || []);
         setDailyComplete(Boolean(parsed.complete));
         setDailyRound(parsed.guesses ? Math.min(4, parsed.guesses.length) : 0);
+        setDailyTimerSeconds(parsed.timerSeconds || 0);
         setDailyRevealed(false);
       } else {
         setDailyGuesses([]);
         setDailyComplete(false);
         setDailyRound(0);
+        setDailyTimerSeconds(0);
         setDailyRevealed(false);
       }
     } catch {
       setDailyGuesses([]);
       setDailyComplete(false);
       setDailyRound(0);
+      setDailyTimerSeconds(0);
       setDailyRevealed(false);
     }
   }, [activeDate, subMode]);
 
-  // Reset Endless Streak
+  useEffect(() => {
+    if (subMode !== 'daily' || dailyComplete) return;
+    const interval = setInterval(() => {
+      setDailyTimerSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [subMode, dailyComplete]);
+
   const handleStartNewEndless = () => {
     playClick();
     const firstA = getRandomContender();
@@ -115,7 +126,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     setEndlessHistory([]);
   };
 
-  // ENDLESS GUESS HANDLER
   const handleEndlessGuess = (choice) => {
     if (endlessRevealed || endlessGameOver) return;
     playClick();
@@ -150,7 +160,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         }
       ]);
 
-      // Transition to next matchup after 1.4 seconds
       setTimeout(() => {
         setAnimatingNext(true);
         setTimeout(() => {
@@ -167,7 +176,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
       playDefeat();
       setEndlessGameOver(true);
 
-      // Save match record
       saveDetailedMatch(user?.id, {
         id: `bo_streak_${Date.now()}_${user?.id || 'guest'}`,
         gameMode: 'box-office',
@@ -175,7 +183,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         date: todayStr,
         won: currentStreak >= 5,
         forfeited: false,
-        hops: currentStreak, // Streak reached
+        hops: currentStreak,
         optimalHops: 10,
         boxOfficeScore: currentStreak,
         targetMovie: {
@@ -234,8 +242,8 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     if (isFinished) {
       setDailyComplete(true);
       const totalCorrect = updatedGuesses.filter(g => g.correct).length;
+      const finalDuration = Math.max(1, dailyTimerSeconds);
 
-      // Save to localStorage
       try {
         const storageKey = `reelquest_bo_daily_${activeDate}`;
         localStorage.setItem(storageKey, JSON.stringify({
@@ -243,11 +251,11 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
           guesses: updatedGuesses,
           complete: true,
           score: totalCorrect,
+          timerSeconds: finalDuration,
           updatedAt: new Date().toISOString()
         }));
       } catch {}
 
-      // Save match record
       saveDetailedMatch(user?.id, {
         id: `bo_daily_${activeDate}_${user?.id || 'guest'}`,
         gameMode: 'box-office',
@@ -258,6 +266,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
         hops: totalCorrect,
         optimalHops: 5,
         boxOfficeScore: totalCorrect,
+        durationSeconds: finalDuration,
         targetMovie: {
           id: currentMatchup.movieB.id,
           title: `Daily Box Office (${totalCorrect}/5)`,
@@ -274,7 +283,7 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
           isPro: user.isPro,
           hops: totalCorrect,
           score: totalCorrect * 200,
-          durationSeconds: 60,
+          durationSeconds: finalDuration,
           date: activeDate
         });
       }
@@ -290,7 +299,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // Share score generator
   const handleShare = () => {
     playClick();
     const lines = [];
@@ -679,7 +687,6 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
             </p>
           </div>
 
-          {/* Breakdown Pills */}
           <div className="flex items-center justify-center gap-2">
             {dailyGuesses.map((g, idx) => (
               <div

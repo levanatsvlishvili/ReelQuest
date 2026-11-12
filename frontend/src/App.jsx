@@ -25,6 +25,7 @@ import { BoxOfficeClashView } from './components/BoxOfficeClashView';
 import { CheckoutSuccessModal } from './components/CheckoutSuccessModal';
 import { useAuth } from './context/AuthContext';
 import { confirmPaymentOrder } from './api/auth';
+import { syncLocalScoresToBackend } from './api/leaderboardService';
 import { activateSubscriptionWithCard } from './utils/billingService';
 
 function parseRouteFromLocation() {
@@ -110,6 +111,12 @@ export default function App() {
   const [activeMode, setActiveMode] = useState(initialRoute.mode);
   const [isDuelMode, setIsDuelMode] = useState(initialRoute.duel);
   const [checkoutSuccessNotice, setCheckoutSuccessNotice] = useState(null);
+
+  useEffect(() => {
+    if (user?.id) {
+      syncLocalScoresToBackend(user);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const handlePopState = () => {

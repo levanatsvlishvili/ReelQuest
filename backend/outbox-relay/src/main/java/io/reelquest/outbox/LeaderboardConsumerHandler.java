@@ -3,6 +3,7 @@ package io.reelquest.outbox;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -29,14 +30,14 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
     private final String tableName;
 
     public LeaderboardConsumerHandler() {
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         String regionStr = System.getenv().getOrDefault("AWS_REGION", "eu-central-1");
         this.tableName = System.getenv().getOrDefault("DYNAMODB_TABLE", DEFAULT_TABLE);
         this.dynamoDbClient = DynamoDbClient.builder().region(Region.of(regionStr)).build();
     }
 
     public LeaderboardConsumerHandler(DynamoDbClient dynamoDbClient, String tableName) {
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         this.dynamoDbClient = Objects.requireNonNull(dynamoDbClient);
         this.tableName = Objects.requireNonNull(tableName);
     }
@@ -61,16 +62,21 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
 
     private void processMessage(String body) throws Exception {
         JsonNode root = objectMapper.readTree(body);
-
-        // If routed through EventBridge, payload is nested inside "detail"
         JsonNode payload = root.has("detail") ? root.get("detail") : root;
 
-        String userId = payload.get("userId").asText();
+        if (payload.has("alreadyAggregated") && payload.get("alreadyAggregated").asBoolean()) {
+            return;
+        }
+
+        String userId = payload.has("userId") ? payload.get("userId").asText() : null;
         if (userId == null || userId.isBlank() || userId.startsWith("guest")) {
             log.info("Skipping leaderboard aggregation for guest user: {}", userId);
             return;
         }
         String date = payload.get("date").asText();
+        String gameMode = payload.has("gameMode") && !payload.get("gameMode").asText().isBlank()
+                ? payload.get("gameMode").asText().toLowerCase()
+                : "six-degrees";
         long score = payload.get("score").asLong();
         int moves = payload.get("moves").asInt();
         long durationSeconds = payload.get("durationSeconds").asLong();
@@ -80,48 +86,49 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
         Boolean isPro = payload.has("isPro") ? payload.get("isPro").asBoolean() : null;
 
         if (username == null || isPro == null) {
-            if (userId != null && !userId.startsWith("guest")) {
-                try {
-                    var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
-                            .tableName(tableName)
-                            .key(Map.of(
-                                    "PK", AttributeValue.fromS("USER#" + userId),
-                                    "SK", AttributeValue.fromS("PROFILE")
-                            ))
-                            .build());
-                    if (profileRes.hasItem() && profileRes.item() != null) {
-                        Map<String, AttributeValue> item = profileRes.item();
-                        if (username == null && item.containsKey("username")) {
-                            username = item.get("username").s();
-                        }
-                        if (isPro == null && item.containsKey("tier")) {
-                            isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
-                        }
+            try {
+                var profileRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of(
+                                "PK", AttributeValue.fromS("USER#" + userId),
+                                "SK", AttributeValue.fromS("PROFILE")
+                        ))
+                        .build());
+                if (profileRes.hasItem() && profileRes.item() != null) {
+                    Map<String, AttributeValue> item = profileRes.item();
+                    if (username == null && item.containsKey("username")) {
+                        username = item.get("username").s();
                     }
-                } catch (Exception e) {
-                    log.warn("Failed to lookup profile for userId {}: {}", userId, e.getMessage());
+                    if (isPro == null && item.containsKey("tier")) {
+                        isPro = "PRO".equalsIgnoreCase(item.get("tier").s());
+                    }
                 }
+            } catch (Exception e) {
+                log.warn("Failed to lookup profile for userId {}: {}", userId, e.getMessage());
             }
         }
 
         if (username == null || username.isBlank()) {
-            username = userId.startsWith("guest") ? "Guest Cinephile" : userId;
+            username = userId;
         }
         if (isPro == null) {
             isPro = false;
         }
 
-        // Format inverted score so GSI1 naturally sorts highest score first
+        String dailyLbPk = "six-degrees".equals(gameMode)
+                ? "LEADERBOARD#" + date
+                : "LEADERBOARD#" + gameMode + "#" + date;
         String invertedScore = String.format("%08d", Math.max(0, 99_999_999L - score));
 
         Map<String, AttributeValue> leaderboardItem = new HashMap<>();
-        leaderboardItem.put("PK", AttributeValue.fromS("LEADERBOARD#" + date));
+        leaderboardItem.put("PK", AttributeValue.fromS(dailyLbPk));
         leaderboardItem.put("SK", AttributeValue.fromS("USER#" + userId));
-        leaderboardItem.put("GSI1PK", AttributeValue.fromS("LEADERBOARD#" + date));
+        leaderboardItem.put("GSI1PK", AttributeValue.fromS(dailyLbPk));
         leaderboardItem.put("GSI1SK", AttributeValue.fromS("SCORE#" + invertedScore));
         leaderboardItem.put("Type", AttributeValue.fromS("LEADERBOARD_ENTRY"));
         leaderboardItem.put("userId", AttributeValue.fromS(userId));
         leaderboardItem.put("username", AttributeValue.fromS(username));
+        leaderboardItem.put("gameMode", AttributeValue.fromS(gameMode));
         leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(score)));
         leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(moves)));
         leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(durationSeconds)));
@@ -133,7 +140,6 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
                 .item(leaderboardItem)
                 .build());
 
-        // Update User Aggregate Profile Stats
         long newTotalScore = score;
         int newGamesPlayed = 1;
         try {
@@ -164,7 +170,6 @@ public class LeaderboardConsumerHandler implements RequestHandler<SQSEvent, Void
             log.warn("Could not update profile stats for userId {}: {}", userId, e.getMessage());
         }
 
-        // Update All-Time Leaderboard
         String invertedAllTimeScore = String.format("%010d", Math.max(0, 999_999_999L - newTotalScore));
         Map<String, AttributeValue> allTimeItem = new HashMap<>();
         allTimeItem.put("PK", AttributeValue.fromS("LEADERBOARD#ALL_TIME"));
