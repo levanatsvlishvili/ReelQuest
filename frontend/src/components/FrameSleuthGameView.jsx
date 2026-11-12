@@ -54,6 +54,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
   const [gameStatus, setGameStatus] = useState('PLAYING');
   const [viewedFrameIndex, setViewedFrameIndex] = useState(0);
   const [gaveUp, setGaveUp] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -81,6 +82,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         setGuesses(parsed.guesses || []);
         setGameStatus(parsed.status || 'PLAYING');
         setGaveUp(Boolean(parsed.gaveUp));
+        setTimerSeconds(parsed.timerSeconds || 0);
         const unlocked = Math.min(MAX_FRAMES - 1, (parsed.guesses || []).length);
         setViewedFrameIndex(unlocked);
         if (parsed.status === 'WON' || parsed.status === 'LOST') {
@@ -92,6 +94,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         setGuesses([]);
         setGameStatus('PLAYING');
         setGaveUp(false);
+        setTimerSeconds(0);
         setViewedFrameIndex(0);
         setShowResultModal(false);
       }
@@ -99,10 +102,19 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
       setGuesses([]);
       setGameStatus('PLAYING');
       setGaveUp(false);
+      setTimerSeconds(0);
       setViewedFrameIndex(0);
       setShowResultModal(false);
     }
   }, [activeDate]);
+
+  useEffect(() => {
+    if (gameStatus !== 'PLAYING') return;
+    const interval = setInterval(() => {
+      setTimerSeconds(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [gameStatus]);
 
   useEffect(() => {
     setImageLoading(true);
@@ -164,6 +176,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
 
     const storageKey = `reelquest_framesleuth_${activeDate}`;
+    const finalDuration = Math.max(1, timerSeconds);
     localStorage.setItem(
       storageKey,
       JSON.stringify({
@@ -171,6 +184,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         guesses: newGuesses,
         status: nextStatus,
         gaveUp: false,
+        timerSeconds: finalDuration,
         updatedAt: new Date().toISOString()
       })
     );
@@ -188,6 +202,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         hops: newGuesses.length,
         optimalHops: 1,
         framesUsed: newGuesses.length,
+        durationSeconds: finalDuration,
         targetMovie: {
           id: targetMovie.id,
           title: targetMovie.title,
@@ -204,7 +219,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
           isPro: user.isPro,
           hops: newGuesses.length,
           score: Math.max(50, 110 - newGuesses.length * 15),
-          durationSeconds: 30,
+          durationSeconds: finalDuration,
           date: activeDate
         });
       }
@@ -221,6 +236,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         hops: MAX_FRAMES,
         optimalHops: 1,
         framesUsed: MAX_FRAMES,
+        durationSeconds: finalDuration,
         targetMovie: {
           id: targetMovie.id,
           title: targetMovie.title,
@@ -256,6 +272,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
 
     const storageKey = `reelquest_framesleuth_${activeDate}`;
+    const finalDuration = Math.max(1, timerSeconds);
     localStorage.setItem(
       storageKey,
       JSON.stringify({
@@ -263,6 +280,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         guesses: newGuesses,
         status: nextStatus,
         gaveUp: false,
+        timerSeconds: finalDuration,
         updatedAt: new Date().toISOString()
       })
     );
