@@ -1,12 +1,6 @@
-/**
- * Spotle Movie Database & Engine for ReelQuest
- * 
- * Contains 524+ celebrated and iconic cinema masterpieces across all major genres,
- * franchises (Fast & Furious, Harry Potter, Star Wars, MCU, Lord of the Rings, Mission: Impossible, etc.),
- * directors, and eras for the daily Spotle mystery guessing game.
- */
+import extraSpotleMovies from './spotleCatalog5000.json';
 
-export const SPOTLE_MOVIES = [
+export const CURATED_SPOTLE_MOVIES = [
   {
     "id": "tt1022603",
     "title": "(500) Days of Summer",
@@ -11979,10 +11973,8 @@ export const SPOTLE_MOVIES = [
   }
 ];
 
-/**
- * Deterministic integer hash for any YYYY-MM-DD date string.
- * Guarantees every player worldwide gets the exact same movie on that day.
- */
+export const SPOTLE_MOVIES = [...CURATED_SPOTLE_MOVIES, ...extraSpotleMovies];
+
 export function getSpotleMovieForDate(dateStr) {
   if (!dateStr || dateStr === 'Today') {
     dateStr = new Date().toISOString().slice(0, 10);
@@ -11992,14 +11984,10 @@ export function getSpotleMovieForDate(dateStr) {
     hash = (hash << 5) - hash + dateStr.charCodeAt(i);
     hash |= 0;
   }
-  const positiveIndex = Math.abs(hash) % SPOTLE_MOVIES.length;
-  return SPOTLE_MOVIES[positiveIndex];
+  const positiveIndex = Math.abs(hash) % CURATED_SPOTLE_MOVIES.length;
+  return CURATED_SPOTLE_MOVIES[positiveIndex];
 }
 
-/**
- * Compares a guessed movie against the target mystery movie.
- * Produces color statuses (EXACT, CLOSE/PARTIAL, MISS) and directional arrows (HIGHER, LOWER, EQUAL).
- */
 export function compareSpotleMovies(guessed, target) {
   if (!guessed || !target) return null;
 
@@ -12045,10 +12033,9 @@ export function compareSpotleMovies(guessed, target) {
   const ratingDirection = ratingDiff > 0 ? 'HIGHER' : ratingDiff < 0 ? 'LOWER' : 'EQUAL';
   const ratingStatus = Math.abs(ratingDiff) <= 0.2 ? 'EXACT' : Math.abs(ratingDiff) <= 0.8 ? 'CLOSE' : 'MISS';
 
-  // 6. Runtime (in minutes)
   const runtimeDiff = target.runtime - guessed.runtime;
   const runtimeDirection = runtimeDiff > 0 ? 'HIGHER' : runtimeDiff < 0 ? 'LOWER' : 'EQUAL';
-  const runtimeStatus = Math.abs(runtimeDiff) <= 10 ? 'EXACT' : Math.abs(runtimeDiff) <= 25 ? 'CLOSE' : 'MISS';
+  const runtimeStatus = runtimeDiff === 0 ? 'EXACT' : Math.abs(runtimeDiff) <= 15 ? 'CLOSE' : 'MISS';
 
   return {
     isExactWin,

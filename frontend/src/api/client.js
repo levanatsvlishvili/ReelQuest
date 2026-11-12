@@ -1,6 +1,6 @@
-import { getAuthToken } from './auth';
+import { getAuthToken, RESOLVED_API_BASE_URL } from './auth';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+export const API_BASE_URL = RESOLVED_API_BASE_URL;
 
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/w500';
 
@@ -111,7 +111,30 @@ export async function fetchOptimalPath(startActorId, targetActorId) {
 
 export async function submitGameScore(payload) {
   const token = getAuthToken();
-  if (API_BASE_URL && token) {
+  const cleanDate = String(payload.date || payload.challengeId || new Date().toISOString().slice(0, 10)).replace(/^daily-/, '');
+  const mode = payload.gameMode || 'six-degrees';
+
+  const storageKey = mode === 'six-degrees' ? `reelquest_lb_${cleanDate}` : `reelquest_lb_${mode}`;
+  const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
+  const entry = {
+    userId: payload.userId || 'guest-user',
+    username: payload.username || 'Cinephile',
+    hops: payload.hops ?? payload.moves ?? 2,
+    moves: payload.hops ?? payload.moves ?? 2,
+    score: payload.score || Math.max(200, 1200 - ((payload.hops || 2) - 2) * 150 - (payload.durationSeconds || 0) * 2),
+    durationSeconds: payload.durationSeconds || 0,
+    metricValue: payload.metricValue,
+    date: cleanDate,
+    submittedAt: new Date().toISOString(),
+    isPro: payload.isPro || false
+  };
+
+  const filteredLocal = existing.filter(e => !(e.userId === entry.userId && (mode === 'six-degrees' || e.date === cleanDate)));
+  filteredLocal.push(entry);
+  filteredLocal.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.hops || 0) - (b.hops || 0) || (a.durationSeconds || 0) - (b.durationSeconds || 0));
+  localStorage.setItem(storageKey, JSON.stringify(filteredLocal.slice(0, 100)));
+
+  if (API_BASE_URL && (token || (payload.userId && !String(payload.userId).startsWith('guest')))) {
     try {
       const idempotencyKey = `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       const res = await fetch(`${API_BASE_URL}/games/submit`, {
@@ -119,52 +142,49 @@ export async function submitGameScore(payload) {
         headers: {
           'Content-Type': 'application/json',
           'Idempotency-Key': idempotencyKey,
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
           userId: payload.userId,
+          username: payload.username,
+          isPro: Boolean(payload.isPro),
+          date: cleanDate,
+          gameMode: mode,
           startActorId: payload.startActorId,
           targetActorId: payload.targetActorId,
           path: payload.path || [],
-          durationSeconds: payload.durationSeconds
+          durationSeconds: payload.durationSeconds || 0,
+          score: entry.score,
+          moves: entry.moves,
+          metricValue: payload.metricValue
         })
       });
       if (res.ok) {
         return await res.json();
       }
     } catch (err) {
-      console.warn('Remote game submit failed, saving to local leaderboard:', err);
+      console.warn('Remote game submit failed, saved to local leaderboard:', err);
     }
   }
-
-  // Save to real local player submissions
-  const storageKey = `reelquest_lb_${payload.challengeId}`;
-  const existing = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  const entry = {
-    userId: payload.userId || 'guest-user',
-    username: payload.username || 'Cinephile',
-    hops: payload.hops,
-    durationSeconds: payload.durationSeconds,
-    submittedAt: new Date().toISOString(),
-    isPro: payload.isPro || false
-  };
-
-  existing.push(entry);
-  existing.sort((a, b) => a.hops - b.hops || a.durationSeconds - b.durationSeconds);
-  localStorage.setItem(storageKey, JSON.stringify(existing.slice(0, 50)));
 
   return { status: 'ACCEPTED', entry };
 }
 
-export async function fetchLeaderboard(challengeId, scope = 'daily') {
+export async function fetchLeaderboard(challengeId, scope = 'daily', mode = 'six-degrees') {
+  const cleanDate = scope === 'all-time'
+    ? 'all-time'
+    : (String(challengeId || '').replace(/^daily-/, '') || new Date().toISOString().slice(0, 10));
+
+  let remoteEntries = [];
   if (API_BASE_URL) {
     try {
-      const date = scope === 'all-time' ? 'all-time' : (challengeId?.replace('daily-', '') || new Date().toISOString().slice(0, 10));
-      const res = await fetch(`${API_BASE_URL}/leaderboard?date=${date}`);
+      const res = await fetch(
+        `${API_BASE_URL}/leaderboard?date=${encodeURIComponent(cleanDate)}&scope=${encodeURIComponent(scope)}&mode=${encodeURIComponent(mode)}`
+      );
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-          return data
+          remoteEntries = data
             .filter(item => {
               const uid = item.userId || '';
               const uname = item.username || '';
@@ -173,14 +193,16 @@ export async function fetchLeaderboard(challengeId, scope = 'daily') {
             .map((item, idx) => ({
               rank: idx + 1,
               userId: item.userId,
-              username: item.username && !item.username.startsWith('guest') && !item.username.includes('-')
+              username: item.username && !item.username.startsWith('guest')
                 ? item.username
-                : (item.username || 'Cinephile'),
+                : 'Cinephile',
               score: item.score || 0,
               hops: item.moves || 0,
               moves: item.moves || 0,
+              metricValue: item.metricValue || undefined,
               durationSeconds: item.durationSeconds || 0,
-              isPro: item.isPro || false
+              isPro: item.isPro || false,
+              date: cleanDate
             }));
         }
       }
@@ -189,11 +211,47 @@ export async function fetchLeaderboard(challengeId, scope = 'daily') {
     }
   }
 
-  const storageKey = scope === 'all-time' ? 'reelquest_lb_all_time' : `reelquest_lb_${challengeId}`;
-  const local = JSON.parse(localStorage.getItem(storageKey) || '[]');
-  return local
-    .filter(item => item.userId && !item.userId.startsWith('guest') && item.username && !item.username.toLowerCase().includes('guest'))
-    .map((item, idx) => ({ rank: idx + 1, ...item }));
+  const storageKey = scope === 'all-time'
+    ? 'reelquest_lb_all_time'
+    : (mode === 'six-degrees' ? `reelquest_lb_${cleanDate}` : `reelquest_lb_${mode}`);
+  const legacyKey = mode === 'six-degrees' && scope !== 'all-time' ? `reelquest_lb_daily-${cleanDate}` : null;
+
+  const localRaw = [
+    ...JSON.parse(localStorage.getItem(storageKey) || '[]'),
+    ...(legacyKey ? JSON.parse(localStorage.getItem(legacyKey) || '[]') : [])
+  ];
+
+  const localFiltered = localRaw.filter(item => {
+    const isGuest = !item.userId || item.userId.startsWith('guest') || (item.username || '').toLowerCase().includes('guest');
+    if (isGuest) return false;
+    if (scope !== 'all-time' && item.date && item.date !== cleanDate) return false;
+    return true;
+  });
+
+  const mergedMap = new Map();
+  for (const r of remoteEntries) {
+    mergedMap.set(r.userId || r.username, r);
+  }
+  for (const l of localFiltered) {
+    const key = l.userId || l.username;
+    if (!mergedMap.has(key)) {
+      mergedMap.set(key, {
+        userId: l.userId,
+        username: l.username,
+        score: l.score || 0,
+        hops: l.hops ?? l.moves ?? 2,
+        moves: l.moves ?? l.hops ?? 2,
+        metricValue: l.metricValue,
+        durationSeconds: l.durationSeconds || 0,
+        isPro: Boolean(l.isPro),
+        date: cleanDate
+      });
+    }
+  }
+
+  const combined = Array.from(mergedMap.values());
+  combined.sort((a, b) => (b.score || 0) - (a.score || 0) || (a.hops || 0) - (b.hops || 0) || (a.durationSeconds || 0) - (b.durationSeconds || 0));
+  return combined.map((item, idx) => ({ ...item, rank: idx + 1 }));
 }
 
 export async function createDuel({

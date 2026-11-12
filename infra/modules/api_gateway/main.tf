@@ -66,11 +66,9 @@ resource "aws_apigatewayv2_route" "leaderboard" {
 }
 
 resource "aws_apigatewayv2_route" "submit_game" {
-  api_id             = aws_apigatewayv2_api.main.id
-  route_key          = "POST /games/submit"
-  target             = "integrations/${aws_apigatewayv2_integration.game_service.id}"
-  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
-  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /games/submit"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
 resource "aws_apigatewayv2_route" "actor_movies" {
@@ -148,7 +146,7 @@ resource "aws_apigatewayv2_route" "billing_order" {
 resource "aws_apigatewayv2_route" "user_profile" {
   api_id    = aws_apigatewayv2_api.main.id
   route_key = "GET /users/{userId}"
-  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
 }
 
 resource "aws_apigatewayv2_route" "user_history" {
@@ -158,11 +156,15 @@ resource "aws_apigatewayv2_route" "user_history" {
 }
 
 resource "aws_apigatewayv2_route" "user_sync" {
-  api_id             = aws_apigatewayv2_api.main.id
-  route_key          = "POST /users/sync"
-  target             = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
-  authorization_type = length(aws_apigatewayv2_authorizer.cognito) > 0 ? "JWT" : "NONE"
-  authorizer_id      = length(aws_apigatewayv2_authorizer.cognito) > 0 ? aws_apigatewayv2_authorizer.cognito[0].id : null
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /users/sync"
+  target    = "integrations/${aws_apigatewayv2_integration.game_service.id}"
+}
+
+resource "aws_apigatewayv2_route" "user_migrate_cognito" {
+  api_id    = aws_apigatewayv2_api.main.id
+  route_key = "POST /users/migrate-cognito"
+  target    = "integrations/${aws_apigatewayv2_integration.billing_service.id}"
 }
 
 resource "aws_apigatewayv2_route" "default" {

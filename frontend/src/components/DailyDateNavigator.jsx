@@ -151,15 +151,19 @@ export function DailyDateNavigator({
       {(!compact && (onOpenDuel || onOpenHowToPlay)) || (embedded && onOpenHowToPlay) ? (
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {!compact && onOpenDuel && (
-            <button
-              type="button"
-              onClick={onOpenDuel}
+            <a
+              href="/duel"
+              onClick={(e) => {
+                if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+                e.preventDefault();
+                onOpenDuel();
+              }}
               className="flex h-8 sm:h-9 items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3 text-xs font-extrabold text-gold shadow-gold-glow/20 transition hover:bg-gold hover:text-cinema-black active:scale-95"
               title="Play 1v1 Online Duel against a friend"
             >
               <Swords className="h-3.5 w-3.5" />
               <span>1v1 Duel</span>
-            </button>
+            </a>
           )}
 
           {onOpenHowToPlay && (

@@ -23,7 +23,6 @@ import { getTmdbImageUrl } from '../api/client';
 import { saveDetailedMatch } from '../api/matchHistory';
 import { recordLeaderboardScore } from '../api/leaderboardService';
 import {
-  FRAME_SLEUTH_MOVIES,
   getFrameSleuthMovieForDate,
   getFrameImageUrl
 } from '../data/frameSleuthMovies';
@@ -40,26 +39,22 @@ import {
 const MAX_FRAMES = 6;
 
 export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
-  const { user, isPro, isAuthenticated, stats } = useAuth();
+  const { user, isPro, isAuthenticated } = useAuth();
 
-  // Active puzzle date (defaults to today)
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
   const isToday = activeDate === todayStr;
   const frameStreak = calculateGameStreak('frame-sleuth', user?.id);
 
-  // The secret mystery movie for this date
   const targetMovie = useMemo(() => {
     return getFrameSleuthMovieForDate(activeDate);
   }, [activeDate]);
 
-  // Game state
-  const [guesses, setGuesses] = useState([]); // [{ title, year, won, skipped }]
-  const [gameStatus, setGameStatus] = useState('PLAYING'); // 'PLAYING' | 'WON' | 'LOST'
+  const [guesses, setGuesses] = useState([]);
+  const [gameStatus, setGameStatus] = useState('PLAYING');
   const [viewedFrameIndex, setViewedFrameIndex] = useState(0);
   const [gaveUp, setGaveUp] = useState(false);
 
-  // Search input & dropdown
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -71,15 +66,12 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
   const [copiedShare, setCopiedShare] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // Search input ref
   const searchInputRef = useRef(null);
 
-  // Current frame index available to the player based on attempts made
-  // e.g. 0 guesses -> can access Frame 0.
-  // 1 guess -> can access Frame 0 and Frame 1.
-  const unlockedFramesCount = Math.min(MAX_FRAMES, guesses.length + 1);
+  const unlockedFramesCount = gameStatus === 'PLAYING'
+    ? Math.min(MAX_FRAMES, guesses.length + 1)
+    : MAX_FRAMES;
 
-  // Load progress for activeDate from localStorage
   useEffect(() => {
     try {
       const storageKey = `reelquest_framesleuth_${activeDate}`;
@@ -89,7 +81,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         setGuesses(parsed.guesses || []);
         setGameStatus(parsed.status || 'PLAYING');
         setGaveUp(Boolean(parsed.gaveUp));
-        // View the latest unlocked frame or the last frame
         const unlocked = Math.min(MAX_FRAMES - 1, (parsed.guesses || []).length);
         setViewedFrameIndex(unlocked);
         if (parsed.status === 'WON' || parsed.status === 'LOST') {
@@ -113,27 +104,36 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
   }, [activeDate]);
 
-  // Pre-load images for smooth transition
   useEffect(() => {
     setImageLoading(true);
   }, [viewedFrameIndex, activeDate]);
 
-  // Autocomplete movie suggestions (from the rich 524-movie library)
   const suggestions = useMemo(() => {
     if (!searchQuery.trim() || searchQuery.trim().length < 2) return [];
     const q = searchQuery.toLowerCase().trim();
-
-    return SPOTLE_MOVIES.filter(m =>
-      m.title.toLowerCase().includes(q) ||
-      (m.director && m.director.toLowerCase().includes(q))
-    ).slice(0, 8);
+    const matched = [];
+    for (let i = 0; i < SPOTLE_MOVIES.length; i++) {
+      const m = SPOTLE_MOVIES[i];
+      const titleLower = m.title.toLowerCase();
+      if (titleLower.includes(q) || (m.director && m.director.toLowerCase().includes(q))) {
+        matched.push({
+          movie: m,
+          exact: titleLower === q,
+          startsWith: titleLower.startsWith(q)
+        });
+      }
+    }
+    matched.sort((a, b) => {
+      if (a.exact !== b.exact) return a.exact ? -1 : 1;
+      if (a.startsWith !== b.startsWith) return a.startsWith ? -1 : 1;
+      return (b.movie.rating || 0) - (a.movie.rating || 0);
+    });
+    return matched.slice(0, 8).map((item) => item.movie);
   }, [searchQuery]);
 
-  // Handle movie guess submission
   const handleGuessMovie = (movie) => {
     if (gameStatus !== 'PLAYING') return;
 
-    // Check if already guessed
     if (guesses.some(g => !g.skipped && g.title.toLowerCase() === movie.title.toLowerCase())) {
       setSearchQuery('');
       setDropdownOpen(false);
@@ -158,13 +158,11 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     setSearchQuery('');
     setDropdownOpen(false);
 
-    // If game continues, advance to next frame
     if (!isWin && !isLoss) {
       setViewedFrameIndex(newGuesses.length);
       playNodeConnect();
     }
 
-    // Persist to localStorage
     const storageKey = `reelquest_framesleuth_${activeDate}`;
     localStorage.setItem(
       storageKey,
@@ -177,7 +175,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
       })
     );
 
-    // Handle end-of-game
     if (isWin) {
       playVictory();
       setShowResultModal(true);
@@ -236,7 +233,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // Skip Frame (advance to next frame without guessing)
   const handleSkipFrame = () => {
     if (gameStatus !== 'PLAYING') return;
     playClick();
@@ -296,7 +292,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // Give Up & Reveal Answer
   const handleGiveUp = () => {
     if (gameStatus !== 'PLAYING') return;
     playDefeat();
@@ -337,7 +332,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     });
   };
 
-  // Keyboard navigation for search dropdown
   const handleKeyDown = (e) => {
     if (!dropdownOpen || suggestions.length === 0) {
       if (e.key === 'Enter' && suggestions.length > 0) {
@@ -362,7 +356,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // Share score generator (Framed style emoji block)
   const handleShare = () => {
     playClick();
     const lines = [];
@@ -374,7 +367,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     }
     lines.push('');
 
-    // Emoji blocks: 🟩 correct, 🟥 wrong, ⬛ skipped/remaining
     let blocks = '';
     for (let i = 0; i < MAX_FRAMES; i++) {
       if (i < guesses.length) {
@@ -396,12 +388,10 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
     setTimeout(() => setCopiedShare(false), 2500);
   };
 
-  // Frame URL for current viewed frame
   const currentFramePath = targetMovie?.frames?.[viewedFrameIndex] || '';
 
-  // Clue unlocks based on frames reached or PRO subscription
-  const canUnlockDecadeGenres = isPro || guesses.length >= 2;
-  const canUnlockDirector = isPro || guesses.length >= 4;
+  const canUnlockDecadeGenres = isPro || gameStatus !== 'PLAYING' || guesses.length >= 2;
+  const canUnlockDirector = isPro || gameStatus !== 'PLAYING' || guesses.length >= 4;
 
   return (
     <div className="mx-auto max-w-4xl space-y-5 pb-12 animate-fade-in">
@@ -474,7 +464,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-2 relative">
-            {/* Search Input */}
             <div className="relative flex-1">
               <div className="relative flex items-center rounded-xl border border-cinema-border/80 bg-cinema-surface/90 px-3 transition focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20">
                 <Search className="h-4 w-4 text-violet-400 shrink-0 mr-2.5" />
@@ -489,7 +478,7 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                   }}
                   onFocus={() => setDropdownOpen(true)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Type a movie title (e.g. Inception, The Matrix, Pulp Fiction)...`}
+                  placeholder="Type a movie title (e.g. Inception, The Matrix, Pulp Fiction)..."
                   className="w-full bg-transparent py-2.5 text-sm sm:text-base font-semibold text-white placeholder-cinema-muted focus:outline-none"
                 />
                 {searchQuery && (
@@ -505,7 +494,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                 )}
               </div>
 
-              {/* Autocomplete Dropdown */}
               {dropdownOpen && suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-72 overflow-y-auto rounded-2xl border border-cinema-border/90 bg-cinema-card/95 p-1.5 shadow-2xl backdrop-blur-lg">
                   {suggestions.map((movie, idx) => {
@@ -586,7 +574,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
           </div>
         </div>
       ) : (
-        /* Game Over Banner */
         <div
           className={`rounded-2xl border p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl ${
             gameStatus === 'WON'
@@ -640,8 +627,49 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
+          canUnlockDecadeGenres
+            ? 'border-violet-500/40 bg-violet-500/10 text-white'
+            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
+        }`}>
+          {canUnlockDecadeGenres ? (
+            <>
+              <Sparkles className="h-3.5 w-3.5 text-violet-400 shrink-0" />
+              <span className="font-bold text-violet-300">Era &amp; Genre:</span>
+              <span className="font-semibold text-white">
+                {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
+              </span>
+            </>
+          ) : (
+            <>
+              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+              <span>Era &amp; Genre unlocks at Frame 3 ({2 - guesses.length} left)</span>
+            </>
+          )}
+        </div>
+
+        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
+          canUnlockDirector
+            ? 'border-gold/40 bg-gold/10 text-white'
+            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
+        }`}>
+          {canUnlockDirector ? (
+            <>
+              <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
+              <span className="font-bold text-gold">Director:</span>
+              <span className="font-bold text-white">{targetMovie.director}</span>
+            </>
+          ) : (
+            <>
+              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
+              <span>Director unlocks at Frame 5 ({4 - guesses.length} left)</span>
+            </>
+          )}
+        </div>
+      </div>
+
       <div className="space-y-3">
-        {/* Frame Navigator Tabs (1 to 6) */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1">
             {Array.from({ length: MAX_FRAMES }).map((_, idx) => {
@@ -700,7 +728,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         <div className="relative aspect-video w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-cinema-border/80 bg-black shadow-2xl shadow-violet-950/20 group">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 z-10" />
 
-          {/* The High-Resolution Movie Frame */}
           {currentFramePath ? (
             <img
               src={getFrameImageUrl(currentFramePath, 'w1280')}
@@ -716,7 +743,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
             </div>
           )}
 
-          {/* Shimmer loading placeholder */}
           {imageLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-cinema-card/80 animate-pulse z-0">
               <div className="flex items-center gap-2 text-xs font-bold text-violet-400">
@@ -725,43 +751,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               </div>
             </div>
           )}
-
-          {/* Corner Frame Stamp */}
-          <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2">
-            <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-violet-300 border border-violet-500/30 backdrop-blur-md">
-              Reel Still #{viewedFrameIndex + 1} of 6
-            </span>
-            {viewedFrameIndex === 0 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-amber-300 border border-amber-500/30 backdrop-blur-md hidden sm:inline">
-                Difficulty: Hardest (Ambience & Setting)
-              </span>
-            )}
-            {viewedFrameIndex === 1 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-amber-200 border border-amber-400/30 backdrop-blur-md hidden sm:inline">
-                Environment & World
-              </span>
-            )}
-            {viewedFrameIndex === 2 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-sky-300 border border-sky-500/30 backdrop-blur-md hidden sm:inline">
-                Scene & Objects
-              </span>
-            )}
-            {viewedFrameIndex === 3 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-indigo-300 border border-indigo-500/30 backdrop-blur-md hidden sm:inline">
-                Action & Supporting Context
-              </span>
-            )}
-            {viewedFrameIndex === 4 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-emerald-300 border border-emerald-500/30 backdrop-blur-md hidden sm:inline">
-                Recognizable Scene
-              </span>
-            )}
-            {viewedFrameIndex === 5 && (
-              <span className="rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-extrabold uppercase text-emerald-400 border border-emerald-500/40 backdrop-blur-md hidden sm:inline">
-                Final Clue: Iconic Hero Shot
-              </span>
-            )}
-          </div>
 
           <button
             onClick={() => {
@@ -776,57 +765,24 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
-          canUnlockDecadeGenres
-            ? 'border-violet-500/40 bg-violet-500/10 text-white'
-            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
-        }`}>
-          {canUnlockDecadeGenres ? (
-            <>
-              <Sparkles className="h-3.5 w-3.5 text-violet-400 shrink-0" />
-              <span className="font-bold text-violet-300">Era &amp; Genre:</span>
-              <span className="font-semibold text-white">
-                {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
-              </span>
-            </>
-          ) : (
-            <>
-              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-              <span>Era &amp; Genre unlocks at Frame 3 ({2 - guesses.length} left)</span>
-            </>
-          )}
-        </div>
-
-        <div className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs ${
-          canUnlockDirector
-            ? 'border-gold/40 bg-gold/10 text-white'
-            : 'border-cinema-border/80 bg-cinema-surface/80 text-slate-400'
-        }`}>
-          {canUnlockDirector ? (
-            <>
-              <Sparkles className="h-3.5 w-3.5 text-gold shrink-0" />
-              <span className="font-bold text-gold">Director:</span>
-              <span className="font-bold text-white">{targetMovie.director}</span>
-            </>
-          ) : (
-            <>
-              <Lock className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-              <span>Director unlocks at Frame 5 ({4 - guesses.length} left)</span>
-            </>
-          )}
-        </div>
-      </div>
-
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {Array.from({ length: MAX_FRAMES }).map((_, idx) => {
           const g = guesses[idx];
           const isCurrent = idx === guesses.length && gameStatus === 'PLAYING';
+          const isUnlocked = idx < unlockedFramesCount;
 
           return (
             <div
               key={idx}
+              onClick={() => {
+                if (isUnlocked) {
+                  playClick();
+                  setViewedFrameIndex(idx);
+                }
+              }}
               className={`rounded-xl border p-2 text-center transition ${
+                isUnlocked ? 'cursor-pointer' : ''
+              } ${
                 g?.won
                   ? 'border-emerald-500/60 bg-emerald-500/20 text-emerald-300 shadow-emerald-500/20'
                   : g?.skipped
@@ -835,7 +791,9 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                       ? 'border-rose-500/60 bg-rose-500/20 text-rose-300 shadow-rose-500/20'
                       : isCurrent
                         ? 'border-violet-500/70 bg-violet-500/10 text-violet-300 ring-2 ring-violet-500/30'
-                        : 'border-cinema-border/50 bg-cinema-card/40 text-cinema-muted'
+                        : isUnlocked
+                          ? 'border-cinema-border/80 bg-cinema-card/80 text-slate-300 hover:border-violet-400/60'
+                          : 'border-cinema-border/50 bg-cinema-card/40 text-cinema-muted'
               }`}
             >
               <div className="flex items-center justify-center gap-1 mb-1">
@@ -850,12 +808,14 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
                   <X className="h-3 w-3 text-rose-400" />
                 ) : isCurrent ? (
                   <Camera className="h-3 w-3 text-violet-400 animate-pulse" />
+                ) : isUnlocked ? (
+                  <Eye className="h-3 w-3 text-violet-400" />
                 ) : (
                   <Lock className="h-3 w-3 text-cinema-muted" />
                 )}
               </div>
               <span className="text-[11px] font-bold block truncate">
-                {g?.won ? 'Solved!' : g?.skipped ? 'Skipped' : g ? g.title : isCurrent ? 'Your Turn' : 'Locked'}
+                {g?.won ? 'Solved!' : g?.skipped ? 'Skipped' : g ? g.title : isCurrent ? 'Your Turn' : isUnlocked ? 'Unlocked' : 'Locked'}
               </span>
             </div>
           );
@@ -1043,7 +1003,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               </div>
             </div>
 
-            {/* Synopsis */}
             {targetMovie.overview && (
               <div className="rounded-xl border border-cinema-border/50 bg-black/40 p-3 text-xs text-slate-300 leading-relaxed max-h-24 overflow-y-auto">
                 <span className="text-[11px] font-bold uppercase text-cinema-muted block mb-0.5">
@@ -1053,7 +1012,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
               </div>
             )}
 
-            {/* Cast Chips */}
             {targetMovie.cast && (
               <div className="space-y-1">
                 <span className="text-[11px] font-bold uppercase text-cinema-muted block">
@@ -1140,7 +1098,6 @@ export function FrameSleuthGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* Archive Modal */}
       <FrameSleuthArchiveModal
         isOpen={showArchiveModal}
         onClose={() => setShowArchiveModal(false)}

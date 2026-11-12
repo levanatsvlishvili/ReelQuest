@@ -1,6 +1,6 @@
-import { getAdminToken, getStoredAdminAuth } from './auth';
+import { getAdminToken, getStoredAdminAuth, ADMIN_API_BASE_URL } from './auth';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com';
+const API_BASE_URL = ADMIN_API_BASE_URL;
 
 (function purgeLegacyDummyStorage() {
   try {
@@ -8,7 +8,6 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://g4loma9iy3.ex
     localStorage.removeItem('reelquest_admin_flagged_scores');
     localStorage.removeItem('reelquest_admin_scheduled_challenges');
   } catch (e) {
-    // ignore
   }
 })();
 
@@ -79,7 +78,6 @@ export async function fetchDashboardMetrics() {
     console.warn('Real telemetry aggregation notice:', err);
   }
 
-  // Resolve unknown actors in today challenge if needed
   if (todayChallenge?.startActor && (todayChallenge.startActor.name === 'Unknown' || !todayChallenge.startActor.profilePath)) {
     const map = await loadPopularActorsMap();
     const resolved = map.get(String(todayChallenge.startActor.id));
@@ -155,7 +153,6 @@ export async function fetchScheduledChallenges() {
   const custom = localStorage.getItem(customKey);
   const list = custom ? JSON.parse(custom) : [];
 
-  // Always include today's live server challenge at the top
   const todayLive = await fetchTodayChallenge();
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -563,7 +560,6 @@ export async function fetchGameHistory({
     };
   });
 
-  // Filter by user and mode if applied client-side
   let filtered = enriched;
   if (userId && userId !== 'ALL') {
     filtered = filtered.filter(s => s.userId === userId);
@@ -572,7 +568,6 @@ export async function fetchGameHistory({
     filtered = filtered.filter(s => s.gameMode === gameMode);
   }
 
-  // Sorting
   filtered.sort((a, b) => {
     switch (sortBy) {
       case 'oldest':
@@ -589,7 +584,6 @@ export async function fetchGameHistory({
     }
   });
 
-  // Pagination
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);

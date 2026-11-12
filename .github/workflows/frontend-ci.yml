@@ -37,6 +37,9 @@ jobs:
         if: github.ref == 'refs/heads/develop' || (github.event_name == 'pull_request' && github.base_ref == 'develop')
         env:
           VITE_API_BASE_URL: "https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com"
+          VITE_COGNITO_USER_POOL_ID: "eu-central-1_9SzgEn1WX"
+          VITE_COGNITO_CLIENT_ID: "v7qlvblobmt33mqkfasdinp9s"
+          VITE_AWS_REGION: "eu-central-1"
         run: npm run build
 
       # Build for Prod (main branch)
@@ -44,6 +47,9 @@ jobs:
         if: github.ref == 'refs/heads/main' || (github.event_name == 'pull_request' && github.base_ref == 'main')
         env:
           VITE_API_BASE_URL: ${{ secrets.PROD_API_BASE_URL || 'https://yzc360nxa0.execute-api.eu-central-1.amazonaws.com' }}
+          VITE_COGNITO_USER_POOL_ID: ${{ secrets.PROD_COGNITO_USER_POOL_ID || 'eu-central-1_mnp890U3A' }}
+          VITE_COGNITO_CLIENT_ID: ${{ secrets.PROD_COGNITO_CLIENT_ID || '6qq3adsee5c5q2h9kh1j8aal5v' }}
+          VITE_AWS_REGION: "eu-central-1"
         run: npm run build
 
       # Deploy to DEV S3 & Invalidate DEV CloudFront
@@ -54,7 +60,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-central-1"
         run: |
-          aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete
+          aws s3 sync dist/ s3://reelquest-dev-frontend-007400345180 --delete --exclude "admin/*"
           aws cloudfront create-invalidation --distribution-id E2ROZR17BH3MH9 --paths "/*"
 
       # Deploy to PROD S3 & Invalidate PROD CloudFront
@@ -65,5 +71,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "eu-central-1"
         run: |
-          aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180 --delete
+          aws s3 sync dist/ s3://reelquest-prod-frontend-007400345180 --delete --exclude "admin/*"
           aws cloudfront create-invalidation --distribution-id ${{ secrets.PROD_CLOUDFRONT_DIST_ID || 'ESG51MGZ8BMJA' }} --paths "/*"

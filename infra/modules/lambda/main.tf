@@ -320,7 +320,10 @@ resource "aws_iam_role_policy" "billing_service_policy" {
         Action = [
           "cognito-idp:AdminAddUserToGroup",
           "cognito-idp:AdminRemoveUserFromGroup",
-          "cognito-idp:AdminGetUser"
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminSetUserPassword",
+          "cognito-idp:AdminUpdateUserAttributes"
         ]
         Resource = var.cognito_user_pool_arn != "" ? var.cognito_user_pool_arn : "*"
       }

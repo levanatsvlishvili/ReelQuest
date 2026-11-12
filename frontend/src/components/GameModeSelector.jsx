@@ -5,6 +5,7 @@ import { calculateGameStreak } from '../api/auth';
 export const GAME_MODES = [
   {
     id: 'six-degrees',
+    path: '/',
     title: 'Beat Otara',
     subtitle: 'Cinema Oracle Duel',
     icon: GitFork,
@@ -14,6 +15,7 @@ export const GAME_MODES = [
   },
   {
     id: 'spotle',
+    path: '/spotle',
     title: 'Spotle',
     subtitle: 'Daily Movie Mystery',
     icon: Film,
@@ -23,6 +25,7 @@ export const GAME_MODES = [
   },
   {
     id: 'frame-sleuth',
+    path: '/frame-sleuth',
     title: 'Frame Sleuth',
     subtitle: '6-Frame Mystery',
     icon: Camera,
@@ -32,6 +35,7 @@ export const GAME_MODES = [
   },
   {
     id: 'box-office',
+    path: '/box-office',
     title: 'Box Office',
     subtitle: 'Higher or Lower',
     icon: TrendingUp,
@@ -41,6 +45,7 @@ export const GAME_MODES = [
   },
   {
     id: 'custom-path',
+    path: '/path-finder',
     title: 'Path Finder',
     subtitle: 'Custom Stars',
     icon: Sparkles,
@@ -49,6 +54,10 @@ export const GAME_MODES = [
     hasStreak: false
   }
 ];
+
+function isModifiedClick(e) {
+  return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+}
 
 export function GameModeSelector({ activeMode, onSelectMode }) {
   const { user, isAuthenticated } = useAuth();
@@ -66,10 +75,14 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
           const modeStreak = calculateGameStreak(mode.id, user?.id);
 
           return (
-            <button
+            <a
               key={mode.id}
-              type="button"
-              onClick={() => onSelectMode(mode.id)}
+              href={mode.path}
+              onClick={(e) => {
+                if (isModifiedClick(e)) return;
+                e.preventDefault();
+                onSelectMode(mode.id);
+              }}
               className={`group flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-semibold transition ${
                 isActive
                   ? 'border border-gold/60 bg-gold/15 text-gold shadow-gold-glow/20'
@@ -94,7 +107,7 @@ export function GameModeSelector({ activeMode, onSelectMode }) {
                   <span>{modeStreak}d</span>
                 </span>
               )}
-            </button>
+            </a>
           );
         })}
       </div>

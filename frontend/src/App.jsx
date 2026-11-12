@@ -26,7 +26,44 @@ import { CheckoutSuccessModal } from './components/CheckoutSuccessModal';
 import { useAuth } from './context/AuthContext';
 import { confirmPaymentOrder } from './api/auth';
 import { activateSubscriptionWithCard } from './utils/billingService';
-import { Film } from 'lucide-react';
+
+function parseRouteFromLocation() {
+  if (typeof window === 'undefined') {
+    return { view: 'game', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+  }
+  const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
+  const search = new URLSearchParams(window.location.search);
+
+  if (path === '/leaderboard') {
+    return { view: 'leaderboard', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/profile') {
+    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/billing' || path === '/profile/billing') {
+    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'billing' };
+  }
+  if (path === '/spotle') {
+    return { view: 'game', mode: 'spotle', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/frame-sleuth') {
+    return { view: 'game', mode: 'frame-sleuth', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/box-office') {
+    return { view: 'game', mode: 'box-office', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/path-finder') {
+    return { view: 'game', mode: 'custom-path', duel: false, profileTab: 'overview' };
+  }
+  if (path === '/duel' || search.get('duel')) {
+    return { view: 'game', mode: 'six-degrees', duel: true, profileTab: 'overview' };
+  }
+  return { view: 'game', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+}
+
+function isModifiedClick(e) {
+  return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+}
 
 export default function App() {
   const {
@@ -65,16 +102,64 @@ export default function App() {
     openVictoryModal
   } = useGameSession();
 
-  const { user, isAuthenticated, setProStatus } = useAuth();
-  const [currentView, setCurrentView] = useState('game');
+  const initialRoute = parseRouteFromLocation();
+  const { user, setProStatus } = useAuth();
+  const [currentView, setCurrentView] = useState(initialRoute.view);
   const [profileUser, setProfileUser] = useState(null);
-  const [profileTabRequest, setProfileTabRequest] = useState({ tab: 'overview', seq: 0 });
-  const [activeMode, setActiveMode] = useState('six-degrees');
-  const [isDuelMode, setIsDuelMode] = useState(false);
+  const [profileTabRequest, setProfileTabRequest] = useState({ tab: initialRoute.profileTab, seq: 0 });
+  const [activeMode, setActiveMode] = useState(initialRoute.mode);
+  const [isDuelMode, setIsDuelMode] = useState(initialRoute.duel);
   const [checkoutSuccessNotice, setCheckoutSuccessNotice] = useState(null);
 
   useEffect(() => {
-    // Seamless routing to dedicated Admin Portal if /admin or ?admin is accessed
+    const handlePopState = () => {
+      const next = parseRouteFromLocation();
+      setCurrentView(next.view);
+      setActiveMode(next.mode);
+      setIsDuelMode(next.duel);
+      if (next.view === 'profile') {
+        setProfileTabRequest((prev) => ({ tab: next.profileTab, seq: prev.seq + 1 }));
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    const rawPath = window.location.pathname.toLowerCase();
+    if (rawPath === '/admin' || rawPath === '/admin/') {
+      return;
+    }
+
+    let targetPath = '/';
+    if (currentView === 'leaderboard') {
+      targetPath = '/leaderboard';
+    } else if (currentView === 'profile') {
+      targetPath = profileTabRequest.tab === 'billing' && !profileUser ? '/billing' : '/profile';
+    } else if (isDuelMode) {
+      targetPath = '/duel';
+    } else if (activeMode === 'spotle') {
+      targetPath = '/spotle';
+    } else if (activeMode === 'frame-sleuth') {
+      targetPath = '/frame-sleuth';
+    } else if (activeMode === 'box-office') {
+      targetPath = '/box-office';
+    } else if (activeMode === 'custom-path') {
+      targetPath = '/path-finder';
+    }
+
+    const search = new URLSearchParams(window.location.search);
+    const duelId = search.get('duel');
+    const querySuffix = isDuelMode && duelId ? `?duel=${encodeURIComponent(duelId)}` : '';
+    const fullTarget = `${targetPath}${querySuffix}`;
+    const currentFull = `${window.location.pathname}${window.location.search}`;
+
+    if (currentFull !== fullTarget && !search.has('session_id') && !search.has('order_id')) {
+      window.history.pushState({ view: currentView, mode: activeMode, duel: isDuelMode }, '', fullTarget);
+    }
+  }, [currentView, activeMode, isDuelMode, profileTabRequest.tab, profileUser]);
+
+  useEffect(() => {
     const path = window.location.pathname.toLowerCase();
     const search = new URLSearchParams(window.location.search);
     if (path === '/admin' || path === '/admin/' || search.has('admin')) {
@@ -125,14 +210,18 @@ export default function App() {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
 
+  const navigateToMainHome = () => {
+    setProfileUser(null);
+    setActiveMode('six-degrees');
+    setIsDuelMode(false);
+    setCurrentView('game');
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
         currentView={currentView}
-        onNavigateHome={() => {
-          setProfileUser(null);
-          setCurrentView('game');
-        }}
+        onNavigateHome={navigateToMainHome}
         onOpenLeaderboard={() => {
           setProfileUser(null);
           setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard');
@@ -333,14 +422,27 @@ export default function App() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <div className="space-y-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold/20 text-gold border border-gold/40 shadow-gold-glow">
-                  <Film className="h-5 w-5" />
+              <a
+                href="/"
+                onClick={(e) => {
+                  if (isModifiedClick(e)) return;
+                  e.preventDefault();
+                  navigateToMainHome();
+                }}
+                className="inline-flex items-center gap-3 cursor-pointer select-none text-left focus:outline-none group"
+              >
+                <div className="relative">
+                  <img
+                    src="/favicon.svg"
+                    alt="ReelQuest Logo"
+                    className="h-10 w-10 rounded-xl shadow-gold-glow transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 rounded-xl bg-gold/20 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <span className="text-lg font-black tracking-tight text-white">
+                <span className="text-xl font-bold tracking-tight text-white">
                   Reel<span className="text-gold">Quest</span>
                 </span>
-              </div>
+              </a>
               <p className="text-xs text-cinema-muted leading-relaxed">
                 Daily cinema trivia and interactive movie games for film lovers.
               </p>
@@ -352,49 +454,64 @@ export default function App() {
               </h4>
               <ul className="space-y-2 text-xs">
                 <li>
-                  <button
-                    onClick={() => {
+                  <a
+                    href="/"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setActiveMode('six-degrees');
                       setIsDuelMode(false);
                       setCurrentView('game');
                     }}
-                    className="hover:text-gold transition text-left"
+                    className="hover:text-gold transition text-left inline-block"
                   >
                     Beat Otara
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    onClick={() => {
+                  <a
+                    href="/spotle"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setActiveMode('spotle');
+                      setIsDuelMode(false);
                       setCurrentView('game');
                     }}
-                    className="hover:text-gold transition text-left"
+                    className="hover:text-gold transition text-left inline-block"
                   >
                     Spotle
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    onClick={() => {
+                  <a
+                    href="/frame-sleuth"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setActiveMode('frame-sleuth');
+                      setIsDuelMode(false);
                       setCurrentView('game');
                     }}
-                    className="hover:text-gold transition text-left"
+                    className="hover:text-gold transition text-left inline-block"
                   >
                     Frame Sleuth
-                  </button>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    onClick={() => {
+                  <a
+                    href="/box-office"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setActiveMode('box-office');
+                      setIsDuelMode(false);
                       setCurrentView('game');
                     }}
-                    className="hover:text-gold transition text-left"
+                    className="hover:text-gold transition text-left inline-block"
                   >
                     Box Office Clash
-                  </button>
+                  </a>
                 </li>
               </ul>
             </div>
@@ -413,12 +530,17 @@ export default function App() {
                   </button>
                 </li>
                 <li>
-                  <button
-                    onClick={() => setCurrentView('leaderboard')}
-                    className="hover:text-gold transition text-left"
+                  <a
+                    href="/leaderboard"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
+                      setCurrentView('leaderboard');
+                    }}
+                    className="hover:text-gold transition text-left inline-block"
                   >
-                    Leaderboard & Rankings
-                  </button>
+                    Leaderboard &amp; Rankings
+                  </a>
                 </li>
                 <li>
                   <button
@@ -429,17 +551,20 @@ export default function App() {
                   </button>
                 </li>
                 <li>
-                  <button
-                    onClick={() => {
+                  <a
+                    href="/"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setActiveMode('six-degrees');
                       setIsDuelMode(false);
                       setCurrentView('game');
                       setIsArchiveOpen(true);
                     }}
-                    className="hover:text-gold transition text-left"
+                    className="hover:text-gold transition text-left inline-block"
                   >
                     Daily Challenge Archive
-                  </button>
+                  </a>
                 </li>
               </ul>
             </div>
