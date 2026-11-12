@@ -7,7 +7,9 @@ import {
   getStoredAuth,
   getUserStats,
   recordGameResult,
-  fetchUserProfile
+  fetchUserProfile,
+  syncUserProfile,
+  hasActiveLocalPro
 } from '../api/auth';
 
 const AuthContext = createContext(null);
@@ -24,7 +26,8 @@ export function AuthProvider({ children }) {
       try {
         const metaKey = `reelquest_user_meta_${stored.user.id}`;
         const meta = JSON.parse(localStorage.getItem(metaKey) || '{}');
-        fullUser = { ...stored.user, ...meta };
+        const initialPro = Boolean(stored.user.isPro || meta.isPro || hasActiveLocalPro(stored.user.id));
+        fullUser = { ...stored.user, ...meta, isPro: initialPro };
       } catch {
         fullUser = stored.user;
       }
@@ -34,15 +37,21 @@ export function AuthProvider({ children }) {
       fetchUserProfile(stored.user.id)
         .then(profile => {
           if (profile) {
-            const isPro = profile.tier === 'PRO';
-            if (isPro !== stored.user.isPro) {
-              const updatedUser = { ...stored.user, isPro };
+            const remotePro = profile.tier === 'PRO';
+            const localPro = Boolean(fullUser.isPro || hasActiveLocalPro(stored.user.id));
+            const effectivePro = remotePro || localPro;
+
+            if (effectivePro !== fullUser.isPro) {
+              const updatedUser = { ...fullUser, isPro: effectivePro };
               setUser(updatedUser);
               const authData = getStoredAuth();
               if (authData) {
                 authData.user = updatedUser;
                 localStorage.setItem('reelquest_auth', JSON.stringify(authData));
               }
+            }
+            if (localPro && !remotePro) {
+              syncUserProfile({ ...fullUser, isPro: true });
             }
             setStats(prev => {
               const localStreak = prev?.streak ?? 0;
@@ -59,10 +68,10 @@ export function AuthProvider({ children }) {
                 ...prev,
                 streak: activeStreak,
                 longestStreak: Math.max(prev?.longestStreak || 0, profile.longestStreak || 0, activeStreak),
-                gamesPlayed: profile.gamesPlayed ?? prev?.gamesPlayed ?? 0,
-                gamesWon: profile.gamesWon ?? prev?.gamesWon ?? 0,
+                gamesPlayed: Math.max(prev?.gamesPlayed ?? 0, profile.gamesPlayed ?? 0),
+                gamesWon: Math.max(prev?.gamesWon ?? 0, profile.gamesWon ?? 0),
                 bestHops: profile.bestHops ?? prev?.bestHops ?? 0,
-                totalScore: profile.totalScore ?? prev?.totalScore ?? 0
+                totalScore: Math.max(prev?.totalScore ?? 0, profile.totalScore ?? 0)
               };
             });
           }
@@ -87,7 +96,8 @@ export function AuthProvider({ children }) {
         localStorage.setItem(metaKey, JSON.stringify(mergedMeta));
       }
       localStorage.removeItem(confirmedKey);
-      fullUser = { ...loggedUser, ...mergedMeta };
+      const effectivePro = Boolean(loggedUser.isPro || mergedMeta.isPro || hasActiveLocalPro(loggedUser.id));
+      fullUser = { ...loggedUser, ...mergedMeta, isPro: effectivePro };
     } catch {
       fullUser = loggedUser;
     }
@@ -98,7 +108,7 @@ export function AuthProvider({ children }) {
     fetchUserProfile(loggedUser.id)
       .then(profile => {
         if (profile) {
-          if (profile.tier === 'PRO') {
+          if (profile.tier === 'PRO' || fullUser.isPro || hasActiveLocalPro(loggedUser.id)) {
             setProStatus(true);
           }
           let profileStreak = profile.streak ?? 0;
@@ -111,12 +121,13 @@ export function AuthProvider({ children }) {
           }
           const activeStreak = (initialStats.streak || 0) > 0 ? initialStats.streak : profileStreak;
           setStats({
+            ...initialStats,
             streak: activeStreak,
             longestStreak: Math.max(initialStats.longestStreak || 0, profile.longestStreak || 0, activeStreak),
-            gamesPlayed: typeof profile.gamesPlayed === 'number' ? profile.gamesPlayed : (initialStats.gamesPlayed || 0),
-            gamesWon: typeof profile.gamesWon === 'number' ? profile.gamesWon : (initialStats.gamesWon || 0),
-            bestHops: typeof profile.bestHops === 'number' ? profile.bestHops : (initialStats.bestHops || 0),
-            totalScore: typeof profile.totalScore === 'number' ? profile.totalScore : (initialStats.totalScore || 0),
+            gamesPlayed: Math.max(initialStats.gamesPlayed || 0, typeof profile.gamesPlayed === 'number' ? profile.gamesPlayed : 0),
+            gamesWon: Math.max(initialStats.gamesWon || 0, typeof profile.gamesWon === 'number' ? profile.gamesWon : 0),
+            bestHops: typeof profile.bestHops === 'number' && profile.bestHops > 0 ? profile.bestHops : (initialStats.bestHops || 0),
+            totalScore: Math.max(initialStats.totalScore || 0, typeof profile.totalScore === 'number' ? profile.totalScore : 0),
             dailyWins: initialStats.dailyWins || [],
             history: initialStats.history || []
           });
@@ -124,7 +135,7 @@ export function AuthProvider({ children }) {
       })
       .catch(() => {});
 
-    return loggedUser;
+    return fullUser;
   };
 
   const register = async (email, password, username, meta = {}) => {
@@ -163,6 +174,12 @@ export function AuthProvider({ children }) {
         authData.user = updated;
         localStorage.setItem('reelquest_auth', JSON.stringify(authData));
       }
+      try {
+        const metaKey = `reelquest_user_meta_${prev.id}`;
+        const existingMeta = JSON.parse(localStorage.getItem(metaKey) || '{}');
+        localStorage.setItem(metaKey, JSON.stringify({ ...existingMeta, isPro }));
+      } catch {}
+      syncUserProfile(updated);
       return updated;
     });
   };

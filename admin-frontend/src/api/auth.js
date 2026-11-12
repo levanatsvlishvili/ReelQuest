@@ -1,6 +1,32 @@
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
 const COGNITO_ENDPOINT = `https://cognito-idp.${REGION}.amazonaws.com/`;
+
+const PROD_API_URL = 'https://yzc360nxa0.execute-api.eu-central-1.amazonaws.com';
+const DEV_API_URL = 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com';
+const PROD_CLIENT_ID = '6qq3adsee5c5q2h9kh1j8aal5v';
+const DEV_CLIENT_ID = 'v7qlvblobmt33mqkfasdinp9s';
+
+function resolveAdminEnv() {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname.toLowerCase();
+    if (host === 'admin.reelquest.io' || host === 'reelquest.io' || host === 'www.reelquest.io') {
+      return { apiBaseUrl: PROD_API_URL, clientId: PROD_CLIENT_ID, isProd: true };
+    }
+    if (host === 'dev-admin.reelquest.io' || host === 'dev.reelquest.io') {
+      return { apiBaseUrl: DEV_API_URL, clientId: DEV_CLIENT_ID, isProd: false };
+    }
+  }
+  const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID || DEV_CLIENT_ID;
+  return {
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || DEV_API_URL,
+    clientId,
+    isProd: clientId === PROD_CLIENT_ID
+  };
+}
+
+const ADMIN_ENV = resolveAdminEnv();
+export const ADMIN_API_BASE_URL = ADMIN_ENV.apiBaseUrl;
+export const ADMIN_CLIENT_ID = ADMIN_ENV.clientId;
 
 const ADMIN_STORAGE_KEY = 'reelquest_admin_auth';
 
@@ -39,22 +65,67 @@ export function parseJwt(token) {
 }
 
 export async function adminSignIn(email, password) {
-  const data = await callCognito('InitiateAuth', {
-    AuthFlow: 'USER_PASSWORD_AUTH',
-    ClientId: CLIENT_ID,
-    AuthParameters: {
-      USERNAME: email,
-      PASSWORD: password
+  let data;
+  try {
+    data = await callCognito('InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: ADMIN_CLIENT_ID,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password
+      }
+    });
+  } catch (primaryErr) {
+    if (ADMIN_CLIENT_ID === PROD_CLIENT_ID) {
+      try {
+        const legacyData = await callCognito('InitiateAuth', {
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: DEV_CLIENT_ID,
+          AuthParameters: {
+            USERNAME: email,
+            PASSWORD: password
+          }
+        });
+        if (legacyData.AuthenticationResult?.IdToken) {
+          const legacyClaims = parseJwt(legacyData.AuthenticationResult.IdToken) || {};
+          const migrateRes = await fetch(`${ADMIN_API_BASE_URL}/users/migrate-cognito`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: legacyClaims.email || email,
+              password,
+              username: legacyClaims.nickname || email.split('@')[0],
+              legacyUserId: legacyClaims.sub,
+              groups: legacyClaims['cognito:groups'] || []
+            })
+          });
+          if (migrateRes.ok) {
+            data = await callCognito('InitiateAuth', {
+              AuthFlow: 'USER_PASSWORD_AUTH',
+              ClientId: PROD_CLIENT_ID,
+              AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password
+              }
+            });
+          } else {
+            data = legacyData;
+          }
+        }
+      } catch {
+        throw primaryErr;
+      }
+    } else {
+      throw primaryErr;
     }
-  });
+  }
 
-  if (data.AuthenticationResult) {
+  if (data && data.AuthenticationResult) {
     const { IdToken, AccessToken, RefreshToken } = data.AuthenticationResult;
     const claims = parseJwt(IdToken) || {};
     const groups = claims['cognito:groups'] || [];
-    
-    // Check if user is member of Admins group or root admin email
-    const isAdmin = groups.includes('Admins') || 
+
+    const isAdmin = groups.includes('Admins') ||
                     email.toLowerCase() === 'levani28100@gmail.com' ||
                     email.toLowerCase().includes('admin');
 
@@ -90,9 +161,8 @@ export function getStoredAdminAuth() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     const claims = parseJwt(parsed.tokens?.IdToken);
-    
-    // Token expiry check
-    if (claims && claims.exp * 1000 < Date.now()) {
+
+    if (claims && claims.exp * 1000 < Date.now() && !parsed.tokens?.RefreshToken) {
       localStorage.removeItem(ADMIN_STORAGE_KEY);
       return null;
     }

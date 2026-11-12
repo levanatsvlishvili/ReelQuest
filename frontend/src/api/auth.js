@@ -1,12 +1,79 @@
 import { saveDetailedMatch, getStoredMatchHistory } from './matchHistory';
 
 const REGION = import.meta.env.VITE_AWS_REGION || 'eu-central-1';
-const CLIENT_ID = import.meta.env.VITE_COGNITO_CLIENT_ID || 'v7qlvblobmt33mqkfasdinp9s';
 const COGNITO_ENDPOINT = `https://cognito-idp.${REGION}.amazonaws.com/`;
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+
+const PROD_API_URL = 'https://yzc360nxa0.execute-api.eu-central-1.amazonaws.com';
+const DEV_API_URL = 'https://g4loma9iy3.execute-api.eu-central-1.amazonaws.com';
+const PROD_CLIENT_ID = '6qq3adsee5c5q2h9kh1j8aal5v';
+const DEV_CLIENT_ID = 'v7qlvblobmt33mqkfasdinp9s';
+const PROD_USER_POOL_ID = 'eu-central-1_mnp890U3A';
+const DEV_USER_POOL_ID = 'eu-central-1_9SzgEn1WX';
+
+function resolveEnvConfig() {
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const host = window.location.hostname.toLowerCase();
+    if (host === 'reelquest.io' || host === 'www.reelquest.io' || host === 'admin.reelquest.io') {
+      return {
+        apiBaseUrl: PROD_API_URL,
+        clientId: PROD_CLIENT_ID,
+        userPoolId: PROD_USER_POOL_ID,
+        isProd: true
+      };
+    }
+    if (host === 'dev.reelquest.io' || host === 'dev-admin.reelquest.io') {
+      return {
+        apiBaseUrl: DEV_API_URL,
+        clientId: DEV_CLIENT_ID,
+        userPoolId: DEV_USER_POOL_ID,
+        isProd: false
+      };
+    }
+  }
+  const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID || DEV_CLIENT_ID;
+  return {
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || DEV_API_URL,
+    clientId,
+    userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID || (clientId === PROD_CLIENT_ID ? PROD_USER_POOL_ID : DEV_USER_POOL_ID),
+    isProd: clientId === PROD_CLIENT_ID
+  };
+}
+
+const ENV_CONFIG = resolveEnvConfig();
+export const RESOLVED_API_BASE_URL = ENV_CONFIG.apiBaseUrl;
+export const RESOLVED_CLIENT_ID = ENV_CONFIG.clientId;
+export const RESOLVED_USER_POOL_ID = ENV_CONFIG.userPoolId;
 
 const STORAGE_KEY = 'reelquest_auth';
 const STATS_KEY = 'reelquest_user_stats';
+
+let refreshPromise = null;
+
+export function hasActiveLocalPro(userId) {
+  if (!userId) return false;
+  try {
+    const subRaw = localStorage.getItem(`reelquest_subscription_${userId}`);
+    if (subRaw) {
+      const sub = JSON.parse(subRaw);
+      if (sub && (sub.status === 'ACTIVE' || sub.status === 'PAST_DUE')) {
+        return true;
+      }
+      if (sub && (sub.status === 'CANCELED' || sub.status === 'SUSPENDED' || sub.status === 'INACTIVE')) {
+        return false;
+      }
+    }
+    const metaRaw = localStorage.getItem(`reelquest_user_meta_${userId}`);
+    if (metaRaw) {
+      const meta = JSON.parse(metaRaw);
+      if (typeof meta.isPro === 'boolean') {
+        return meta.isPro;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
 
 async function callCognito(target, payload) {
   const res = await fetch(COGNITO_ENDPOINT, {
@@ -21,12 +88,14 @@ async function callCognito(target, payload) {
   const data = await res.json();
   if (!res.ok) {
     const errorMsg = data.message || data.__type || 'Authentication failed';
-    throw new Error(errorMsg);
+    const err = new Error(errorMsg);
+    err.code = data.__type || '';
+    throw err;
   }
   return data;
 }
 
-function parseJwt(token) {
+export function parseJwt(token) {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -42,9 +111,61 @@ function parseJwt(token) {
   }
 }
 
+export async function refreshCognitoSession(storedAuth) {
+  if (!storedAuth?.tokens?.RefreshToken) return storedAuth;
+  if (refreshPromise) return refreshPromise;
+
+  const tokenClaims = parseJwt(storedAuth.tokens.IdToken);
+  const tokenClientId = tokenClaims?.aud || RESOLVED_CLIENT_ID;
+
+  refreshPromise = (async () => {
+    try {
+      const data = await callCognito('InitiateAuth', {
+        AuthFlow: 'REFRESH_TOKEN_AUTH',
+        ClientId: tokenClientId,
+        AuthParameters: {
+          REFRESH_TOKEN: storedAuth.tokens.RefreshToken
+        }
+      });
+      if (data.AuthenticationResult?.IdToken) {
+        const { IdToken, AccessToken } = data.AuthenticationResult;
+        const claims = parseJwt(IdToken) || {};
+        const groups = claims['cognito:groups'] || [];
+        const preservedPro = Boolean(
+          storedAuth.user?.isPro ||
+          groups.includes('ProUsers') ||
+          hasActiveLocalPro(storedAuth.user?.id)
+        );
+        const updatedAuth = {
+          ...storedAuth,
+          tokens: {
+            ...storedAuth.tokens,
+            IdToken,
+            AccessToken: AccessToken || storedAuth.tokens.AccessToken
+          },
+          user: {
+            ...storedAuth.user,
+            isPro: preservedPro,
+            groups: groups.length > 0 ? groups : (storedAuth.user?.groups || [])
+          }
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedAuth));
+        return updatedAuth;
+      }
+    } catch {
+      return storedAuth;
+    } finally {
+      refreshPromise = null;
+    }
+    return storedAuth;
+  })();
+
+  return refreshPromise;
+}
+
 export async function signUp(email, password, username) {
   return await callCognito('SignUp', {
-    ClientId: CLIENT_ID,
+    ClientId: RESOLVED_CLIENT_ID,
     Username: email,
     Password: password,
     UserAttributes: [
@@ -56,7 +177,7 @@ export async function signUp(email, password, username) {
 
 export async function confirmSignUp(email, code) {
   return await callCognito('ConfirmSignUp', {
-    ClientId: CLIENT_ID,
+    ClientId: RESOLVED_CLIENT_ID,
     Username: email,
     ConfirmationCode: code
   });
@@ -64,35 +185,82 @@ export async function confirmSignUp(email, code) {
 
 export async function resendConfirmationCode(email) {
   return await callCognito('ResendConfirmationCode', {
-    ClientId: CLIENT_ID,
+    ClientId: RESOLVED_CLIENT_ID,
     Username: email
   });
 }
 
 export async function signIn(email, password) {
-  const data = await callCognito('InitiateAuth', {
-    AuthFlow: 'USER_PASSWORD_AUTH',
-    ClientId: CLIENT_ID,
-    AuthParameters: {
-      USERNAME: email,
-      PASSWORD: password
+  let data;
+  try {
+    data = await callCognito('InitiateAuth', {
+      AuthFlow: 'USER_PASSWORD_AUTH',
+      ClientId: RESOLVED_CLIENT_ID,
+      AuthParameters: {
+        USERNAME: email,
+        PASSWORD: password
+      }
+    });
+  } catch (primaryErr) {
+    if (RESOLVED_CLIENT_ID === PROD_CLIENT_ID) {
+      try {
+        const legacyData = await callCognito('InitiateAuth', {
+          AuthFlow: 'USER_PASSWORD_AUTH',
+          ClientId: DEV_CLIENT_ID,
+          AuthParameters: {
+            USERNAME: email,
+            PASSWORD: password
+          }
+        });
+        if (legacyData.AuthenticationResult?.IdToken) {
+          const legacyClaims = parseJwt(legacyData.AuthenticationResult.IdToken) || {};
+          const migrateRes = await fetch(`${RESOLVED_API_BASE_URL}/users/migrate-cognito`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: legacyClaims.email || email,
+              password,
+              username: legacyClaims.nickname || email.split('@')[0],
+              legacyUserId: legacyClaims.sub,
+              groups: legacyClaims['cognito:groups'] || []
+            })
+          });
+          if (migrateRes.ok) {
+            data = await callCognito('InitiateAuth', {
+              AuthFlow: 'USER_PASSWORD_AUTH',
+              ClientId: PROD_CLIENT_ID,
+              AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password
+              }
+            });
+          } else {
+            data = legacyData;
+          }
+        }
+      } catch {
+        throw primaryErr;
+      }
+    } else {
+      throw primaryErr;
     }
-  });
+  }
 
-  if (data.AuthenticationResult) {
+  if (data && data.AuthenticationResult) {
     const { IdToken, AccessToken, RefreshToken } = data.AuthenticationResult;
     const claims = parseJwt(IdToken) || {};
     const groups = claims['cognito:groups'] || [];
-    const isPro = groups.includes('ProUsers');
+    const userId = claims.sub;
+    const isPro = Boolean(groups.includes('ProUsers') || hasActiveLocalPro(userId));
 
     const authData = {
       tokens: { IdToken, AccessToken, RefreshToken },
       user: {
-        id: claims.sub,
+        id: userId,
         email: claims.email || email,
         username: claims.nickname || email.split('@')[0],
-        isPro: isPro,
-        groups: groups
+        isPro,
+        groups
       }
     };
 
@@ -114,10 +282,14 @@ export function getStoredAuth() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     const claims = parseJwt(parsed.tokens?.IdToken);
-    
-    if (claims && claims.exp * 1000 < Date.now()) {
-      localStorage.removeItem(STORAGE_KEY);
-      return null;
+
+    if (claims && claims.exp * 1000 < Date.now() + 60000) {
+      if (parsed.tokens?.RefreshToken) {
+        refreshCognitoSession(parsed);
+      }
+    }
+    if (parsed.user && !parsed.user.isPro && hasActiveLocalPro(parsed.user.id)) {
+      parsed.user.isPro = true;
     }
     return parsed;
   } catch {
@@ -130,51 +302,51 @@ export function getAuthToken() {
   return auth?.tokens?.IdToken || null;
 }
 
+export const getAccessToken = getAuthToken;
+
 export async function syncUserProfile(user) {
-  if (!API_BASE_URL || !user) return null;
+  if (!RESOLVED_API_BASE_URL || !user) return null;
   try {
     const token = getAuthToken();
     const headers = { 'Content-Type': 'application/json' };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const res = await fetch(`${API_BASE_URL}/users/sync`, {
+    const uid = user.id || user.userId;
+    const effectivePro = Boolean(user.isPro || hasActiveLocalPro(uid));
+    const res = await fetch(`${RESOLVED_API_BASE_URL}/users/sync`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        userId: user.id || user.userId,
+        userId: uid,
         email: user.email,
         username: user.username,
-        isPro: Boolean(user.isPro)
+        isPro: effectivePro
       })
     });
     if (res.ok) {
       return await res.json();
     }
-  } catch {
-    // Graceful fallback to client-only state
-  }
+  } catch {}
   return null;
 }
 
 export async function fetchUserProfile(userId) {
-  if (!API_BASE_URL || !userId) return null;
+  if (!RESOLVED_API_BASE_URL || !userId) return null;
   try {
-    const res = await fetch(`${API_BASE_URL}/users/${userId}`);
+    const res = await fetch(`${RESOLVED_API_BASE_URL}/users/${encodeURIComponent(userId)}`);
     if (res.ok) {
       return await res.json();
     }
-  } catch {
-    // Graceful fallback
-  }
+  } catch {}
   return null;
 }
 
 export async function createCheckoutSession(userId, email) {
-  if (!API_BASE_URL) {
+  if (!RESOLVED_API_BASE_URL) {
     throw new Error('API Gateway URL not configured');
   }
-  const res = await fetch(`${API_BASE_URL}/billing/checkout`, {
+  const res = await fetch(`${RESOLVED_API_BASE_URL}/billing/checkout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -192,10 +364,10 @@ export async function createCheckoutSession(userId, email) {
 }
 
 export async function confirmPaymentOrder(orderId, success = true) {
-  if (!API_BASE_URL) {
+  if (!RESOLVED_API_BASE_URL) {
     throw new Error('API Gateway URL not configured');
   }
-  const res = await fetch(`${API_BASE_URL}/billing/simulate-webhook`, {
+  const res = await fetch(`${RESOLVED_API_BASE_URL}/billing/simulate-webhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orderId, success })
@@ -221,7 +393,6 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
   let streak = 0;
   let checkDate = todayStr;
 
-  // If today's challenge was won on-time:
   if (winSet.has(checkDate)) {
     streak += 1;
     checkDate = shiftDateStr(checkDate, -1);
@@ -232,7 +403,6 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
     return streak;
   }
 
-  // Today has not yet been won: check if yesterday was won to preserve the streak
   checkDate = shiftDateStr(todayStr, -1);
   while (winSet.has(checkDate)) {
     streak += 1;
@@ -296,7 +466,6 @@ export function getUserStats(userId) {
     if (raw) {
       const parsed = JSON.parse(raw);
       let dailyWins = parsed.dailyWins || [];
-      // If dailyWins is empty but history has won games, extract on-time wins
       if (dailyWins.length === 0 && Array.isArray(parsed.history)) {
         dailyWins = parsed.history
           .filter(h => h.won && h.date)
@@ -311,9 +480,7 @@ export function getUserStats(userId) {
         longestStreak
       };
     }
-  } catch {
-    // Return defaults
-  }
+  } catch {}
   return {
     streak: 0,
     gamesPlayed: 0,
@@ -336,9 +503,6 @@ export function recordGameResult(userId, gameResult) {
       stats.bestHops = gameResult.hops;
     }
 
-    // STRICT CONSECUTIVE DAILY CHALLENGE STREAK RULE:
-    // Only completing today's challenge on its active calendar date counts towards the streak!
-    // Solving archive challenges (e.g. from 3 days ago) must NOT extend or increment the streak.
     const isTodayChallenge = gameResult.date === todayStr;
     if (isTodayChallenge) {
       if (!stats.dailyWins) stats.dailyWins = [];
@@ -348,7 +512,6 @@ export function recordGameResult(userId, gameResult) {
     }
   }
 
-  // Recalculate streak
   stats.streak = calculateStreak(stats.dailyWins || [], todayStr);
   stats.totalHops += (gameResult.hops || 0);
 
@@ -366,7 +529,6 @@ export function recordGameResult(userId, gameResult) {
   const key = `${STATS_KEY}_${userId || 'guest'}`;
   localStorage.setItem(key, JSON.stringify(stats));
 
-  // Save full structured match to historical timeline
   try {
     saveDetailedMatch(userId, gameResult);
   } catch (err) {

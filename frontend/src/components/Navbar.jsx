@@ -16,6 +16,10 @@ import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEf
 import { getAvatarById, calculateCinemaLevel } from '../utils/cinemaLevels';
 import { getDetailedMatchHistory } from '../api/matchHistory';
 
+function isModifiedClick(e) {
+  return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+}
+
 export function Navbar({
   currentView = 'game',
   onNavigateHome,
@@ -71,9 +75,13 @@ export function Navbar({
   return (
     <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={handleLogoClick}
+        <a
+          href="/"
+          onClick={(e) => {
+            if (isModifiedClick(e)) return;
+            e.preventDefault();
+            handleLogoClick();
+          }}
           className="flex items-center gap-3 cursor-pointer select-none text-left focus:outline-none group"
         >
           <div className="relative">
@@ -87,12 +95,16 @@ export function Navbar({
           <span className="text-xl font-bold tracking-tight text-white">
             Reel<span className="text-gold">Quest</span>
           </span>
-        </button>
+        </a>
 
         <div className="flex items-center gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={handleLogoClick}
+          <a
+            href="/"
+            onClick={(e) => {
+              if (isModifiedClick(e)) return;
+              e.preventDefault();
+              handleLogoClick();
+            }}
             className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
               currentView === 'game'
                 ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
@@ -102,11 +114,15 @@ export function Navbar({
           >
             <Gamepad2 className="h-4 w-4 text-gold" />
             <span className="hidden sm:inline">Games</span>
-          </button>
+          </a>
 
-          <button
-            type="button"
-            onClick={onOpenLeaderboard}
+          <a
+            href="/leaderboard"
+            onClick={(e) => {
+              if (isModifiedClick(e)) return;
+              e.preventDefault();
+              onOpenLeaderboard?.();
+            }}
             className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
               isLeaderboardActive
                 ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
@@ -115,7 +131,7 @@ export function Navbar({
           >
             <Trophy className="h-4 w-4 text-gold" />
             <span className="hidden sm:inline">Leaderboard</span>
-          </button>
+          </a>
 
           <button
             type="button"
@@ -191,9 +207,11 @@ export function Navbar({
                     </span>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <a
+                    href="/profile"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setMenuOpen(false);
                       onOpenProfile?.();
                     }}
@@ -201,11 +219,13 @@ export function Navbar({
                   >
                     <User className="h-4 w-4 text-gold shrink-0" />
                     <span>My Profile &amp; Stats</span>
-                  </button>
+                  </a>
 
-                  <button
-                    type="button"
-                    onClick={() => {
+                  <a
+                    href="/billing"
+                    onClick={(e) => {
+                      if (isModifiedClick(e)) return;
+                      e.preventDefault();
                       setMenuOpen(false);
                       if (onOpenBilling) onOpenBilling();
                       else onOpenProfile?.();
@@ -214,7 +234,7 @@ export function Navbar({
                   >
                     <CreditCard className="h-4 w-4 text-gold shrink-0" />
                     <span>PRO &amp; Saved Cards</span>
-                  </button>
+                  </a>
 
                   <div className="my-1.5 border-t border-cinema-border/60" />
 

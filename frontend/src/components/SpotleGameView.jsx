@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Film,
   Search,
@@ -36,9 +36,6 @@ import {
 
 const MAX_GUESSES = 10;
 
-/**
- * Interactive Cast Member Chip with Hover Tooltip Popover
- */
 function CastMemberChip({ actor, isMatch }) {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -94,14 +91,12 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
 
-  // Search autocomplete state
   const [searchQuery, setSearchQuery] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Game state
   const [guesses, setGuesses] = useState([]);
-  const [gameStatus, setGameStatus] = useState('PLAYING'); // 'PLAYING' | 'WON' | 'LOST'
+  const [gameStatus, setGameStatus] = useState('PLAYING');
   const [gaveUp, setGaveUp] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
   const [copiedShare, setCopiedShare] = useState(false);
@@ -110,11 +105,15 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
   const searchInputRef = useRef(null);
   const timerRef = useRef(null);
+  const winModalTimeoutRef = useRef(null);
 
   const isToday = activeDate === todayStr;
 
-  // Load target movie and persistent local session when activeDate changes
   useEffect(() => {
+    if (winModalTimeoutRef.current) {
+      clearTimeout(winModalTimeoutRef.current);
+      winModalTimeoutRef.current = null;
+    }
     const movie = getSpotleMovieForDate(activeDate);
     setTargetMovie(movie);
     setSearchQuery('');
@@ -144,9 +143,14 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
       setGuesses([]);
       setGameStatus('PLAYING');
     }
+
+    return () => {
+      if (winModalTimeoutRef.current) {
+        clearTimeout(winModalTimeoutRef.current);
+      }
+    };
   }, [activeDate]);
 
-  // Stopwatch timer for active gameplay
   useEffect(() => {
     if (gameStatus === 'PLAYING') {
       timerRef.current = setInterval(() => {
@@ -160,19 +164,25 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     };
   }, [gameStatus]);
 
-  // Filter movie suggestions based on user search query
-  const suggestions = searchQuery.trim().length >= 1
-    ? SPOTLE_MOVIES.filter((m) => {
-        const q = searchQuery.toLowerCase().trim();
-        return (
-          m.title.toLowerCase().includes(q) ||
-          m.director.toLowerCase().includes(q) ||
-          String(m.year).includes(q)
-        );
-      }).slice(0, 8)
-    : [];
+  const suggestions = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (q.length < 1) return [];
+    const matched = [];
+    for (let i = 0; i < SPOTLE_MOVIES.length; i++) {
+      const m = SPOTLE_MOVIES[i];
+      const titleLower = m.title.toLowerCase();
+      if (titleLower.includes(q)) {
+        matched.push({ movie: m, startsWith: titleLower.startsWith(q), exact: titleLower === q });
+      }
+    }
+    matched.sort((a, b) => {
+      if (a.exact !== b.exact) return a.exact ? -1 : 1;
+      if (a.startsWith !== b.startsWith) return a.startsWith ? -1 : 1;
+      return (b.movie.rating || 0) - (a.movie.rating || 0);
+    });
+    return matched.slice(0, 8).map((item) => item.movie);
+  }, [searchQuery]);
 
-  // Submit a movie guess
   const handleSelectMovieGuess = (movie) => {
     if (gameStatus !== 'PLAYING') return;
 
@@ -206,13 +216,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     } catch (e) {}
 
     if (isWin) {
-      playVictory();
-      setShowResultModal(true);
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 }
-      });
+      playNodeConnect();
       saveDetailedMatch(user?.id, {
         id: `spotle_${activeDate}_${user?.id || 'guest'}`,
         gameMode: 'spotle',
@@ -229,7 +233,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
           director: targetMovie.director,
           posterPath: targetMovie.posterPath
         },
-        guesses: newGuesses.map(g => g.guessedMovie.title)
+        guesses: newGuesses.map((g) => g.guessedMovie.title)
       });
       if (user?.id) {
         recordLeaderboardScore('spotle', {
@@ -242,9 +246,17 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
           date: activeDate
         });
       }
+      winModalTimeoutRef.current = setTimeout(() => {
+        playVictory();
+        confetti({
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+        setShowResultModal(true);
+      }, 1450);
     } else if (isLoss) {
       playDefeat();
-      setShowResultModal(true);
       saveDetailedMatch(user?.id, {
         id: `spotle_${activeDate}_${user?.id || 'guest'}`,
         gameMode: 'spotle',
@@ -261,14 +273,16 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
           director: targetMovie.director,
           posterPath: targetMovie.posterPath
         },
-        guesses: newGuesses.map(g => g.guessedMovie.title)
+        guesses: newGuesses.map((g) => g.guessedMovie.title)
       });
+      winModalTimeoutRef.current = setTimeout(() => {
+        setShowResultModal(true);
+      }, 1100);
     } else {
       playNodeConnect();
     }
   };
 
-  // Give Up & Reveal Answer
   const handleGiveUp = () => {
     if (gameStatus !== 'PLAYING') return;
 
@@ -306,11 +320,10 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         director: targetMovie.director,
         posterPath: targetMovie.posterPath
       },
-      guesses: guesses.map(g => g.guessedMovie.title)
+      guesses: guesses.map((g) => g.guessedMovie.title)
     });
   };
 
-  // Keyboard navigation for search dropdown
   const handleKeyDown = (e) => {
     if (!dropdownOpen || suggestions.length === 0) {
       if (e.key === 'Enter' && suggestions.length > 0) {
@@ -335,7 +348,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     }
   };
 
-  // Date shifting (Yesterday / Tomorrow)
   const shiftDay = (days) => {
     playClick();
     const [y, m, d] = activeDate.split('-').map(Number);
@@ -345,7 +357,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setActiveDate(nextStr);
   };
 
-  // Generate shareable spoiler-free emoji grid (Wordle/Spotle style)
   const generateShareText = () => {
     const lines = [];
     lines.push(`ReelQuest Spotle #${activeDate} 🎬`);
@@ -354,13 +365,14 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
 
     guesses.forEach((g) => {
       const a = g.attributes;
-      const yBox = a.year.status === 'EXACT' ? '🟩' : a.year.status === 'CLOSE' ? '🟨' : '⬛';
       const dBox = a.director.status === 'EXACT' ? '🟩' : '⬛';
+      const yBox = a.year.status === 'EXACT' ? '🟩' : a.year.status === 'CLOSE' ? '🟨' : '⬛';
       const gBox = a.genres.status === 'EXACT' ? '🟩' : a.genres.status === 'PARTIAL' ? '🟨' : '⬛';
       const cBox = a.cast.status === 'EXACT' ? '🟩' : a.cast.status === 'PARTIAL' ? '🟨' : '⬛';
       const sBox = a.rating.status === 'EXACT' ? '🟩' : a.rating.status === 'CLOSE' ? '🟨' : '⬛';
       const rBox = a.runtime.status === 'EXACT' ? '🟩' : a.runtime.status === 'CLOSE' ? '🟨' : '⬛';
-      lines.push(`${yBox}${dBox}${gBox}${cBox}${sBox}${rBox}`);
+      const mBox = g.isExactWin ? '🟩' : '⬛';
+      lines.push(`${dBox}${yBox}${gBox}${cBox}${sBox}${rBox}${mBox}`);
     });
 
     lines.push('');
@@ -376,7 +388,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
     setTimeout(() => setCopiedShare(false), 2500);
   };
 
-  // Clue unlocks
   const canUnlockTagline = isPro || guesses.length >= 3;
   const canUnlockCast = isPro || guesses.length >= 6;
 
@@ -402,25 +413,41 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
           </div>
         </div>
 
-        <DailyDateNavigator
-          currentDate={activeDate}
-          onSelectDate={(newDate) => {
-            playClick();
-            setActiveDate(newDate);
-          }}
-          onPrevDay={() => shiftDay(-1)}
-          onNextDay={() => shiftDay(1)}
-          onResetToToday={() => {
-            playClick();
-            setActiveDate(todayStr);
-          }}
-          onOpenArchive={() => {
-            playClick();
-            setIsArchiveModalOpen(true);
-          }}
-          onOpenHowToPlay={() => setShowLegend((prev) => !prev)}
-          embedded={true}
-        />
+        <div className="flex items-center gap-2 flex-wrap">
+          <DailyDateNavigator
+            currentDate={activeDate}
+            onSelectDate={(newDate) => {
+              playClick();
+              setActiveDate(newDate);
+            }}
+            onPrevDay={() => shiftDay(-1)}
+            onNextDay={() => shiftDay(1)}
+            onResetToToday={() => {
+              playClick();
+              setActiveDate(todayStr);
+            }}
+            onOpenArchive={() => {
+              playClick();
+              setIsArchiveModalOpen(true);
+            }}
+            onOpenHowToPlay={() => setShowLegend((prev) => !prev)}
+            embedded={true}
+          />
+
+          {gameStatus !== 'PLAYING' && (
+            <button
+              type="button"
+              onClick={() => {
+                playClick();
+                setShowResultModal(true);
+              }}
+              className="flex h-8 sm:h-9 items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3 text-xs font-black text-gold hover:bg-gold/25 transition shadow-sm"
+            >
+              <Trophy className="h-3.5 w-3.5 text-gold" />
+              <span>Result</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {showLegend && (
@@ -441,7 +468,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="h-5 w-5 rounded bg-amber-600 font-black text-white flex items-center justify-center text-[11px]">🟨</span>
-              <span><strong>Yellow:</strong> Close (Year within 3y, partial cast/genre)</span>
+              <span><strong>Orange:</strong> Close (Year ±3y, Runtime ±15m, partial cast/genre)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-5 w-5 rounded bg-[#212534] font-black text-slate-300 flex items-center justify-center text-[11px]">⬛</span>
@@ -449,7 +476,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             </div>
           </div>
           <p className="text-[11px] text-slate-400 pt-1 border-t border-cinema-border/40">
-            Arrows (<strong>↑ Newer / Higher</strong> or <strong>↓ Older / Lower</strong>) guide your release year, score, and runtime.
+            Arrows (<strong>↑ Newer / Higher / Longer</strong> or <strong>↓ Older / Lower / Shorter</strong>) guide your release year, score, and runtime.
           </p>
         </div>
       )}
@@ -502,7 +529,9 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                 <div className="absolute left-0 right-0 top-full mt-2 overflow-hidden rounded-2xl border border-gold/40 bg-cinema-card/95 backdrop-blur-xl shadow-2xl divide-y divide-cinema-border/50 animate-fade-in max-h-80 overflow-y-auto z-40">
                   {suggestions.map((movie, idx) => {
                     const isSelected = idx === selectedIndex;
-                    const alreadyGuessed = guesses.some((g) => g.guessedMovie.id === movie.id);
+                    const alreadyGuessed = guesses.some(
+                      (g) => g.guessedMovie.id === movie.id || g.guessedMovie.title.toLowerCase() === movie.title.toLowerCase()
+                    );
 
                     return (
                       <div
@@ -532,9 +561,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                           </div>
                           <div className="min-w-0">
                             <h4 className="text-xs sm:text-sm font-extrabold truncate text-white">{movie.title}</h4>
-                            <p className="text-[11px] text-slate-400 truncate">
-                              {movie.year} • Dir. {movie.director} • {movie.genres.slice(0, 2).join(', ')}
-                            </p>
                           </div>
                         </div>
 
@@ -577,7 +603,7 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                 <Lightbulb className="h-3.5 w-3.5 text-gold shrink-0" />
                 <span className="font-bold text-gold">Tagline:</span>
                 <span className="text-slate-100 italic">
-                  &ldquo;{targetMovie.tagline || targetMovie.overview.slice(0, 90) + '...'}&rdquo;
+                  &ldquo;{targetMovie.tagline || (targetMovie.overview ? targetMovie.overview.slice(0, 90) + '...' : targetMovie.title)}&rdquo;
                 </span>
               </div>
             ) : canUnlockTagline ? (
@@ -627,13 +653,13 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         <div className="min-w-[760px] max-w-4xl mx-auto space-y-2">
           <div className="grid grid-cols-7 gap-2 text-center select-none">
             {[
-              { label: 'Movie', icon: Film },
               { label: 'Director', icon: User },
               { label: 'Year', icon: Calendar },
               { label: 'Genres', icon: Sparkles },
               { label: 'Top Cast', icon: Star },
               { label: 'Score', icon: Trophy },
-              { label: 'Runtime', icon: Clock }
+              { label: 'Runtime', icon: Clock },
+              { label: 'Movie', icon: Film }
             ].map((col, cIdx) => (
               <div
                 key={cIdx}
@@ -647,7 +673,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
             ))}
           </div>
 
-          {/* Submitted Guess Rows (Reverse-chronological: Newest guess on top, oldest below) */}
           {[...guesses]
             .map((g, idx) => ({ ...g, attemptNum: idx + 1, isLatest: idx === guesses.length - 1 }))
             .reverse()
@@ -660,229 +685,219 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
                   key={g.guessedMovie.id || attemptNum}
                   className="grid grid-cols-7 gap-2 animate-fade-in"
                 >
-                {/* Tile 1: Movie Guess */}
-                <div
-                  className={`h-[88px] rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    g.isExactWin
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : 'bg-cinema-card/95 border-cinema-border/80 text-white'
-                  }`}
-                  style={{ animationDelay: isLatest ? '0ms' : undefined }}
-                >
-                  <div className="h-16 w-11 shrink-0 overflow-hidden rounded border border-white/20 bg-black/40">
-                    {g.guessedMovie.posterPath ? (
-                      <img
-                        src={getTmdbImageUrl(g.guessedMovie.posterPath)}
-                        alt={g.guessedMovie.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <Film className="h-full w-full p-1 text-cinema-muted" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1 pr-1">
-                    <span className="text-[11px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
-                      #{attemptNum}
-                    </span>
-                    <h4 className="text-xs font-black truncate leading-tight text-white">
-                      {g.guessedMovie.title}
-                    </h4>
-                    <span className="text-[11px] text-slate-300 block truncate mt-0.5">
-                      {g.guessedMovie.year}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Tile 2: Director */}
-                <div
-                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.director.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '100ms' : undefined }}
-                >
-                  <span className="text-xs font-black leading-snug line-clamp-2 px-1">
-                    {a.director.value}
-                  </span>
-                  {a.director.status === 'EXACT' && (
-                    <span className="mt-1 flex items-center gap-0.5 text-[11px] font-extrabold text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full">
-                      <Check className="h-2.5 w-2.5" /> Match
-                    </span>
-                  )}
-                </div>
-
-                {/* Tile 3: Release Year */}
-                <div
-                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.year.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : a.year.status === 'CLOSE'
-                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                  <div
+                    className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.director.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
                         : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '200ms' : undefined }}
-                >
-                  <span className="text-base font-black font-mono leading-tight">
-                    {a.year.value}
-                  </span>
-                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
-                    {a.year.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowUp className="h-3 w-3 animate-bounce" /> Newer
-                      </span>
-                    )}
-                    {a.year.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowDown className="h-3 w-3 animate-bounce" /> Older
-                      </span>
-                    )}
-                    {a.year.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
-                        <Check className="h-3 w-3" /> Exact
+                    }`}
+                    style={{ animationDelay: isLatest ? '0ms' : undefined }}
+                  >
+                    <span className="text-xs font-black leading-snug line-clamp-2 px-1">
+                      {a.director.value}
+                    </span>
+                    {a.director.status === 'EXACT' && (
+                      <span className="mt-1 flex items-center gap-0.5 text-[11px] font-extrabold text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full">
+                        <Check className="h-2.5 w-2.5" /> Match
                       </span>
                     )}
                   </div>
-                </div>
 
-                {/* Tile 4: Genres */}
-                <div
-                  className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.genres.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : a.genres.status === 'PARTIAL'
-                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
-                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '300ms' : undefined }}
-                >
-                  <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
-                    {a.genres.value.slice(0, 3).map((genre, gIdx) => {
-                      const isMatch = (a.genres.matching || []).includes(genre);
-                      return (
-                        <span
-                          key={gIdx}
-                          className={`rounded px-1.5 py-0.5 text-[11px] font-black truncate max-w-[92px] ${
-                            isMatch
-                              ? 'bg-black/50 text-emerald-300 border border-emerald-300/40 shadow-sm'
-                              : 'bg-black/25 text-slate-300 border border-white/5'
-                          }`}
-                        >
-                          {genre}
+                  <div
+                    className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.year.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : a.year.status === 'CLOSE'
+                          ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                          : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                    }`}
+                    style={{ animationDelay: isLatest ? '130ms' : undefined }}
+                  >
+                    <span className="text-base font-black font-mono leading-tight">
+                      {a.year.value}
+                    </span>
+                    <div className="flex items-center gap-1 mt-1 font-black text-xs">
+                      {a.year.direction === 'HIGHER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowUp className="h-3 w-3 animate-bounce" /> Newer
                         </span>
-                      );
-                    })}
+                      )}
+                      {a.year.direction === 'LOWER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowDown className="h-3 w-3 animate-bounce" /> Older
+                        </span>
+                      )}
+                      {a.year.direction === 'EQUAL' && (
+                        <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
+                          <Check className="h-3 w-3" /> Exact
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Tile 5: Top Cast (Fits cleanly inside rectangle with zero overflow!) */}
-                <div
-                  className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.cast.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : a.cast.status === 'PARTIAL'
-                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
-                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '400ms' : undefined }}
-                >
-                  <div className="flex flex-col items-center justify-center gap-1 w-full max-h-full">
-                    {a.cast.value.slice(0, 3).map((actor, actIdx) => {
-                      const isMatch = (a.cast.matching || []).includes(actor);
-                      return (
-                        <CastMemberChip
-                          key={actIdx}
-                          actor={actor}
-                          isMatch={isMatch}
+                  <div
+                    className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.genres.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : a.genres.status === 'PARTIAL'
+                          ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                          : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                    }`}
+                    style={{ animationDelay: isLatest ? '260ms' : undefined }}
+                  >
+                    <div className="flex flex-wrap items-center justify-center gap-1 max-w-full">
+                      {a.genres.value.slice(0, 3).map((genre, gIdx) => {
+                        const isMatch = (a.genres.matching || []).includes(genre);
+                        return (
+                          <span
+                            key={gIdx}
+                            className={`rounded px-1.5 py-0.5 text-[11px] font-black truncate max-w-[92px] ${
+                              isMatch
+                                ? 'bg-black/50 text-emerald-300 border border-emerald-300/40 shadow-sm'
+                                : 'bg-black/25 text-slate-300 border border-white/5'
+                            }`}
+                          >
+                            {genre}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`h-[88px] rounded-xl border p-1.5 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.cast.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : a.cast.status === 'PARTIAL'
+                          ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                          : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                    }`}
+                    style={{ animationDelay: isLatest ? '390ms' : undefined }}
+                  >
+                    <div className="flex flex-col items-center justify-center gap-1 w-full max-h-full">
+                      {a.cast.value.slice(0, 3).map((actor, actIdx) => {
+                        const isMatch = (a.cast.matching || []).includes(actor);
+                        return (
+                          <CastMemberChip
+                            key={actIdx}
+                            actor={actor}
+                            isMatch={isMatch}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.rating.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : a.rating.status === 'CLOSE'
+                          ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                          : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                    }`}
+                    style={{ animationDelay: isLatest ? '520ms' : undefined }}
+                  >
+                    <div className="flex items-center gap-1 text-base font-black font-mono leading-tight">
+                      <Star className="h-3.5 w-3.5 text-gold fill-gold" />
+                      <span>{a.rating.value}</span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1 font-black text-xs">
+                      {a.rating.direction === 'HIGHER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowUp className="h-3 w-3" /> Higher
+                        </span>
+                      )}
+                      {a.rating.direction === 'LOWER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowDown className="h-3 w-3" /> Lower
+                        </span>
+                      )}
+                      {a.rating.direction === 'EQUAL' && (
+                        <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
+                          <Check className="h-3 w-3" /> Match
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      a.runtime.status === 'EXACT'
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : a.runtime.status === 'CLOSE'
+                          ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
+                          : 'bg-[#212534] border-cinema-border/80 text-slate-200'
+                    }`}
+                    style={{ animationDelay: isLatest ? '650ms' : undefined }}
+                  >
+                    <span className="text-base font-black font-mono leading-tight">
+                      {a.runtime.value}
+                    </span>
+                    <div className="flex items-center gap-1 mt-1 font-black text-xs">
+                      {a.runtime.direction === 'HIGHER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowUp className="h-3 w-3" /> Longer
+                        </span>
+                      )}
+                      {a.runtime.direction === 'LOWER' && (
+                        <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
+                          <ArrowDown className="h-3 w-3" /> Shorter
+                        </span>
+                      )}
+                      {a.runtime.direction === 'EQUAL' && (
+                        <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
+                          <Check className="h-3 w-3" /> Match
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`h-[88px] rounded-xl border p-1.5 flex items-center gap-2 transition-all shadow-md overflow-hidden ${
+                      isLatest ? 'animate-tile-flip' : ''
+                    } ${
+                      g.isExactWin
+                        ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
+                        : 'bg-cinema-card/95 border-cinema-border/80 text-white'
+                    }`}
+                    style={{ animationDelay: isLatest ? '780ms' : undefined }}
+                  >
+                    <div className="h-16 w-11 shrink-0 overflow-hidden rounded border border-white/20 bg-black/40">
+                      {g.guessedMovie.posterPath ? (
+                        <img
+                          src={getTmdbImageUrl(g.guessedMovie.posterPath)}
+                          alt={g.guessedMovie.title}
+                          className="h-full w-full object-cover"
                         />
-                      );
-                    })}
+                      ) : (
+                        <Film className="h-full w-full p-1 text-cinema-muted" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 pr-1">
+                      <span className="text-[11px] font-extrabold uppercase text-gold/90 block leading-none mb-1">
+                        #{attemptNum}
+                      </span>
+                      <h4 className="text-xs font-black line-clamp-2 leading-tight text-white">
+                        {g.guessedMovie.title}
+                      </h4>
+                    </div>
                   </div>
                 </div>
-
-                {/* Tile 6: Rating / Score */}
-                <div
-                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.rating.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : a.rating.status === 'CLOSE'
-                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
-                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '500ms' : undefined }}
-                >
-                  <div className="flex items-center gap-1 text-base font-black font-mono leading-tight">
-                    <Star className="h-3.5 w-3.5 text-gold fill-gold" />
-                    <span>{a.rating.value}</span>
-                  </div>
-                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
-                    {a.rating.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowUp className="h-3 w-3" /> Higher
-                      </span>
-                    )}
-                    {a.rating.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowDown className="h-3 w-3" /> Lower
-                      </span>
-                    )}
-                    {a.rating.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
-                        <Check className="h-3 w-3" /> Match
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tile 7: Runtime */}
-                <div
-                  className={`h-[88px] rounded-xl border p-2 flex flex-col items-center justify-center text-center transition-all shadow-md overflow-hidden ${
-                    isLatest ? 'animate-tile-flip' : ''
-                  } ${
-                    a.runtime.status === 'EXACT'
-                      ? 'bg-emerald-600/90 border-emerald-400 text-white shadow-emerald-500/30'
-                      : a.runtime.status === 'CLOSE'
-                        ? 'bg-amber-600/90 border-amber-400 text-white shadow-amber-500/30'
-                        : 'bg-[#212534] border-cinema-border/80 text-slate-200'
-                  }`}
-                  style={{ animationDelay: isLatest ? '600ms' : undefined }}
-                >
-                  <span className="text-base font-black font-mono leading-tight">
-                    {a.runtime.value}
-                  </span>
-                  <div className="flex items-center gap-1 mt-1 font-black text-xs">
-                    {a.runtime.direction === 'HIGHER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowUp className="h-3 w-3" /> Longer
-                      </span>
-                    )}
-                    {a.runtime.direction === 'LOWER' && (
-                      <span className="flex items-center gap-0.5 text-gold bg-black/35 px-2 py-0.5 rounded-full text-[11px]">
-                        <ArrowDown className="h-3 w-3" /> Shorter
-                      </span>
-                    )}
-                    {a.runtime.direction === 'EQUAL' && (
-                      <span className="flex items-center gap-0.5 text-emerald-200 bg-black/30 px-2 py-0.5 rounded-full text-[11px]">
-                        <Check className="h-3 w-3" /> Match
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
           {guesses.length === 0 && (
             <div className="rounded-xl border border-dashed border-cinema-border/70 bg-cinema-card/40 p-8 text-center text-cinema-muted space-y-1">
@@ -907,7 +922,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               <X className="h-5 w-5" />
             </button>
 
-            {/* Cinematic Trophy / Reel Icon */}
             <div className="relative mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-gold/25 via-amber-600/20 to-transparent border-2 border-gold/40 shadow-gold-glow/40 animate-fade-in">
               {gameStatus === 'WON' ? (
                 <Trophy className="h-10 w-10 text-gold animate-bounce" />
@@ -937,7 +951,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               </p>
             </div>
 
-            {/* Target Movie Artwork & Brief */}
             <div className="flex items-center gap-3 text-left rounded-2xl border border-cinema-border/70 bg-cinema-black/60 p-3.5">
               <img
                 src={getTmdbImageUrl(targetMovie.posterPath)}
@@ -954,7 +967,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
               </div>
             </div>
 
-            {/* Share & Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
                 onClick={handleShare}
@@ -980,7 +992,6 @@ export function SpotleGameView({ onOpenPro, onOpenAuth }) {
         </div>
       )}
 
-      {/* Archive Modal */}
       <SpotleArchiveModal
         isOpen={isArchiveModalOpen}
         onClose={() => setIsArchiveModalOpen(false)}
