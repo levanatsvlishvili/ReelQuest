@@ -167,7 +167,6 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // 1v1 ONLINE DUELS
   {
     id: 'duel_gladiator_rises',
     gameMode: 'duels',
@@ -178,7 +177,7 @@ export const ACHIEVEMENTS = [
     maxProgress: 1,
     checkProgress: (stats, history) => {
       const duels = history.filter(m => m.gameMode === 'duels');
-      return duels.length >= 1 ? 1 : 0;
+      return (duels.length >= 1 || (stats?.duelsWon || 0) >= 1) ? 1 : 0;
     }
   },
   {
@@ -191,7 +190,7 @@ export const ACHIEVEMENTS = [
     maxProgress: 3,
     checkProgress: (stats, history) => {
       const wins = history.filter(m => m.gameMode === 'duels' && m.won);
-      return Math.min(3, wins.length);
+      return Math.min(3, Math.max(wins.length, stats?.duelsWon || 0));
     }
   },
   {
@@ -451,7 +450,6 @@ export const ACHIEVEMENTS = [
     }
   },
 
-  // STREAKS & META (Global Mastery)
   {
     id: 'meta_streak_3',
     gameMode: 'meta',
@@ -460,7 +458,7 @@ export const ACHIEVEMENTS = [
     tier: 'bronze',
     icon: 'Flame',
     maxProgress: 3,
-    checkProgress: (stats) => Math.min(3, stats.streak || 0)
+    checkProgress: (stats) => Math.min(3, Math.max(stats?.streak || 0, stats?.longestStreak || 0))
   },
   {
     id: 'meta_streak_7',
@@ -470,7 +468,7 @@ export const ACHIEVEMENTS = [
     tier: 'silver',
     icon: 'Flame',
     maxProgress: 7,
-    checkProgress: (stats) => Math.min(7, stats.streak || 0)
+    checkProgress: (stats) => Math.min(7, Math.max(stats?.streak || 0, stats?.longestStreak || 0))
   },
   {
     id: 'meta_streak_30',
@@ -480,7 +478,7 @@ export const ACHIEVEMENTS = [
     tier: 'diamond',
     icon: 'Crown',
     maxProgress: 30,
-    checkProgress: (stats) => Math.min(30, stats.streak || 0)
+    checkProgress: (stats) => Math.min(30, Math.max(stats?.streak || 0, stats?.longestStreak || 0))
   },
   {
     id: 'meta_veteran_25',
@@ -565,17 +563,16 @@ export function getStoredUnlockedAchievements(userId) {
  * Evaluates all achievements against user stats and match history.
  * Persists any newly unlocked achievements with an unlock timestamp.
  */
-export function evaluateAchievements(userId, user, stats = {}, matchHistory = []) {
+export function evaluateAchievements(userId, user, stats = {}, matchHistory = [], persist = true) {
   const effectiveUserId = userId || 'guest';
-  const storedUnlocked = getStoredUnlockedAchievements(effectiveUserId);
+  const storedUnlocked = persist ? getStoredUnlockedAchievements(effectiveUserId) : {};
   const updatedUnlocked = { ...storedUnlocked };
   const newlyUnlocked = [];
 
   const totalGamesCount = Math.max(stats?.gamesPlayed || 0, matchHistory.length);
   const totalWinsCount = Math.max(stats?.gamesWon || 0, matchHistory.filter(m => m.won).length);
 
-  // If a user has NEVER played any games, prune any erroneously saved game achievements
-  if (totalGamesCount === 0) {
+  if (persist && totalGamesCount === 0) {
     let pruned = false;
     for (const key of Object.keys(updatedUnlocked)) {
       if (key.startsWith('otara_') || key.startsWith('duel_') || key.startsWith('spotle_') || key.startsWith('frame_') || key.startsWith('bo_') || key.startsWith('meta_streak') || key.startsWith('meta_veteran')) {
@@ -606,7 +603,6 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
       }
     }
 
-    // A game achievement can ONLY be unlocked if the user has actually played games!
     const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.gameMode === 'frame-sleuth' || ach.gameMode === 'box-office' || ach.id.includes('streak') || ach.id.includes('veteran');
     let isNowUnlocked = false;
 
@@ -636,8 +632,7 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
     };
   });
 
-  // Save updated unlock states if new unlocks occurred
-  if (newlyUnlocked.length > 0) {
+  if (persist && newlyUnlocked.length > 0) {
     const storageKey = `${UNLOCKED_STORAGE_PREFIX}${effectiveUserId}`;
     try {
       localStorage.setItem(storageKey, JSON.stringify(updatedUnlocked));
@@ -646,7 +641,6 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
     }
   }
 
-  // Calculate trophy stats
   const activeAchievements = evaluated.filter(a => !a.isComingSoon);
   const unlockedCount = activeAchievements.filter(a => a.isUnlocked).length;
   const totalCount = activeAchievements.length;

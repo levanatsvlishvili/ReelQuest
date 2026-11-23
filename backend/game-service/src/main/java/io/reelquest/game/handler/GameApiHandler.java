@@ -349,6 +349,7 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         map.put("userId", item.containsKey("userId") ? item.get("userId").s() : "");
         map.put("username", item.containsKey("username") ? item.get("username").s() : "Cinephile");
         map.put("gameMode", item.containsKey("gameMode") ? item.get("gameMode").s() : "six-degrees");
+        map.put("subMode", item.containsKey("subMode") ? item.get("subMode").s() : "daily");
         map.put("score", item.containsKey("score") ? Long.parseLong(item.get("score").n()) : 0L);
         map.put("moves", item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0);
         map.put("durationSeconds", item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L);
@@ -356,6 +357,30 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         map.put("startActorName", item.containsKey("startActorName") ? item.get("startActorName").s() : "");
         map.put("targetActorId", item.containsKey("targetActorId") ? item.get("targetActorId").s() : "");
         map.put("targetActorName", item.containsKey("targetActorName") ? item.get("targetActorName").s() : "");
+        if (item.containsKey("optimalHops")) {
+            map.put("optimalHops", Integer.parseInt(item.get("optimalHops").n()));
+        }
+        if (item.containsKey("matchedOtara") && item.get("matchedOtara").bool() != null) {
+            map.put("matchedOtara", item.get("matchedOtara").bool());
+        }
+        if (item.containsKey("usedHint") && item.get("usedHint").bool() != null) {
+            map.put("usedHint", item.get("usedHint").bool());
+        }
+        if (item.containsKey("undos")) {
+            map.put("undos", Integer.parseInt(item.get("undos").n()));
+        }
+        if (item.containsKey("targetMovieTitle")) {
+            map.put("targetMovieTitle", item.get("targetMovieTitle").s());
+        }
+        if (item.containsKey("targetMovieYear")) {
+            map.put("targetMovieYear", item.get("targetMovieYear").s());
+        }
+        if (item.containsKey("targetMovieDirector")) {
+            map.put("targetMovieDirector", item.get("targetMovieDirector").s());
+        }
+        if (item.containsKey("targetMoviePosterPath")) {
+            map.put("targetMoviePosterPath", item.get("targetMoviePosterPath").s());
+        }
         if (item.containsKey("opponentUsername")) {
             map.put("opponentUsername", item.get("opponentUsername").s());
         }
@@ -378,7 +403,9 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         map.put("email", item.containsKey("email") ? item.get("email").s() : userId + "@reelquest.user");
         map.put("username", item.containsKey("username") ? item.get("username").s() : "Cinephile");
         map.put("role", item.containsKey("role") ? item.get("role").s() : "PLAYER");
-        map.put("tier", item.containsKey("tier") ? item.get("tier").s() : "FREE");
+        String tier = item.containsKey("tier") ? item.get("tier").s() : "FREE";
+        map.put("tier", tier);
+        map.put("isPro", "PRO".equalsIgnoreCase(tier));
         map.put("status", item.containsKey("status") ? item.get("status").s() : "ACTIVE");
         LocalDate todayUtc = LocalDate.now(ZoneOffset.UTC);
         String todayStr = todayUtc.toString();
@@ -402,6 +429,14 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         map.put("joinedAt", createdAt.length() >= 10 ? createdAt.substring(0, 10) : createdAt);
         map.put("createdAt", createdAt);
         map.put("updatedAt", item.containsKey("updatedAt") ? item.get("updatedAt").s() : "");
+        for (String field : List.of(
+                "firstName", "lastName", "countryCode", "nationality", "countryFlag",
+                "bio", "favoriteDirector", "favoriteMovie", "favoriteGenre", "avatarId", "customAvatarUrl"
+        )) {
+            if (item.containsKey(field) && item.get(field).s() != null) {
+                map.put(field, item.get(field).s());
+            }
+        }
         return map;
     }
 
@@ -582,6 +617,11 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             item.put("status", AttributeValue.fromS("ACTIVE"));
             item.put("updatedAt", AttributeValue.fromS(now));
 
+            List<String> optionalProfileFields = List.of(
+                    "firstName", "lastName", "countryCode", "nationality", "countryFlag",
+                    "bio", "favoriteDirector", "favoriteMovie", "favoriteGenre", "avatarId"
+            );
+
             try {
                 var existing = dynamoDbClient.getItem(GetItemRequest.builder()
                         .tableName(tableName)
@@ -592,6 +632,13 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                         : findLegacyProfileByEmailOrUsername(email, username);
 
                 if (ex != null && !ex.isEmpty()) {
+                    if (email.isBlank() && ex.containsKey("email")) {
+                        email = ex.get("email").s();
+                        item.put("email", ex.get("email"));
+                    }
+                    if (!json.has("username") && ex.containsKey("username")) {
+                        item.put("username", ex.get("username"));
+                    }
                     if (ex.containsKey("createdAt")) item.put("createdAt", ex.get("createdAt"));
                     if (ex.containsKey("streak")) item.put("streak", ex.get("streak"));
                     if (ex.containsKey("longestStreak")) item.put("longestStreak", ex.get("longestStreak"));
@@ -605,6 +652,14 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                         isPro = true;
                         item.put("tier", AttributeValue.fromS("PRO"));
                     }
+                    for (String field : optionalProfileFields) {
+                        if (ex.containsKey(field)) {
+                            item.put(field, ex.get(field));
+                        }
+                    }
+                    if (ex.containsKey("customAvatarUrl")) {
+                        item.put("customAvatarUrl", ex.get("customAvatarUrl"));
+                    }
                 } else {
                     item.put("createdAt", AttributeValue.fromS(now));
                     item.put("streak", AttributeValue.fromN("0"));
@@ -615,6 +670,26 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                     item.put("totalScore", AttributeValue.fromN("0"));
                 }
             } catch (Exception ignored) {}
+
+            for (String field : optionalProfileFields) {
+                if (json.has(field)) {
+                    if (json.get(field).isNull()) {
+                        item.remove(field);
+                    } else {
+                        item.put(field, AttributeValue.fromS(json.get(field).asText("")));
+                    }
+                }
+            }
+            if (json.has("customAvatarUrl")) {
+                if (json.get("customAvatarUrl").isNull() || json.get("customAvatarUrl").asText("").isBlank()) {
+                    item.remove("customAvatarUrl");
+                } else {
+                    String avatarUrl = json.get("customAvatarUrl").asText("");
+                    if (avatarUrl.length() < 300_000) {
+                        item.put("customAvatarUrl", AttributeValue.fromS(avatarUrl));
+                    }
+                }
+            }
 
             if (!email.isBlank()) {
                 item.put("GSI1PK", AttributeValue.fromS("EMAIL#" + email));
@@ -649,7 +724,29 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                     .tableName(tableName)
                     .key(Map.of("PK", AttributeValue.fromS("USER#" + userId), "SK", AttributeValue.fromS("PROFILE")))
                     .build());
-            if (!res.hasItem() || res.item() == null) {
+            if (!res.hasItem() || res.item() == null || res.item().isEmpty()) {
+                var lbRes = dynamoDbClient.getItem(GetItemRequest.builder()
+                        .tableName(tableName)
+                        .key(Map.of("PK", AttributeValue.fromS("LEADERBOARD#ALL_TIME"), "SK", AttributeValue.fromS("USER#" + userId)))
+                        .build());
+                if (lbRes.hasItem() && lbRes.item() != null && !lbRes.item().isEmpty()) {
+                    var lbItem = lbRes.item();
+                    Map<String, Object> fallback = new HashMap<>();
+                    fallback.put("id", userId);
+                    fallback.put("userId", userId);
+                    fallback.put("username", lbItem.containsKey("username") ? lbItem.get("username").s() : "Cinephile");
+                    boolean isPro = lbItem.containsKey("isPro") && Boolean.TRUE.equals(lbItem.get("isPro").bool());
+                    fallback.put("tier", isPro ? "PRO" : "FREE");
+                    fallback.put("isPro", isPro);
+                    fallback.put("totalScore", lbItem.containsKey("score") ? Long.parseLong(lbItem.get("score").n()) : 0L);
+                    int wins = lbItem.containsKey("moves") ? Integer.parseInt(lbItem.get("moves").n()) : 0;
+                    fallback.put("gamesWon", wins);
+                    fallback.put("gamesPlayed", wins);
+                    fallback.put("streak", 0);
+                    fallback.put("longestStreak", 0);
+                    fallback.put("duelsWon", 0);
+                    return response(200, fallback);
+                }
                 return response(404, Map.of("error", "User profile not found"));
             }
             return response(200, mapUserProfile(res.item(), userId));
@@ -1006,7 +1103,7 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             long score = bodyNode.has("score") ? bodyNode.get("score").asLong(defaultScore) : defaultScore;
             ValidationResult arcadeResult = new ValidationResult(true, moves, score, "Completed " + gameMode);
             GameSubmission arcadeSub = new GameSubmission(authUser.userId(), gameMode, gameMode, List.of(), durationSeconds);
-            int updatedStreak = saveGameSessionAndOutboxEvent(arcadeSub, arcadeResult, authUser, gameMode, submittedDate);
+            int updatedStreak = saveGameSessionAndOutboxEvent(arcadeSub, arcadeResult, authUser, gameMode, submittedDate, bodyNode);
 
             Map<String, Object> responseData = new HashMap<>();
             responseData.put("valid", true);
@@ -1029,7 +1126,7 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             return response(400, result);
         }
 
-        int updatedStreak = saveGameSessionAndOutboxEvent(submission, result, authUser, "six-degrees", submittedDate);
+        int updatedStreak = saveGameSessionAndOutboxEvent(submission, result, authUser, "six-degrees", submittedDate, bodyNode);
 
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("valid", true);
@@ -1049,7 +1146,8 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             ValidationResult result,
             AuthenticatedUser authUser,
             String gameMode,
-            String submittedDate
+            String submittedDate,
+            JsonNode bodyNode
     ) throws Exception {
         if (dynamoDbClient == null) return 1;
         LocalDate todayUtc = LocalDate.now(ZoneOffset.UTC);
@@ -1174,8 +1272,56 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         sessionItem.put("score", AttributeValue.fromN(String.valueOf(bestDailyScore)));
         sessionItem.put("moves", AttributeValue.fromN(String.valueOf(bestDailyMoves)));
         sessionItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(bestDailyDuration)));
-        sessionItem.put("startActorId", AttributeValue.fromS(submission.startActorId() != null ? submission.startActorId() : mode));
-        sessionItem.put("targetActorId", AttributeValue.fromS(submission.targetActorId() != null ? submission.targetActorId() : mode));
+        String startId = submission.startActorId() != null ? submission.startActorId() : mode;
+        String targetId = submission.targetActorId() != null ? submission.targetActorId() : mode;
+        sessionItem.put("startActorId", AttributeValue.fromS(startId));
+        sessionItem.put("targetActorId", AttributeValue.fromS(targetId));
+        String startName = bodyNode != null && bodyNode.has("startActorName") ? bodyNode.get("startActorName").asText("") : "";
+        String targetName = bodyNode != null && bodyNode.has("targetActorName") ? bodyNode.get("targetActorName").asText("") : "";
+        if (startName.isBlank() && "six-degrees".equals(mode) && !startId.equals(mode)) {
+            startName = dataProvider.findActorById(startId).map(Actor::name).orElse("");
+        }
+        if (targetName.isBlank() && "six-degrees".equals(mode) && !targetId.equals(mode)) {
+            targetName = dataProvider.findActorById(targetId).map(Actor::name).orElse("");
+        }
+        if (!startName.isBlank()) sessionItem.put("startActorName", AttributeValue.fromS(startName));
+        if (!targetName.isBlank()) sessionItem.put("targetActorName", AttributeValue.fromS(targetName));
+        if (bodyNode != null) {
+            if (bodyNode.has("subMode") && !bodyNode.get("subMode").asText("").isBlank()) {
+                sessionItem.put("subMode", AttributeValue.fromS(bodyNode.get("subMode").asText()));
+            }
+            if (bodyNode.has("optimalHops") && bodyNode.get("optimalHops").isNumber()) {
+                sessionItem.put("optimalHops", AttributeValue.fromN(String.valueOf(bodyNode.get("optimalHops").asInt())));
+            }
+            if (bodyNode.has("matchedOtara") && bodyNode.get("matchedOtara").isBoolean()) {
+                sessionItem.put("matchedOtara", AttributeValue.fromBool(bodyNode.get("matchedOtara").asBoolean()));
+            }
+            if (bodyNode.has("usedHint") && bodyNode.get("usedHint").isBoolean()) {
+                sessionItem.put("usedHint", AttributeValue.fromBool(bodyNode.get("usedHint").asBoolean()));
+            }
+            if (bodyNode.has("undos") && bodyNode.get("undos").isNumber()) {
+                sessionItem.put("undos", AttributeValue.fromN(String.valueOf(bodyNode.get("undos").asInt())));
+            }
+            JsonNode movieNode = bodyNode.has("targetMovie") && bodyNode.get("targetMovie").isObject()
+                    ? bodyNode.get("targetMovie")
+                    : null;
+            String mTitle = movieNode != null && movieNode.has("title")
+                    ? movieNode.get("title").asText("")
+                    : (bodyNode.has("targetMovieTitle") ? bodyNode.get("targetMovieTitle").asText("") : "");
+            String mYear = movieNode != null && movieNode.has("year")
+                    ? movieNode.get("year").asText("")
+                    : (bodyNode.has("targetMovieYear") ? bodyNode.get("targetMovieYear").asText("") : "");
+            String mDir = movieNode != null && movieNode.has("director")
+                    ? movieNode.get("director").asText("")
+                    : (bodyNode.has("targetMovieDirector") ? bodyNode.get("targetMovieDirector").asText("") : "");
+            String mPoster = movieNode != null && movieNode.has("posterPath")
+                    ? movieNode.get("posterPath").asText("")
+                    : (bodyNode.has("targetMoviePosterPath") ? bodyNode.get("targetMoviePosterPath").asText("") : "");
+            if (!mTitle.isBlank()) sessionItem.put("targetMovieTitle", AttributeValue.fromS(mTitle));
+            if (!mYear.isBlank()) sessionItem.put("targetMovieYear", AttributeValue.fromS(mYear));
+            if (!mDir.isBlank()) sessionItem.put("targetMovieDirector", AttributeValue.fromS(mDir));
+            if (!mPoster.isBlank()) sessionItem.put("targetMoviePosterPath", AttributeValue.fromS(mPoster));
+        }
         sessionItem.put("createdAt", AttributeValue.fromS(timestamp));
 
         Map<String, Object> eventPayload = new HashMap<>();

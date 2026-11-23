@@ -30,6 +30,7 @@ import {
   getRandomContender
 } from '../data/boxOfficeMovies';
 import { DailyDateNavigator } from './DailyDateNavigator';
+import { NextDailyGameBar } from './NextDailyGameBar';
 import {
   playClick,
   playNodeConnect,
@@ -37,10 +38,10 @@ import {
   playDefeat
 } from '../utils/soundEffects';
 
-export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
+export function BoxOfficeClashView({ onOpenPro, onOpenAuth, onSelectGame, onOpenLeaderboard }) {
   const { user, isAuthenticated, stats } = useAuth();
 
-  const [subMode, setSubMode] = useState('endless');
+  const [subMode, setSubMode] = useState('daily');
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
@@ -324,63 +325,103 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
   const activeDailyMatchup = dailyMatchups[dailyRound] || dailyMatchups[0];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 pb-12 animate-fade-in">
-      <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-3.5 sm:p-4 shadow-xl backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm">
-            <TrendingUp className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-black tracking-tight text-white">
-                Box Office Clash
-              </h1>
-              {isAuthenticated && boDailyStreak > 0 && (
-                <span className="flex items-center gap-1 rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-black text-orange-400 border border-orange-500/30">
-                  <Flame className="h-3 w-3 fill-orange-400" />
-                  <span>{boDailyStreak}d</span>
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-400">
-              Which film dominated the global box office? Guess Higher or Lower!
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-          <div className="flex items-center rounded-xl border border-cinema-border bg-cinema-surface/90 p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => {
-                playClick();
-                setSubMode('endless');
-              }}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition ${
-                subMode === 'endless'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Flame className="h-3.5 w-3.5" />
-              <span>Endless</span>
-            </button>
+    <div className="mx-auto max-w-4xl space-y-5 pb-8 animate-fade-in">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] pb-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex items-center rounded-lg border border-white/[0.08] bg-cinema-surface p-0.5">
             <button
               type="button"
               onClick={() => {
                 playClick();
                 setSubMode('daily');
               }}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black transition ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition ${
                 subMode === 'daily'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-cinema-muted hover:text-white'
               }`}
             >
-              <Calendar className="h-3.5 w-3.5" />
-              <span>Daily 5-Round</span>
+              <Calendar className="h-3 w-3 text-gold" />
+              <span>Daily 5</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                playClick();
+                setSubMode('endless');
+              }}
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-bold transition ${
+                subMode === 'endless'
+                  ? 'bg-white/[0.1] text-white'
+                  : 'text-cinema-muted hover:text-white'
+              }`}
+            >
+              <Flame className="h-3 w-3 text-gold" />
+              <span>Endless</span>
             </button>
           </div>
+
+          {subMode === 'daily' ? (
+            <DailyDateNavigator
+              currentDate={activeDate}
+              onSelectDate={(newDate) => {
+                playClick();
+                setActiveDate(newDate);
+              }}
+              compact={true}
+              embedded={true}
+            />
+          ) : (
+            <div className="flex items-center gap-3 text-xs text-cinema-muted">
+              <span>
+                Streak: <strong className="text-white font-mono">{currentStreak}</strong>
+              </span>
+              <span className="text-slate-600">•</span>
+              <span>
+                Best: <strong className="text-gold font-mono">{bestStreak}</strong>
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {subMode === 'daily' ? (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                {Array.from({ length: 5 }).map((_, idx) => {
+                  const guess = dailyGuesses[idx];
+                  const isCurrent = idx === dailyRound && !dailyComplete;
+                  return (
+                    <span
+                      key={idx}
+                      className={`h-2.5 w-2.5 rounded-full transition ${
+                        guess?.correct
+                          ? 'bg-emerald-400'
+                          : guess && !guess.correct
+                            ? 'bg-rose-400'
+                            : isCurrent
+                              ? 'bg-gold ring-2 ring-gold/30'
+                              : 'bg-white/15'
+                      }`}
+                      title={`Round ${idx + 1}`}
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-xs font-semibold text-cinema-muted tabular-nums">
+                {dailyComplete ? `${dailyGuesses.filter(g => g.correct).length}/5` : `Round ${dailyRound + 1}/5`}
+              </span>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStartNewEndless}
+              className="flex h-7 items-center gap-1 rounded-lg border border-white/[0.08] px-2.5 text-xs font-semibold text-slate-300 hover:border-white/20 hover:text-white transition"
+            >
+              <RotateCcw className="h-3 w-3" />
+              <span>New Run</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -388,79 +429,13 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
               playClick();
               setShowHowToPlay(true);
             }}
-            className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl border border-cinema-border/80 bg-cinema-surface/80 text-xs font-bold text-slate-300 hover:border-emerald-500/60 hover:text-white transition shadow-sm"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/[0.08] text-cinema-muted hover:border-white/20 hover:text-white transition"
             title="How to Play"
           >
-            <HelpCircle className="h-4 w-4 text-emerald-400" />
+            <HelpCircle className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
-
-      {subMode === 'endless' ? (
-        <div className="flex items-center justify-between rounded-2xl border border-cinema-border/70 bg-cinema-card/80 p-3 sm:p-4 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 rounded-xl bg-orange-500/15 border border-orange-500/30 px-3.5 py-2 text-orange-400">
-              <Flame className="h-4 w-4 fill-orange-400 animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-wider">Current Streak:</span>
-              <span className="font-mono text-base font-black text-white">{currentStreak}</span>
-            </div>
-            <div className="text-xs text-slate-400 hidden sm:block">
-              Best Streak: <strong className="text-gold font-mono">{bestStreak}</strong>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleStartNewEndless}
-            className="flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            <span>New Run</span>
-          </button>
-        </div>
-      ) : (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-cinema-border/70 bg-cinema-card/80 p-3 sm:p-4 shadow-lg">
-          <DailyDateNavigator
-            currentDate={activeDate}
-            onSelectDate={(newDate) => {
-              playClick();
-              setActiveDate(newDate);
-            }}
-            compact={true}
-            embedded={true}
-          />
-
-          <div className="flex items-center gap-1.5">
-            {Array.from({ length: 5 }).map((_, idx) => {
-              const guess = dailyGuesses[idx];
-              const isCurrent = idx === dailyRound && !dailyComplete;
-
-              return (
-                <div
-                  key={idx}
-                  className={`flex h-8 items-center gap-1 rounded-xl px-2.5 text-xs font-black border transition ${
-                    guess?.correct
-                      ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300'
-                      : guess && !guess.correct
-                        ? 'border-rose-500 bg-rose-500/20 text-rose-300'
-                        : isCurrent
-                          ? 'border-gold bg-gold/20 text-gold ring-2 ring-gold/30'
-                          : 'border-cinema-border/60 bg-cinema-surface/50 text-slate-400 opacity-70'
-                  }`}
-                >
-                  {guess?.correct ? (
-                    <Check className="h-3 w-3 text-emerald-400" />
-                  ) : guess ? (
-                    <X className="h-3 w-3 text-rose-400" />
-                  ) : (
-                    <span>R{idx + 1}</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {(() => {
         const movieA = subMode === 'endless' ? endlessMovieA : activeDailyMatchup?.movieA;
@@ -670,48 +645,62 @@ export function BoxOfficeClashView({ onOpenPro, onOpenAuth }) {
       )}
 
       {subMode === 'daily' && dailyComplete && (
-        <div className="rounded-3xl border border-emerald-500/40 bg-cinema-card p-6 shadow-2xl text-center space-y-4 animate-fade-in">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 mx-auto">
-            <Trophy className="h-7 w-7 text-gold" />
-          </div>
+        <div className="space-y-3 animate-fade-in">
+          <div className="rounded-2xl border border-white/15 bg-cinema-surface p-6 text-center space-y-4">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gold">
+                Daily Challenge Complete
+              </span>
+              <h2 className="text-2xl font-extrabold text-white mt-1">
+                {dailyGuesses.filter(g => g.correct).length} of 5 Correct
+              </h2>
+              <p className="text-xs text-cinema-muted mt-1">
+                Challenge #{activeDate} locked in.
+              </p>
+            </div>
 
-          <div>
-            <span className="text-xs font-extrabold uppercase tracking-wider text-emerald-400">
-              Daily Challenge Complete
-            </span>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">
-              Score: {dailyGuesses.filter(g => g.correct).length} of 5 Correct!
-            </h2>
-            <p className="text-xs text-cinema-muted mt-1">
-              Challenge #{activeDate} is locked in. Come back tomorrow for 5 new matchups!
-            </p>
-          </div>
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {dailyGuesses.map((g, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-bold border ${
+                    g.correct
+                      ? 'border-emerald-500/35 bg-emerald-500/15 text-emerald-300'
+                      : 'border-rose-500/35 bg-rose-500/15 text-rose-300'
+                  }`}
+                >
+                  {g.correct ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+                  <span>R{idx + 1}</span>
+                </div>
+              ))}
+            </div>
 
-          <div className="flex items-center justify-center gap-2">
-            {dailyGuesses.map((g, idx) => (
-              <div
-                key={idx}
-                className={`flex items-center gap-1 rounded-xl px-3 py-1 text-xs font-black border ${
-                  g.correct
-                    ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300'
-                    : 'border-rose-500/40 bg-rose-500/20 text-rose-300'
-                }`}
+            <div className="flex items-center justify-center gap-2.5 pt-1">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-2 rounded-xl bg-gold hover:bg-amber-300 px-5 py-2.5 text-xs font-extrabold text-cinema-black transition active:scale-95"
               >
-                {g.correct ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                <span>Round {idx + 1}</span>
-              </div>
-            ))}
+                <Share2 className="h-4 w-4" />
+                <span>{copiedShare ? 'Copied!' : 'Share Result'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  playClick();
+                  setSubMode('endless');
+                }}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-cinema-card px-4 py-2.5 text-xs font-semibold text-slate-200 hover:border-white/25 hover:text-white transition"
+              >
+                <Flame className="h-3.5 w-3.5 text-gold" />
+                <span>Try Endless</span>
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center justify-center gap-3 pt-2">
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 px-6 py-3 text-xs font-black text-white transition active:scale-95 shadow-lg shadow-emerald-600/30"
-            >
-              <Share2 className="h-4 w-4" />
-              <span>{copiedShare ? 'Copied to Clipboard! 📋' : 'Share Result to Friends'}</span>
-            </button>
-          </div>
+          <NextDailyGameBar
+            currentMode="box-office"
+            onSelectGame={onSelectGame}
+            onOpenLeaderboard={onOpenLeaderboard}
+          />
         </div>
       )}
 

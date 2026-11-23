@@ -64,7 +64,7 @@ export async function syncLocalScoresToBackend(currentUser) {
     const isPro = Boolean(currentUser.isPro);
     const candidates = new Map();
 
-    const addCandidate = (mode, dateStr, hops, score, durationSeconds, path = []) => {
+    const addCandidate = (mode, dateStr, hops, score, durationSeconds, extra = {}) => {
       const cleanDate = String(dateStr || '').replace(/^daily-/, '');
       if (!/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) return;
       const syncKey = `reelquest_synced_v3_${uid}_${mode}_${cleanDate}`;
@@ -77,7 +77,7 @@ export async function syncLocalScoresToBackend(currentUser) {
         hops: Math.max(1, Number(hops || 1)),
         score: Number(score || 100),
         durationSeconds: Math.max(1, Number(durationSeconds || 30)),
-        path: Array.isArray(path) ? path : [],
+        ...extra,
         syncKey
       };
       if (!existing || compareEntries(next, existing, mode, 'daily') < 0) {
@@ -98,7 +98,18 @@ export async function syncLocalScoresToBackend(currentUser) {
           : mode === 'box-office'
             ? (m.boxOfficeScore ?? hops) * 200
             : Math.max(100, 10000 - Math.max(0, hops - 1) * 1200 - Math.min(dur * 20, 4000));
-      addCandidate(mode, m.date, hops, score, dur);
+      addCandidate(mode, m.date, hops, score, dur, {
+        startActorId: m.startActor?.id,
+        startActorName: m.startActor?.name,
+        targetActorId: m.targetActor?.id,
+        targetActorName: m.targetActor?.name,
+        targetMovie: m.targetMovie,
+        subMode: m.subMode,
+        optimalHops: m.optimalHops,
+        matchedOtara: m.matchedOtara,
+        usedHint: m.usedHint,
+        undos: m.undos
+      });
     }
 
     for (let i = 0; i < localStorage.length; i++) {
@@ -152,6 +163,16 @@ export async function syncLocalScoresToBackend(currentUser) {
         moves: c.hops,
         score: c.score,
         durationSeconds: c.durationSeconds,
+        startActorId: c.startActorId,
+        startActorName: c.startActorName,
+        targetActorId: c.targetActorId,
+        targetActorName: c.targetActorName,
+        targetMovie: c.targetMovie,
+        subMode: c.subMode,
+        optimalHops: c.optimalHops,
+        matchedOtara: c.matchedOtara,
+        usedHint: c.usedHint,
+        undos: c.undos,
         isPro
       });
     }
@@ -186,6 +207,8 @@ export function recordScoreToLeaderboard(mode, entry) {
       score: entry.score || 1000,
       durationSeconds: entry.durationSeconds || 0,
       metricValue: entry.metricValue,
+      subMode: entry.subMode,
+      targetMovie: entry.targetMovie,
       isPro: Boolean(entry.isPro)
     });
   } catch (e) {

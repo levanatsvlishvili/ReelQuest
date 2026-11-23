@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useGameSession } from './hooks/useGameSession';
 import { Navbar } from './components/Navbar';
 import { ChallengeHeader } from './components/ChallengeHeader';
-import { VisualGraph } from './components/VisualGraph';
 import { ChainBuilder } from './components/ChainBuilder';
 import { VictoryModal } from './components/VictoryModal';
 import { LeaderboardDrawer } from './components/LeaderboardDrawer';
@@ -10,7 +9,7 @@ import { HowToPlayModal } from './components/HowToPlayModal';
 import { ProSubscriptionModal } from './components/ProSubscriptionModal';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileView } from './components/UserProfileView';
-import { GameModeSelector } from './components/GameModeSelector';
+import { DailyHubView } from './components/DailyHubView';
 import { UpcomingGamePreview } from './components/UpcomingGamePreview';
 import { DailyDateNavigator } from './components/DailyDateNavigator';
 import { DailyArchiveModal } from './components/DailyArchiveModal';
@@ -30,36 +29,39 @@ import { activateSubscriptionWithCard } from './utils/billingService';
 
 function parseRouteFromLocation() {
   if (typeof window === 'undefined') {
-    return { view: 'game', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+    return { view: 'hub', mode: 'six-degrees', duel: false, profileTab: 'overview', targetUserId: null };
   }
   const path = window.location.pathname.toLowerCase().replace(/\/+$/, '') || '/';
   const search = new URLSearchParams(window.location.search);
 
   if (path === '/leaderboard') {
-    return { view: 'leaderboard', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+    return { view: 'leaderboard', mode: 'six-degrees', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/profile') {
-    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'overview', targetUserId: search.get('user') || null };
   }
   if (path === '/billing' || path === '/profile/billing') {
-    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'billing' };
+    return { view: 'profile', mode: 'six-degrees', duel: false, profileTab: 'billing', targetUserId: null };
+  }
+  if (path === '/beat-otara' || path === '/six-degrees') {
+    return { view: 'game', mode: 'six-degrees', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/spotle') {
-    return { view: 'game', mode: 'spotle', duel: false, profileTab: 'overview' };
+    return { view: 'game', mode: 'spotle', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/frame-sleuth') {
-    return { view: 'game', mode: 'frame-sleuth', duel: false, profileTab: 'overview' };
+    return { view: 'game', mode: 'frame-sleuth', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/box-office') {
-    return { view: 'game', mode: 'box-office', duel: false, profileTab: 'overview' };
+    return { view: 'game', mode: 'box-office', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/path-finder') {
-    return { view: 'game', mode: 'custom-path', duel: false, profileTab: 'overview' };
+    return { view: 'game', mode: 'custom-path', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/duel' || search.get('duel')) {
-    return { view: 'game', mode: 'six-degrees', duel: true, profileTab: 'overview' };
+    return { view: 'game', mode: 'six-degrees', duel: true, profileTab: 'overview', targetUserId: null };
   }
-  return { view: 'game', mode: 'six-degrees', duel: false, profileTab: 'overview' };
+  return { view: 'hub', mode: 'six-degrees', duel: false, profileTab: 'overview', targetUserId: null };
 }
 
 function isModifiedClick(e) {
@@ -70,7 +72,6 @@ export default function App() {
   const {
     challenge,
     activeDate,
-    isToday,
     isCustom,
     loading,
     currentActor,
@@ -106,7 +107,9 @@ export default function App() {
   const initialRoute = parseRouteFromLocation();
   const { user, setProStatus } = useAuth();
   const [currentView, setCurrentView] = useState(initialRoute.view);
-  const [profileUser, setProfileUser] = useState(null);
+  const [profileUser, setProfileUser] = useState(() =>
+    initialRoute.targetUserId ? { id: initialRoute.targetUserId } : null
+  );
   const [profileTabRequest, setProfileTabRequest] = useState({ tab: initialRoute.profileTab, seq: 0 });
   const [activeMode, setActiveMode] = useState(initialRoute.mode);
   const [isDuelMode, setIsDuelMode] = useState(initialRoute.duel);
@@ -124,6 +127,7 @@ export default function App() {
       setCurrentView(next.view);
       setActiveMode(next.mode);
       setIsDuelMode(next.duel);
+      setProfileUser(next.targetUserId ? { id: next.targetUserId } : null);
       if (next.view === 'profile') {
         setProfileTabRequest((prev) => ({ tab: next.profileTab, seq: prev.seq + 1 }));
       }
@@ -139,7 +143,9 @@ export default function App() {
     }
 
     let targetPath = '/';
-    if (currentView === 'leaderboard') {
+    if (currentView === 'hub') {
+      targetPath = '/';
+    } else if (currentView === 'leaderboard') {
       targetPath = '/leaderboard';
     } else if (currentView === 'profile') {
       targetPath = profileTabRequest.tab === 'billing' && !profileUser ? '/billing' : '/profile';
@@ -153,18 +159,29 @@ export default function App() {
       targetPath = '/box-office';
     } else if (activeMode === 'custom-path') {
       targetPath = '/path-finder';
+    } else {
+      targetPath = '/beat-otara';
     }
 
     const search = new URLSearchParams(window.location.search);
     const duelId = search.get('duel');
-    const querySuffix = isDuelMode && duelId ? `?duel=${encodeURIComponent(duelId)}` : '';
+    let querySuffix = '';
+    if (isDuelMode && duelId) {
+      querySuffix = `?duel=${encodeURIComponent(duelId)}`;
+    } else if (currentView === 'profile' && profileUser?.id && profileUser.id !== user?.id) {
+      querySuffix = `?user=${encodeURIComponent(profileUser.id)}`;
+    }
     const fullTarget = `${targetPath}${querySuffix}`;
     const currentFull = `${window.location.pathname}${window.location.search}`;
 
     if (currentFull !== fullTarget && !search.has('session_id') && !search.has('order_id')) {
-      window.history.pushState({ view: currentView, mode: activeMode, duel: isDuelMode }, '', fullTarget);
+      window.history.pushState(
+        { view: currentView, mode: activeMode, duel: isDuelMode, targetUserId: profileUser?.id || null },
+        '',
+        fullTarget
+      );
     }
-  }, [currentView, activeMode, isDuelMode, profileTabRequest.tab, profileUser]);
+  }, [currentView, activeMode, isDuelMode, profileTabRequest.tab, profileUser, user?.id]);
 
   useEffect(() => {
     const path = window.location.pathname.toLowerCase();
@@ -175,6 +192,7 @@ export default function App() {
     }
 
     if (search.get('duel')) {
+      setCurrentView('game');
       setActiveMode('six-degrees');
       setIsDuelMode(true);
     }
@@ -217,24 +235,36 @@ export default function App() {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [isHintOpen, setIsHintOpen] = useState(false);
 
-  const navigateToMainHome = () => {
+  const navigateToHub = () => {
     setProfileUser(null);
-    setActiveMode('six-degrees');
+    setIsDuelMode(false);
+    setCurrentView('hub');
+  };
+
+  const navigateToGame = (modeId) => {
+    setProfileUser(null);
+    setActiveMode(modeId);
     setIsDuelMode(false);
     setCurrentView('game');
+  };
+
+  const openLeaderboardView = () => {
+    setProfileUser(null);
+    setCurrentView('leaderboard');
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-cinema-black text-slate-100">
       <Navbar
         currentView={currentView}
-        onNavigateHome={navigateToMainHome}
+        activeMode={activeMode}
+        onNavigateHome={navigateToHub}
+        onSelectGame={navigateToGame}
         onOpenLeaderboard={() => {
           setProfileUser(null);
-          setCurrentView(currentView === 'leaderboard' ? 'game' : 'leaderboard');
+          setCurrentView(currentView === 'leaderboard' ? 'hub' : 'leaderboard');
         }}
         isLeaderboardActive={currentView === 'leaderboard'}
-        onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
         onOpenPro={() => setIsProModalOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenProfile={() => {
@@ -250,8 +280,20 @@ export default function App() {
         isProfileActive={currentView === 'profile' && !profileUser}
       />
 
-      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8 space-y-5">
-        {currentView === 'profile' ? (
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 lg:px-8 space-y-4">
+        {currentView === 'hub' ? (
+          <DailyHubView
+            challenge={challenge}
+            onSelectGame={navigateToGame}
+            onOpenDuel={() => {
+              setActiveMode('six-degrees');
+              setIsDuelMode(true);
+              setCurrentView('game');
+            }}
+            onOpenPathFinder={() => navigateToGame('custom-path')}
+            onOpenLeaderboard={openLeaderboardView}
+          />
+        ) : currentView === 'profile' ? (
           <UserProfileView
             key={profileUser?.id || 'self'}
             targetUser={profileUser}
@@ -259,13 +301,13 @@ export default function App() {
             onBack={() => {
               const fromLeaderboard = Boolean(profileUser);
               setProfileUser(null);
-              setCurrentView(fromLeaderboard ? 'leaderboard' : 'game');
+              setCurrentView(fromLeaderboard ? 'leaderboard' : 'hub');
             }}
             onOpenPro={() => setIsProModalOpen(true)}
           />
         ) : currentView === 'leaderboard' ? (
           <LeaderboardView
-            onBackToGame={() => setCurrentView('game')}
+            onBackToGame={navigateToHub}
             activeChallenge={challenge}
             activeDate={activeDate}
             onSelectDate={(d) => loadDateChallenge(d)}
@@ -283,320 +325,173 @@ export default function App() {
               setCurrentView('profile');
             }}
           />
+        ) : activeMode === 'custom-path' ? (
+          <CustomPathFinder
+            onOpenPro={() => setIsProModalOpen(true)}
+            onPlayCustomChallenge={(customData) => {
+              loadCustomChallenge(customData);
+              setActiveMode('six-degrees');
+              setIsDuelMode(false);
+            }}
+          />
+        ) : activeMode === 'spotle' ? (
+          <SpotleGameView
+            onOpenPro={() => setIsProModalOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onSelectGame={navigateToGame}
+            onOpenLeaderboard={openLeaderboardView}
+          />
+        ) : activeMode === 'frame-sleuth' ? (
+          <FrameSleuthGameView
+            onOpenPro={() => setIsProModalOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onSelectGame={navigateToGame}
+            onOpenLeaderboard={openLeaderboardView}
+          />
+        ) : activeMode === 'box-office' ? (
+          <BoxOfficeClashView
+            onOpenPro={() => setIsProModalOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onSelectGame={navigateToGame}
+            onOpenLeaderboard={openLeaderboardView}
+          />
+        ) : activeMode !== 'six-degrees' ? (
+          <UpcomingGamePreview
+            modeId={activeMode}
+            onBackToMain={() => navigateToGame('six-degrees')}
+            onOpenPro={() => setIsProModalOpen(true)}
+          />
+        ) : isDuelMode ? (
+          <DuelGameView
+            onBackToMain={() => setIsDuelMode(false)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+          />
+        ) : loading ? (
+          <div className="flex flex-col items-center justify-center py-24 space-y-4">
+            <div className="h-10 w-10 rounded-full border-2 border-gold/30 border-t-gold animate-spin" />
+            <p className="text-xs font-medium text-cinema-muted">Loading Hollywood graph...</p>
+          </div>
         ) : (
-          <>
-            <GameModeSelector
-              activeMode={activeMode}
-              onSelectMode={(mode) => {
-                setActiveMode(mode);
-                setIsDuelMode(false);
-              }}
-            />
-
-            {activeMode === 'custom-path' ? (
-              <CustomPathFinder
-                onOpenPro={() => setIsProModalOpen(true)}
-                onPlayCustomChallenge={(customData) => {
-                  loadCustomChallenge(customData);
-                  setActiveMode('six-degrees');
-                  setIsDuelMode(false);
-                }}
+          <div className="space-y-4">
+            {!isCustom ? (
+              <DailyDateNavigator
+                currentDate={activeDate}
+                onSelectDate={loadDateChallenge}
+                onPrevDay={goToPrevDay}
+                onNextDay={goToNextDay}
+                onOpenArchive={() => setIsArchiveOpen(true)}
+                onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                onOpenDuel={() => setIsDuelMode(true)}
+                onOpenPathFinder={() => navigateToGame('custom-path')}
+                onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
               />
-            ) : activeMode === 'spotle' ? (
-              <SpotleGameView
-                onOpenPro={() => setIsProModalOpen(true)}
-                onOpenAuth={() => setIsAuthOpen(true)}
-              />
-            ) : activeMode === 'frame-sleuth' ? (
-              <FrameSleuthGameView
-                onOpenPro={() => setIsProModalOpen(true)}
-                onOpenAuth={() => setIsAuthOpen(true)}
-              />
-            ) : activeMode === 'box-office' ? (
-              <BoxOfficeClashView
-                onOpenPro={() => setIsProModalOpen(true)}
-                onOpenAuth={() => setIsAuthOpen(true)}
-              />
-            ) : activeMode !== 'six-degrees' ? (
-              <UpcomingGamePreview
-                modeId={activeMode}
-                onBackToMain={() => setActiveMode('six-degrees')}
-                onOpenPro={() => setIsProModalOpen(true)}
-              />
-            ) : isDuelMode ? (
-              <DuelGameView
-                onBackToMain={() => setIsDuelMode(false)}
-                onOpenAuth={() => setIsAuthOpen(true)}
-              />
-            ) : loading ? (
-              <div className="flex flex-col items-center justify-center py-24 space-y-4">
-                <div className="h-12 w-12 rounded-xl border-2 border-gold/40 border-t-gold animate-spin" />
-                <p className="text-sm font-medium text-cinema-muted">Loading Hollywood graph...</p>
+            ) : (
+              <div className="flex items-center justify-between border-b border-white/[0.06] pb-3 text-xs">
+                <span className="font-semibold text-gold">Custom Path Challenge</span>
+                <button
+                  type="button"
+                  onClick={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
+                  className="rounded-lg border border-white/10 bg-cinema-surface px-2.5 py-1 text-slate-200 hover:border-gold/50 hover:text-gold transition"
+                >
+                  Return to Daily
+                </button>
               </div>
+            )}
+
+            {gameStatus === 'READY' ? (
+              <OtaraChallengeCard
+                challenge={challenge}
+                gameStatus={gameStatus}
+                moves={moves}
+                onStart={startGame}
+                onOpenDuel={() => setIsDuelMode(true)}
+                onSelectGame={navigateToGame}
+                onOpenLeaderboard={openLeaderboardView}
+              />
             ) : (
               <>
-                {!isCustom && (
-                  <DailyDateNavigator
-                    currentDate={activeDate}
-                    onSelectDate={loadDateChallenge}
-                    onPrevDay={goToPrevDay}
-                    onNextDay={goToNextDay}
-                    onOpenArchive={() => setIsArchiveOpen(true)}
-                    onResetToToday={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
-                    onOpenDuel={() => setIsDuelMode(true)}
-                    onOpenHowToPlay={() => setIsHowToPlayOpen(true)}
-                  />
-                )}
+                <ChallengeHeader
+                  challenge={challenge}
+                  chain={chain}
+                  moves={moves}
+                  timerSeconds={timerSeconds}
+                  onUndo={undoLastMove}
+                  onStepClick={undoToStep}
+                  onGiveUp={giveUp}
+                  canUndo={canUndo}
+                  gameStatus={gameStatus}
+                  onViewSummary={openVictoryModal}
+                  onOpenHint={() => setIsHintOpen(true)}
+                />
 
-                {isCustom && (
-                  <div className="flex items-center justify-between rounded-xl border border-gold/40 bg-gold/10 px-4 py-2 text-xs font-semibold text-gold">
-                    <span>🎮 Custom Challenge Mode</span>
-                    <button
-                      onClick={() => loadDateChallenge(new Date().toISOString().slice(0, 10))}
-                      className="rounded-lg bg-cinema-card border border-cinema-border px-2.5 py-1 text-slate-200 hover:text-gold transition"
-                    >
-                      Return to Daily Challenge
-                    </button>
-                  </div>
-                )}
-
-                {gameStatus === 'READY' ? (
+                {gameStatus !== 'PLAYING' && (
                   <OtaraChallengeCard
                     challenge={challenge}
                     gameStatus={gameStatus}
                     moves={moves}
-                    timerSeconds={timerSeconds}
                     onStart={startGame}
+                    onOpenSummary={openVictoryModal}
                     onOpenDuel={() => setIsDuelMode(true)}
+                    onSelectGame={navigateToGame}
+                    onOpenLeaderboard={openLeaderboardView}
                   />
-                ) : (
-                  <>
-                    <ChallengeHeader
-                      challenge={challenge}
-                      moves={moves}
-                      timerSeconds={timerSeconds}
-                      onUndo={undoLastMove}
-                      onGiveUp={giveUp}
-                      canUndo={canUndo}
-                      gameStatus={gameStatus}
-                      onViewSummary={openVictoryModal}
-                      onOpenHint={() => setIsHintOpen(true)}
-                    />
-
-                    {gameStatus !== 'PLAYING' && (
-                      <OtaraChallengeCard
-                        challenge={challenge}
-                        gameStatus={gameStatus}
-                        moves={moves}
-                        timerSeconds={timerSeconds}
-                        onStart={startGame}
-                        onOpenSummary={openVictoryModal}
-                        onOpenDuel={() => setIsDuelMode(true)}
-                        onOpenHint={() => setIsHintOpen(true)}
-                      />
-                    )}
-
-                    <VisualGraph
-                      chain={chain}
-                      targetActor={challenge?.targetActor}
-                      onStepClick={undoToStep}
-                    />
-
-                    <ChainBuilder
-                      currentActor={currentActor}
-                      selectedMovie={selectedMovie}
-                      availableMovies={availableMovies}
-                      availableCast={availableCast}
-                      moviesLoading={moviesLoading}
-                      castLoading={castLoading}
-                      targetActor={challenge?.targetActor}
-                      onSelectMovie={selectMovie}
-                      onClearMovie={clearSelectedMovie}
-                      onSelectActor={selectActor}
-                      onUndo={undoLastMove}
-                      canUndo={canUndo}
-                      previousActor={chain.length > 1 ? chain[chain.length - 2].actor : null}
-                    />
-                  </>
                 )}
+
+                <ChainBuilder
+                  currentActor={currentActor}
+                  selectedMovie={selectedMovie}
+                  availableMovies={availableMovies}
+                  availableCast={availableCast}
+                  moviesLoading={moviesLoading}
+                  castLoading={castLoading}
+                  targetActor={challenge?.targetActor}
+                  onSelectMovie={selectMovie}
+                  onClearMovie={clearSelectedMovie}
+                  onSelectActor={selectActor}
+                />
               </>
             )}
-          </>
+          </div>
         )}
       </main>
 
-      <footer className="mt-auto border-t border-cinema-border/70 bg-gradient-to-b from-cinema-card/90 via-cinema-surface to-cinema-black pt-10 pb-8 text-xs text-cinema-muted">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="space-y-3">
-              <a
-                href="/"
-                onClick={(e) => {
-                  if (isModifiedClick(e)) return;
-                  e.preventDefault();
-                  navigateToMainHome();
-                }}
-                className="inline-flex items-center gap-3 cursor-pointer select-none text-left focus:outline-none group"
-              >
-                <div className="relative">
-                  <img
-                    src="/favicon.svg"
-                    alt="ReelQuest Logo"
-                    className="h-10 w-10 rounded-xl shadow-gold-glow transition-transform duration-300 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 rounded-xl bg-gold/20 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <span className="text-xl font-bold tracking-tight text-white">
-                  Reel<span className="text-gold">Quest</span>
-                </span>
-              </a>
-              <p className="text-xs text-cinema-muted leading-relaxed">
-                Daily cinema trivia and interactive movie games for film lovers.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                Games
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <a
-                    href="/"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setActiveMode('six-degrees');
-                      setIsDuelMode(false);
-                      setCurrentView('game');
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Beat Otara
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/spotle"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setActiveMode('spotle');
-                      setIsDuelMode(false);
-                      setCurrentView('game');
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Spotle
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/frame-sleuth"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setActiveMode('frame-sleuth');
-                      setIsDuelMode(false);
-                      setCurrentView('game');
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Frame Sleuth
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="/box-office"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setActiveMode('box-office');
-                      setIsDuelMode(false);
-                      setCurrentView('game');
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Box Office Clash
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                Features
-              </h4>
-              <ul className="space-y-2 text-xs">
-                <li>
-                  <button
-                    onClick={() => setIsHowToPlayOpen(true)}
-                    className="hover:text-gold transition text-left"
-                  >
-                    How to Play
-                  </button>
-                </li>
-                <li>
-                  <a
-                    href="/leaderboard"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setCurrentView('leaderboard');
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Leaderboard &amp; Rankings
-                  </a>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setIsProModalOpen(true)}
-                    className="hover:text-gold transition text-left"
-                  >
-                    ReelQuest PRO ($3/mo)
-                  </button>
-                </li>
-                <li>
-                  <a
-                    href="/"
-                    onClick={(e) => {
-                      if (isModifiedClick(e)) return;
-                      e.preventDefault();
-                      setActiveMode('six-degrees');
-                      setIsDuelMode(false);
-                      setCurrentView('game');
-                      setIsArchiveOpen(true);
-                    }}
-                    className="hover:text-gold transition text-left inline-block"
-                  >
-                    Daily Challenge Archive
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div className="space-y-3">
-              <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                Cinema Data
-              </h4>
-              <p className="text-[11px] text-cinema-muted leading-relaxed">
-                Movie metadata, cast filmographies, and high-resolution stills provided by <strong className="text-slate-200">The Movie Database (TMDB)</strong>.
-              </p>
-              <div className="flex items-center gap-2 text-[11px] text-slate-400 pt-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-                <span>Daily challenges refresh at 00:00 UTC</span>
-              </div>
-            </div>
+      <footer className="mt-auto border-t border-white/[0.06] bg-cinema-black py-4 text-[11px] text-slate-500">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-start">
+            <span>© 2026 ReelQuest</span>
+            <span>•</span>
+            <span>Created by <strong className="text-slate-300 font-semibold">Levan Natsvlishvili</strong></span>
+            <span>•</span>
+            <span>Data by TMDB</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-cinema-border/60 pt-5 text-[11px]">
-            <p className="text-cinema-muted text-center sm:text-left">
-              © 2026 ReelQuest. All rights reserved.
-            </p>
-            <p className="text-slate-300">
-              Created by <strong className="text-white">Levan Natsvlishvili</strong>
-            </p>
+          <div className="flex items-center gap-4 flex-wrap justify-center">
+            <button
+              type="button"
+              onClick={() => setIsHowToPlayOpen(true)}
+              className="hover:text-slate-200 transition"
+            >
+              How to Play
+            </button>
+            <a
+              href="/leaderboard"
+              onClick={(e) => {
+                if (isModifiedClick(e)) return;
+                e.preventDefault();
+                openLeaderboardView();
+              }}
+              className="hover:text-slate-200 transition"
+            >
+              Leaderboard
+            </a>
+            <button
+              type="button"
+              onClick={() => setIsProModalOpen(true)}
+              className="hover:text-gold transition"
+            >
+              PRO ($3/mo)
+            </button>
+            <span>Daily refresh 00:00 UTC</span>
           </div>
         </div>
       </footer>
@@ -610,7 +505,8 @@ export default function App() {
         timerSeconds={timerSeconds}
         optimalPath={optimalPath}
         onRestart={restartGame}
-        onOpenLeaderboard={() => setCurrentView('leaderboard')}
+        onOpenLeaderboard={openLeaderboardView}
+        onSelectGame={navigateToGame}
       />
 
       <LeaderboardDrawer

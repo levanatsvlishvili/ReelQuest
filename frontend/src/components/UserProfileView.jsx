@@ -32,7 +32,7 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { calculateGameStreak } from '../api/auth';
+import { calculateGameStreak, fetchUserProfile } from '../api/auth';
 import { getTmdbImageUrl } from '../api/client';
 import { getDetailedMatchHistory, fetchAndMergeUserHistory } from '../api/matchHistory';
 import {
@@ -80,18 +80,51 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
   const { user: currentUser, stats: currentStats, updateUserProfile, setProStatus } = useAuth();
 
   const isOwnProfile = !targetUser || (currentUser && targetUser.id === currentUser.id);
+  const [remoteProfile, setRemoteProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRemoteProfile(null);
+    if (isOwnProfile || !targetUser?.id || String(targetUser.id).startsWith('guest')) {
+      setProfileLoading(false);
+      return;
+    }
+    setProfileLoading(true);
+    fetchUserProfile(targetUser.id)
+      .then((profile) => {
+        if (!cancelled && profile) {
+          setRemoteProfile(profile);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwnProfile, targetUser?.id]);
 
   const profileUser = useMemo(() => {
     if (isOwnProfile) {
       return currentUser || { username: 'Guest Cinephile', id: 'guest', isPro: false };
     }
-    try {
-      const meta = JSON.parse(localStorage.getItem(`reelquest_user_meta_${targetUser.id}`) || '{}');
-      return { ...targetUser, ...meta };
-    } catch {
-      return targetUser;
+    const cleanRemote = {};
+    if (remoteProfile && typeof remoteProfile === 'object') {
+      for (const [k, v] of Object.entries(remoteProfile)) {
+        if (v !== undefined && v !== null && v !== '') {
+          cleanRemote[k] = v;
+        }
+      }
     }
-  }, [isOwnProfile, currentUser, targetUser]);
+    return {
+      ...targetUser,
+      ...cleanRemote,
+      id: targetUser?.id || cleanRemote.id || cleanRemote.userId,
+      username: cleanRemote.username || targetUser?.username || 'Cinephile',
+      isPro: Boolean(remoteProfile?.tier === 'PRO' || remoteProfile?.isPro || targetUser?.isPro)
+    };
+  }, [isOwnProfile, currentUser, targetUser, remoteProfile]);
 
   const resolveRequestedTab = (tabName) => {
     if (!tabName) return 'overview';
@@ -103,7 +136,9 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
   const [trophyFilter, setTrophyFilter] = useState('all');
   const [historyFilter, setHistoryFilter] = useState('all');
   const [visibleMatchCount, setVisibleMatchCount] = useState(10);
-  const [matchHistory, setMatchHistory] = useState(() => getDetailedMatchHistory(profileUser?.id));
+  const [matchHistory, setMatchHistory] = useState(() =>
+    isOwnProfile ? getDetailedMatchHistory(profileUser?.id) : []
+  );
   const [historyLoading, setHistoryLoading] = useState(false);
 
   const [editAvatarId, setEditAvatarId] = useState(profileUser?.avatarId || 'avatar-director');
@@ -122,7 +157,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const [subscription, setSubscription] = useState(() =>
-    getSubscription(profileUser?.id, profileUser?.email, profileUser?.isPro)
+    isOwnProfile ? getSubscription(profileUser?.id, profileUser?.email, profileUser?.isPro) : null
   );
   const [billingNotice, setBillingNotice] = useState(null);
   const [showCardModal, setShowCardModal] = useState(false);
@@ -155,47 +190,67 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
       setEditFavoriteGenre(profileUser.favoriteGenre || 'Sci-Fi');
       setCardHolder(profileUser.username || 'Cinephile');
 
-      const sub = getSubscription(profileUser.id, profileUser.email, profileUser.isPro);
-      setSubscription(sub);
+      if (isOwnProfile) {
+        const sub = getSubscription(profileUser.id, profileUser.email, profileUser.isPro);
+        setSubscription(sub);
+      } else {
+        setSubscription(null);
+      }
     }
-  }, [profileUser]);
+  }, [profileUser, isOwnProfile]);
 
   useEffect(() => {
     const userId = profileUser?.id || 'guest';
-    const localMatches = getDetailedMatchHistory(userId);
+    const localMatches = isOwnProfile ? getDetailedMatchHistory(userId) : [];
     setMatchHistory(localMatches);
 
-    if (profileUser && !profileUser.id?.startsWith('guest')) {
+    if (profileUser?.id && !String(profileUser.id).startsWith('guest')) {
+      let cancelled = false;
       setHistoryLoading(true);
-      fetchAndMergeUserHistory(profileUser.id)
+      fetchAndMergeUserHistory(profileUser.id, isOwnProfile)
         .then(merged => {
-          if (Array.isArray(merged) && merged.length > 0) {
+          if (!cancelled && Array.isArray(merged)) {
             setMatchHistory(merged);
           }
         })
-        .finally(() => setHistoryLoading(false));
+        .finally(() => {
+          if (!cancelled) setHistoryLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [profileUser?.id]);
+  }, [profileUser?.id, isOwnProfile]);
 
   const activeStats = useMemo(() => {
     if (isOwnProfile) return currentStats || {};
+    const wonFromHistory = matchHistory.filter(m => m.won).length;
+    const playedFromHistory = matchHistory.length;
+    const streak = remoteProfile?.streak ?? targetUser?.streak ?? 0;
+    const longestStreak = Math.max(remoteProfile?.longestStreak ?? 0, streak, targetUser?.longestStreak ?? 0);
     return {
-      streak: targetUser.streak || 0,
-      gamesPlayed: targetUser.moves || matchHistory.length || 0,
-      gamesWon: targetUser.moves || matchHistory.filter(m => m.won).length || 0,
-      totalScore: targetUser.score || 0
+      streak,
+      longestStreak,
+      gamesPlayed: Math.max(remoteProfile?.gamesPlayed ?? 0, playedFromHistory, wonFromHistory),
+      gamesWon: Math.max(remoteProfile?.gamesWon ?? 0, wonFromHistory),
+      duelsWon: remoteProfile?.duelsWon ?? 0,
+      totalScore: Math.max(remoteProfile?.totalScore ?? 0, targetUser?.score ?? 0),
+      bestHops: remoteProfile?.bestHops ?? 0,
+      isPro: Boolean(profileUser?.isPro)
     };
-  }, [isOwnProfile, currentStats, targetUser, matchHistory]);
+  }, [isOwnProfile, currentStats, targetUser, remoteProfile, matchHistory, profileUser?.isPro]);
 
   const perGameStreaks = useMemo(() => {
-    if (!isOwnProfile || !profileUser?.id || profileUser.id === 'guest') {
+    if (!profileUser?.id || String(profileUser.id).startsWith('guest')) {
       return [];
     }
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const historyArg = isOwnProfile ? null : matchHistory;
     return [
-      { id: 'six-degrees', label: 'Beat Otara', streak: calculateGameStreak('six-degrees', profileUser.id), accent: 'text-gold border-gold/30 bg-gold/10' },
-      { id: 'spotle', label: 'Spotle', streak: calculateGameStreak('spotle', profileUser.id), accent: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
-      { id: 'frame-sleuth', label: 'Frame Sleuth', streak: calculateGameStreak('frame-sleuth', profileUser.id), accent: 'text-violet-300 border-violet-500/30 bg-violet-500/10' },
-      { id: 'box-office', label: 'Box Office', streak: calculateGameStreak('box-office', profileUser.id), accent: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' }
+      { id: 'six-degrees', label: 'Beat Otara', streak: calculateGameStreak('six-degrees', profileUser.id, todayStr, historyArg), accent: 'text-gold border-gold/30 bg-gold/10' },
+      { id: 'spotle', label: 'Spotle', streak: calculateGameStreak('spotle', profileUser.id, todayStr, historyArg), accent: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
+      { id: 'frame-sleuth', label: 'Frame Sleuth', streak: calculateGameStreak('frame-sleuth', profileUser.id, todayStr, historyArg), accent: 'text-violet-300 border-violet-500/30 bg-violet-500/10' },
+      { id: 'box-office', label: 'Box Office', streak: calculateGameStreak('box-office', profileUser.id, todayStr, historyArg), accent: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' }
     ];
   }, [isOwnProfile, profileUser?.id, matchHistory]);
 
@@ -205,12 +260,12 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
   }, [activeStats?.streak, perGameStreaks]);
 
   const levelInfo = useMemo(() => {
-    return calculateCinemaLevel(activeStats, matchHistory);
-  }, [activeStats, matchHistory]);
+    return calculateCinemaLevel({ ...activeStats, isPro: Boolean(profileUser?.isPro) }, matchHistory);
+  }, [activeStats, matchHistory, profileUser?.isPro]);
 
   const trophyData = useMemo(() => {
-    return evaluateAchievements(profileUser?.id, profileUser, activeStats, matchHistory);
-  }, [profileUser, activeStats, matchHistory]);
+    return evaluateAchievements(profileUser?.id, profileUser, activeStats, matchHistory, isOwnProfile);
+  }, [profileUser, activeStats, matchHistory, isOwnProfile]);
 
   const avatar = getAvatarById(isOwnProfile ? (profileUser?.avatarId || editAvatarId) : profileUser?.avatarId);
   const activeCountry = getCountryByCode(profileUser?.countryCode || editCountryCode);
@@ -398,9 +453,16 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Leaderboard</span>
           </button>
-          <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
-            Viewing Public Cinephile Profile
-          </span>
+          <div className="flex items-center gap-2">
+            {(profileLoading || historyLoading) && (
+              <span className="rounded-full bg-gold/15 border border-gold/30 px-2.5 py-0.5 text-[11px] font-bold text-gold animate-pulse">
+                Loading Profile...
+              </span>
+            )}
+            <span className="rounded-full bg-cyan-500/15 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300">
+              Viewing Public Cinephile Profile
+            </span>
+          </div>
         </div>
       )}
 
@@ -427,13 +489,11 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-2xl border border-cinema-border/80 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-black p-6 sm:p-7 shadow-2xl">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
-
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
-          <div className="flex items-start sm:items-center gap-5 min-w-0">
-            <div className={`relative flex h-20 w-20 sm:h-24 sm:w-24 shrink-0 items-center justify-center rounded-2xl border-2 bg-gradient-to-br shadow-xl overflow-hidden ${
-              customAvatarUrl ? 'border-gold shadow-gold-glow bg-black/60' : avatar.bgGradient
+      <div className="rounded-2xl border border-white/[0.08] bg-cinema-surface p-5 sm:p-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="flex items-start sm:items-center gap-4 min-w-0">
+            <div className={`relative flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-2xl border bg-gradient-to-br overflow-hidden ${
+              customAvatarUrl ? 'border-gold/50 bg-black/60' : avatar.bgGradient
             }`}>
               {customAvatarUrl ? (
                 <img
@@ -442,78 +502,58 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-4xl sm:text-5xl select-none">{avatar.emoji}</span>
+                <span className="text-3xl sm:text-4xl select-none">{avatar.emoji}</span>
               )}
-              <span className="absolute -bottom-1 rounded-full bg-cinema-black/95 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-gold border border-gold/40 shadow-md">
+              <span className="absolute -bottom-1 rounded-full bg-cinema-black/95 px-2 py-0.5 text-[10px] font-extrabold text-gold border border-gold/30">
                 Lv.{levelInfo.level}
               </span>
             </div>
 
             <div className="space-y-1.5 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl sm:text-2xl font-black text-white truncate">
+                <h2 className="text-xl font-extrabold text-white truncate">
                   {profileUser.username}
                 </h2>
 
-                <span className="flex items-center gap-1.5 rounded-full bg-cinema-surface/90 border border-cinema-border px-2.5 py-0.5 text-xs font-bold text-slate-200" title={activeCountry.name}>
-                  <span className="text-base">{activeCountry.flag}</span>
-                  <span className="text-[11px] font-semibold">{activeCountry.name}</span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-cinema-card border border-white/[0.08] px-2 py-0.5 text-[11px] font-semibold text-slate-300" title={activeCountry.name}>
+                  <span>{activeCountry.flag}</span>
+                  <span>{activeCountry.name}</span>
                 </span>
 
-                {profileUser.isPro ? (
-                  <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-gold/25 to-amber-500/25 px-2.5 py-0.5 text-[11px] font-extrabold text-gold border border-gold/40 shadow-gold-glow">
+                {profileUser.isPro && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-extrabold text-gold">
                     <Crown className="h-3 w-3 fill-gold" />
-                    PRO VIP
-                  </span>
-                ) : (
-                  <span className="rounded-full bg-cinema-border px-2.5 py-0.5 text-[11px] font-semibold text-cinema-muted">
-                    Cinephile
+                    PRO
                   </span>
                 )}
 
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold border ${levelInfo.badgeColor}`}>
-                  {levelInfo.title}
+                <span className="text-xs font-semibold text-cinema-muted">
+                  • {levelInfo.title}
                 </span>
               </div>
 
               {(profileUser.firstName || profileUser.lastName || (isOwnProfile && profileUser.email)) && (
-                <p className="text-xs font-semibold text-slate-200">
+                <p className="text-xs text-slate-300">
                   {`${profileUser.firstName || ''} ${profileUser.lastName || ''}`.trim()}
                   {isOwnProfile && profileUser.email && (
-                    <span className={`text-cinema-muted font-normal ${profileUser.firstName || profileUser.lastName ? 'ml-2' : ''}`}>
+                    <span className={`text-cinema-muted ${profileUser.firstName || profileUser.lastName ? 'ml-2' : ''}`}>
                       {profileUser.firstName || profileUser.lastName ? `• ${profileUser.email}` : profileUser.email}
                     </span>
                   )}
                 </p>
               )}
 
-              {profileUser.bio ? (
+              {profileUser.bio && (
                 <p className="text-xs text-slate-300 max-w-xl line-clamp-2">
                   &ldquo;{profileUser.bio}&rdquo;
-                </p>
-              ) : (
-                <p className="text-xs text-cinema-muted italic">
-                  {avatar.description}
                 </p>
               )}
 
               {(profileUser.favoriteDirector || profileUser.favoriteMovie || profileUser.favoriteGenre) && (
-                <div className="flex items-center gap-2 flex-wrap pt-1 text-xs">
-                  {profileUser.favoriteDirector && (
-                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
-                      🎬 <strong className="text-white">{profileUser.favoriteDirector}</strong>
-                    </span>
-                  )}
-                  {profileUser.favoriteMovie && (
-                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
-                      🍿 <strong className="text-white">{profileUser.favoriteMovie}</strong>
-                    </span>
-                  )}
-                  {profileUser.favoriteGenre && (
-                    <span className="rounded-lg bg-cinema-surface/80 border border-cinema-border px-2.5 py-0.5 text-slate-300">
-                      🎞️ <strong className="text-white">{profileUser.favoriteGenre}</strong>
-                    </span>
-                  )}
+                <div className="flex items-center gap-2 flex-wrap pt-0.5 text-[11px] text-cinema-muted">
+                  {profileUser.favoriteDirector && <span>Dir: <strong className="text-slate-200">{profileUser.favoriteDirector}</strong></span>}
+                  {profileUser.favoriteMovie && <span>• Film: <strong className="text-slate-200">{profileUser.favoriteMovie}</strong></span>}
+                  {profileUser.favoriteGenre && <span>• {profileUser.favoriteGenre}</span>}
                 </div>
               )}
             </div>
@@ -522,241 +562,161 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
           {isOwnProfile && (
             <button
               onClick={() => setActiveTab(activeTab === 'edit' ? 'overview' : 'edit')}
-              className={`self-start md:self-center shrink-0 flex items-center gap-2 rounded-xl border px-4 py-2 text-xs font-bold transition ${
+              className={`self-start md:self-center shrink-0 flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
                 activeTab === 'edit'
-                  ? 'border-gold bg-gold text-cinema-black shadow-gold-glow'
-                  : 'border-cinema-border bg-cinema-surface text-white hover:border-gold hover:text-gold'
+                  ? 'border-gold bg-gold text-cinema-black'
+                  : 'border-white/10 bg-cinema-card text-slate-200 hover:border-white/25 hover:text-white'
               }`}
             >
               <Edit3 className="h-3.5 w-3.5" />
-              <span>{activeTab === 'edit' ? 'Viewing Editor' : 'Edit Profile'}</span>
+              <span>{activeTab === 'edit' ? 'Back to Profile' : 'Edit Profile'}</span>
             </button>
           )}
         </div>
 
-        <div className="mt-6 pt-5 border-t border-cinema-border/60">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs mb-2">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-extrabold text-white">
-                Level {levelInfo.level} — <span className="text-gold">{levelInfo.title}</span>
-              </span>
-              {levelInfo.streakShieldActive && (
-                <span className="flex items-center gap-1 rounded-full bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-[11px] font-bold text-blue-300" title="Daily Streak Protected">
-                  <Shield className="h-3 w-3 text-blue-400" />
-                  Streak Shield
-                </span>
-              )}
-              {levelInfo.streakMultiplier > 1 && (
-                <span className="flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/40 px-2 py-0.5 text-[11px] font-bold text-amber-300">
-                  <Flame className="h-3 w-3 text-amber-400" />
-                  1.5x XP Bonanza
-                </span>
-              )}
-            </div>
-
-            <div className="text-cinema-muted text-xs">
-              <strong className="text-white font-mono">{levelInfo.currentLevelProgressXp.toLocaleString()}</strong>
-              {' / '}
-              <span className="font-mono">{levelInfo.neededForNext.toLocaleString()} XP to Level {levelInfo.level + 1}</span>
-              {' '}
-              <span className="text-gold font-bold">({levelInfo.progressPercent}%)</span>
-            </div>
+        <div className="mt-5 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center justify-between gap-2 text-xs mb-1.5">
+            <span className="font-semibold text-slate-300">
+              Level {levelInfo.level} <span className="text-cinema-muted">• {levelInfo.title}</span>
+            </span>
+            <span className="text-cinema-muted text-[11px] font-mono">
+              {levelInfo.currentLevelProgressXp.toLocaleString()} / {levelInfo.neededForNext.toLocaleString()} XP ({levelInfo.progressPercent}%)
+            </span>
           </div>
 
-          <div className="h-3 w-full overflow-hidden rounded-full bg-cinema-black/80 border border-cinema-border/70 p-0.5">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-cinema-black/80">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-600 via-gold to-yellow-300 shadow-gold-glow transition-all duration-700"
+              className="h-full rounded-full bg-gold transition-all duration-700"
               style={{ width: `${levelInfo.progressPercent}%` }}
             />
           </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 border-b border-cinema-border/70 pb-3 overflow-x-auto scrollbar-none w-full">
+      <div className="inline-flex items-center gap-1 rounded-xl border border-white/[0.08] bg-cinema-surface p-1 overflow-x-auto scrollbar-none max-w-full">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 transition ${
             activeTab === 'overview'
-              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+              ? 'bg-white/[0.1] text-white'
+              : 'text-cinema-muted hover:text-white'
           }`}
         >
-          <User className="h-4 w-4" />
-          <span>Overview & Stats</span>
+          <User className="h-3.5 w-3.5 text-gold" />
+          <span>Overview</span>
         </button>
 
         <button
           onClick={() => setActiveTab('history')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 transition ${
             activeTab === 'history'
-              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+              ? 'bg-white/[0.1] text-white'
+              : 'text-cinema-muted hover:text-white'
           }`}
         >
-          <History className="h-4 w-4" />
-          <span>Match History</span>
+          <History className="h-3.5 w-3.5 text-gold" />
+          <span>History</span>
           {matchHistory.length > 0 && (
-            <span className="rounded-full bg-cinema-border px-1.5 py-0.5 text-[11px] text-slate-200 font-mono">
-              {matchHistory.length}
-            </span>
+            <span className="text-[11px] text-cinema-muted font-mono">({matchHistory.length})</span>
           )}
         </button>
 
         <button
           onClick={() => setActiveTab('trophies')}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 transition ${
             activeTab === 'trophies'
-              ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-              : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+              ? 'bg-white/[0.1] text-white'
+              : 'text-cinema-muted hover:text-white'
           }`}
         >
-          <Trophy className="h-4 w-4" />
-          <span>Achievements</span>
-          <span className="rounded-full bg-cinema-border px-1.5 py-0.5 text-[11px] text-slate-200 font-mono">
-            {trophyData.unlockedCount}/{trophyData.totalCount}
+          <Trophy className="h-3.5 w-3.5 text-gold" />
+          <span>Trophies</span>
+          <span className="text-[11px] text-cinema-muted font-mono">
+            ({trophyData.unlockedCount}/{trophyData.totalCount})
           </span>
         </button>
 
         {isOwnProfile && (
           <button
             onClick={() => setActiveTab('billing')}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold whitespace-nowrap shrink-0 transition ${
+            className={`flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap shrink-0 transition ${
               activeTab === 'billing'
-                ? 'bg-gold/20 text-gold border border-gold/40 shadow-gold-glow'
-                : 'text-cinema-muted hover:text-white hover:bg-cinema-surface border border-transparent'
+                ? 'bg-white/[0.1] text-white'
+                : 'text-cinema-muted hover:text-white'
             }`}
           >
-            <CreditCard className="h-4 w-4" />
-            <span>PRO & Billing</span>
+            <CreditCard className="h-3.5 w-3.5 text-gold" />
+            <span>PRO &amp; Billing</span>
             {(subscription?.status === 'PAST_DUE' || subscription?.status === 'SUSPENDED') && (
-              <span className={`h-2 w-2 rounded-full ${subscription.status === 'SUSPENDED' ? 'bg-red-400' : 'bg-amber-400'} animate-ping`} />
+              <span className={`h-2 w-2 rounded-full ${subscription.status === 'SUSPENDED' ? 'bg-red-400' : 'bg-amber-400'}`} />
             )}
           </button>
         )}
       </div>
 
       {activeTab === 'overview' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
-              <span className="text-xs font-semibold text-cinema-muted block">Total XP</span>
-              <span className="text-xl font-black text-gold mt-1 block">{levelInfo.totalXp.toLocaleString()} XP</span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">Level {levelInfo.level} {levelInfo.title}</span>
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-white/[0.08] bg-cinema-surface p-4 sm:p-5 space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl border border-white/[0.06] bg-cinema-black/50 p-3.5">
+                <span className="text-[11px] font-semibold text-cinema-muted block">Total XP</span>
+                <span className="text-xl font-extrabold text-gold mt-0.5 block tabular-nums">{levelInfo.totalXp.toLocaleString()}</span>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-cinema-black/50 p-3.5">
+                <span className="text-[11px] font-semibold text-cinema-muted block">Games Won</span>
+                <span className="text-xl font-extrabold text-white mt-0.5 block tabular-nums">
+                  {activeStats?.gamesWon || 0}
+                  <span className="text-xs text-cinema-muted font-normal ml-1">/ {activeStats?.gamesPlayed || 0}</span>
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-cinema-black/50 p-3.5">
+                <span className="text-[11px] font-semibold text-cinema-muted block">Best Streak</span>
+                <span className="text-xl font-extrabold text-white mt-0.5 flex items-center gap-1 tabular-nums">
+                  <Flame className="h-4 w-4 text-gold fill-gold" />
+                  {bestDisplayStreak}d
+                  <span className="text-xs text-cinema-muted font-normal ml-1">(Max {activeStats?.longestStreak || bestDisplayStreak}d)</span>
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-white/[0.06] bg-cinema-black/50 p-3.5">
+                <span className="text-[11px] font-semibold text-cinema-muted block">Win Rate</span>
+                <span className="text-xl font-extrabold text-emerald-400 mt-0.5 block tabular-nums">{winRate}%</span>
+              </div>
             </div>
 
-            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
-              <span className="text-xs font-semibold text-cinema-muted block">Games Won</span>
-              <span className="text-xl font-black text-white mt-1 block">{activeStats?.gamesWon || 0}</span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">{activeStats?.gamesPlayed || 0} total played</span>
-            </div>
-
-            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
-              <span className="text-xs font-semibold text-cinema-muted block">Active Best Streak</span>
-              <span className="text-xl font-black text-orange-400 mt-1 flex items-center gap-1.5">
-                <Flame className="h-5 w-5 fill-orange-400" />
-                {bestDisplayStreak} {bestDisplayStreak === 1 ? 'Day' : 'Days'}
-              </span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">Record: {activeStats?.longestStreak || bestDisplayStreak}d</span>
-            </div>
-
-            <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-4 shadow-lg">
-              <span className="text-xs font-semibold text-cinema-muted block">Win Rate</span>
-              <span className="text-xl font-black text-emerald-400 mt-1 block">{winRate}%</span>
-              <span className="text-[11px] text-slate-400 mt-0.5 block">{trophyData.unlockedCount} trophies earned</span>
-            </div>
-          </div>
-
-          {perGameStreaks.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              {perGameStreaks.map((mode) => (
-                <div key={mode.id} className="flex items-center justify-between rounded-xl border border-cinema-border/70 bg-cinema-surface/60 px-3.5 py-2.5">
-                  <span className="text-xs font-bold text-slate-200">{mode.label}</span>
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-extrabold ${
-                    mode.streak > 0 ? mode.accent : 'border-cinema-border bg-cinema-card text-cinema-muted'
-                  }`}>
-                    <Flame className="h-3 w-3" />
-                    {mode.streak}d
+            {perGameStreaks.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-white/[0.06] text-xs">
+                <span className="text-cinema-muted font-medium mr-1">Mode Streaks:</span>
+                {perGameStreaks.map((mode) => (
+                  <span
+                    key={mode.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-cinema-card px-2.5 py-1 text-xs text-slate-200"
+                  >
+                    <span>{mode.label}</span>
+                    <strong className={mode.streak > 0 ? 'text-gold' : 'text-slate-500'}>{mode.streak}d</strong>
                   </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
 
           <CinemaActivityHeatmap matchHistory={matchHistory} />
 
-          <div className="rounded-2xl border border-cinema-border/80 bg-cinema-card/90 p-5 shadow-xl">
-            <div className="flex items-center justify-between border-b border-cinema-border/50 pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gold" />
-                <h3 className="text-sm font-extrabold text-white">Cinephile Identity & Credentials</h3>
-              </div>
-              {isOwnProfile && (
-                <button
-                  onClick={() => setActiveTab('edit')}
-                  className="text-xs font-bold text-gold hover:underline flex items-center gap-1"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  <span>Edit Details</span>
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
-              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Full Name</span>
-                <span className="font-bold text-white text-sm mt-0.5 block">
-                  {profileUser.firstName || profileUser.lastName
-                    ? `${profileUser.firstName || ''} ${profileUser.lastName || ''}`.trim()
-                    : 'Not Specified'}
-                </span>
-              </div>
-
-              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[11px] uppercase font-bold text-cinema-muted block">
-                  {isOwnProfile ? 'Email Address' : 'Username'}
-                </span>
-                <span className="font-bold text-white truncate block text-sm mt-0.5" title={isOwnProfile ? profileUser.email : profileUser.username}>
-                  {isOwnProfile ? (profileUser.email || 'guest@reelquest.io') : profileUser.username}
-                </span>
-              </div>
-
-              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Nationality</span>
-                <span className="font-bold text-white flex items-center gap-1.5 text-sm mt-0.5">
-                  <span className="text-base">{activeCountry.flag}</span>
-                  <span>{activeCountry.name}</span>
-                </span>
-              </div>
-
-              <div className="rounded-xl border border-cinema-border/70 bg-cinema-surface/60 p-3">
-                <span className="text-[11px] uppercase font-bold text-cinema-muted block">Subscription Tier</span>
-                <span className="font-extrabold text-sm flex items-center gap-1 text-gold mt-0.5">
-                  <Crown className="h-3.5 w-3.5" />
-                  <span>{profileUser.isPro ? 'Pro VIP ($3/mo)' : 'Free Member'}</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
           {isOwnProfile && !profileUser.isPro && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/15 via-cinema-card to-amber-950/30 p-5 shadow-gold-glow">
-              <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gold/20 text-gold border border-gold/40 shadow-inner">
-                  <Sparkles className="h-6 w-6" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-bold text-white">Upgrade to ReelQuest PRO VIP ($3.00/mo)</h4>
-                  <p className="text-xs text-slate-300 mt-0.5">
-                    Unlock Unlimited Otara hints, Custom Graph sandbox, Golden VIP avatar glow, and permanent Streak Shield protection.
-                  </p>
-                </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-gold/25 bg-gold/[0.06] px-5 py-4">
+              <div>
+                <h4 className="text-sm font-bold text-white">Upgrade to ReelQuest PRO ($3/mo)</h4>
+                <p className="text-xs text-cinema-muted mt-0.5">
+                  Unlimited Otara hints, Path Finder sandbox, and Streak Shield protection.
+                </p>
               </div>
-
               <button
                 onClick={onOpenPro}
-                className="shrink-0 rounded-xl bg-gold px-5 py-2.5 text-xs font-black text-cinema-black hover:opacity-90 shadow-gold-glow transition active:scale-95"
+                className="shrink-0 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-cinema-black hover:bg-amber-300 transition"
               >
-                Unlock Pro ($3/mo)
+                Unlock PRO
               </button>
             </div>
           )}
@@ -851,12 +811,14 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           <div className="min-w-0">
                             <h5 className="truncate text-xs font-bold text-white">
                               {m.gameMode === 'spotle'
-                                ? `Spotle: ${m.targetMovie?.title || 'Movie'}`
+                                ? (m.targetMovie?.title ? `Spotle: ${m.targetMovie.title}` : `Spotle Daily (${m.hops || 1}/10 guesses)`)
                                 : m.gameMode === 'frame-sleuth'
-                                ? `Frame Sleuth: ${m.targetMovie?.title || 'Movie'}`
+                                ? (m.targetMovie?.title ? `Frame Sleuth: ${m.targetMovie.title}` : `Frame Sleuth Daily (${m.framesUsed || m.hops || 1}/6 frames)`)
                                 : m.gameMode === 'box-office'
-                                ? 'Box Office Clash'
-                                : `Beat Otara: ${m.startActor?.name || 'Star'} → ${m.targetActor?.name || 'Star'}`}
+                                ? `Box Office Clash (${m.boxOfficeScore ?? m.hops ?? 0}/5)`
+                                : (m.startActor?.name && m.targetActor?.name
+                                  ? `Beat Otara: ${m.startActor.name} → ${m.targetActor.name}`
+                                  : `Beat Otara Daily (${m.hops || 2} hops)`)}
                             </h5>
                             <span className="text-[11px] text-cinema-muted">
                               {formatMatchDate(m.date || m.timestamp)} • {m.durationSeconds || 0}s
@@ -1134,27 +1096,37 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           </span>
                         </div>
                       </div>
-                    ) : (isSpotle || isFrameSleuth) && m.targetMovie ? (
+                    ) : (isSpotle || isFrameSleuth) ? (
                       <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-3 border border-cinema-border/30">
                         <div className="flex items-center gap-3 min-w-0">
-                          {m.targetMovie.posterPath ? (
+                          {m.targetMovie?.posterPath ? (
                             <img
                               src={getTmdbImageUrl(m.targetMovie.posterPath)}
                               alt={m.targetMovie.title}
                               className="h-12 w-8 rounded object-cover border border-cinema-border shrink-0"
                             />
                           ) : (
-                            <div className="flex h-12 w-8 items-center justify-center rounded bg-cinema-surface border border-cinema-border text-gold shrink-0">
-                              <Film className="h-4 w-4" />
+                            <div className={`flex h-10 w-10 items-center justify-center rounded-xl border shrink-0 ${
+                              isFrameSleuth
+                                ? 'bg-violet-500/20 border-violet-500/30 text-violet-400'
+                                : 'bg-amber-500/20 border-amber-500/30 text-gold'
+                            }`}>
+                              {isFrameSleuth ? <Camera className="h-5 w-5" /> : <Film className="h-5 w-5" />}
                             </div>
                           )}
                           <div className="min-w-0">
                             <h4 className="text-xs font-bold text-white truncate">
-                              {m.targetMovie.title} {m.targetMovie.year ? `(${m.targetMovie.year})` : ''}
+                              {m.targetMovie?.title
+                                ? `${m.targetMovie.title} ${m.targetMovie.year ? `(${m.targetMovie.year})` : ''}`
+                                : (isFrameSleuth ? 'Daily 6-Frame Mystery' : 'Daily Mystery Film')}
                             </h4>
-                            {m.targetMovie.director && (
+                            {m.targetMovie?.director ? (
                               <span className="text-[11px] text-cinema-muted truncate block">
                                 Dir. {m.targetMovie.director}
+                              </span>
+                            ) : m.score > 0 && (
+                              <span className="text-[11px] text-cinema-muted truncate block">
+                                {m.score} pts awarded
                               </span>
                             )}
                           </div>
@@ -1169,7 +1141,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           </span>
                         </div>
                       </div>
-                    ) : (m.startActor || m.targetActor) && (
+                    ) : (m.startActor || m.targetActor) ? (
                       <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-3 border border-cinema-border/30">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {m.startActor?.profilePath ? (
@@ -1206,6 +1178,24 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           )}
                         </div>
                       </div>
+                    ) : (
+                      <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-3 border border-cinema-border/30">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/15 text-gold border border-gold/30 shrink-0">
+                            <Footprints className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-white">Beat Otara Connection</h4>
+                            <span className="text-[11px] text-cinema-muted">
+                              {m.score > 0 ? `${m.score.toLocaleString()} pts earned` : 'Six Degrees Challenge'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[11px] uppercase font-bold text-cinema-muted block">Hops</span>
+                          <span className="text-xs font-black text-gold font-mono">{m.hops || 2} hops</span>
+                        </div>
+                      </div>
                     )}
 
                     <div className="mt-2.5 flex items-center justify-between text-xs text-cinema-muted">
@@ -1214,7 +1204,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                         <span>{m.durationSeconds || 0}s duration</span>
                       </span>
 
-                      {m.optimalHops && (
+                      {!isSpotle && !isFrameSleuth && !isBoxOffice && m.optimalHops && (
                         <span className="text-[11px] text-cinema-muted">
                           Par: {m.optimalHops} hops
                         </span>

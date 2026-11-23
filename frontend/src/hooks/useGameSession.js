@@ -232,24 +232,32 @@ export function useGameSession() {
       }
 
       if (!isCustom) {
+        const isToday = challenge.date === todayStr;
+        const subMode = isCustom ? 'custom' : (isToday ? 'daily' : 'archive');
+        const optimalHops = challenge.optimalHops || 2;
+        const matchedOtara = newMoves <= optimalHops;
+
         if (user && !user.id?.startsWith('guest')) {
           submitGameScore({
             challengeId: challenge.challengeId,
+            date: challenge.date,
             userId: user.id,
             username: user.username || 'You',
             hops: newMoves,
             durationSeconds: timerSeconds,
             startActorId: challenge.startActor.id,
+            startActorName: challenge.startActor.name,
             targetActorId: challenge.targetActor.id,
+            targetActorName: challenge.targetActor.name,
+            subMode,
+            optimalHops,
+            matchedOtara,
+            undos: undosCount,
+            usedHint,
             path: submittedPath,
             isPro: user.isPro || false
           });
         }
-
-        const isToday = challenge.date === todayStr;
-        const subMode = isCustom ? 'custom' : (isToday ? 'daily' : 'archive');
-        const optimalHops = challenge.optimalHops || 2;
-        const matchedOtara = newMoves <= optimalHops;
 
         recordGame({
           date: challenge.date,
