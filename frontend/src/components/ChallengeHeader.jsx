@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
-import { Clock, Footprints, RotateCcw, Flag, User, Lightbulb, Sparkles, Trophy } from 'lucide-react';
+import { Clock, RotateCcw, Flag, User, Lightbulb, Trophy, ArrowRight, Film } from 'lucide-react';
 import { getTmdbImageUrl } from '../api/client';
 import OtaraObservingMascot from './OtaraObservingMascot';
 import { playHintWhisper } from '../utils/soundEffects';
 
 export function ChallengeHeader({
   challenge,
+  chain = [],
   moves,
   timerSeconds,
   onUndo,
+  onStepClick,
   onGiveUp,
   canUndo,
   gameStatus,
@@ -66,60 +68,155 @@ export function ChallengeHeader({
 
   const getCommentaryText = () => {
     if (activeEmotion === 'IMPRESSED') {
-      return `„Spot on! Right on the golden par pace! One step closer to cinema glory.“`;
+      return 'Spot on! Right on the golden par pace.';
     }
     if (activeEmotion === 'ENCOURAGING') {
-      return `„A scenic detour, but the connection is still alive. Look for a bridge co-star!“`;
+      return 'Scenic detour, still alive — look for a bridge co-star.';
     }
     if (activeEmotion === 'HINT') {
-      return `„Otara's Oracle Whisper: Look for celebrated films where both stars shared the marquee!“`;
+      return 'Oracle Whisper active — check shared marquee films.';
     }
     if (moves === 0) {
-      return `„I already found the route in ${optimalHops} hops. Select your opening film below...“`;
+      return `I solved this in ${optimalHops} hops. Pick your opening film below.`;
     }
     if (moves < optimalHops) {
-      return `„Looking sharp! You're at ${moves} hops, right on pace with my Par.“`;
+      return `At ${moves} hop${moves === 1 ? '' : 's'} — right on pace to match my Par.`;
     }
     if (moves === optimalHops) {
-      return `„Tense moment! One direct link right now will tie my record!“`;
+      return 'One direct link right now will tie my record!';
     }
-    return `„Keep pushing forward — every co-star brings you closer to the target!“`;
+    return 'Keep going — every co-star brings you closer to the target.';
   };
 
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-cinema-border/90 bg-gradient-to-r from-cinema-card via-cinema-surface to-cinema-card p-3.5 sm:p-4 shadow-card-glow">
-      <div className="absolute -left-16 -top-16 h-40 w-40 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
+  const intermediateSteps = chain.slice(1);
+  const targetReached = targetActor && chain[chain.length - 1]?.actor?.id === targetActor.id;
 
-      <div className="grid grid-cols-2 md:grid-cols-12 items-center gap-3 md:gap-4 relative z-10">
-        <div className="col-span-1 md:col-span-3 order-1 flex items-center gap-3 min-w-0">
-          <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 border-emerald-500/50 bg-cinema-surface shadow-md">
-            {startActor.profilePath ? (
-              <img
-                src={getTmdbImageUrl(startActor.profilePath)}
-                alt={startActor.name}
-                className="h-full w-full object-cover"
-              />
+  return (
+    <div className="space-y-2.5">
+      <div className="rounded-2xl border border-white/[0.08] bg-cinema-surface px-4 py-3.5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              if (chain.length > 1 && onStepClick) onStepClick(0);
+            }}
+            className={`flex items-center gap-3 min-w-0 text-left shrink-0 ${
+              chain.length > 1 ? 'cursor-pointer group' : 'cursor-default'
+            }`}
+            title={chain.length > 1 ? `Click to step back to ${startActor.name}` : undefined}
+          >
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full border-2 border-emerald-500/50 bg-cinema-card">
+              {startActor.profilePath ? (
+                <img
+                  src={getTmdbImageUrl(startActor.profilePath)}
+                  alt={startActor.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-cinema-muted">
+                  <User className="h-5 w-5" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400/90 block">
+                Start
+              </span>
+              <h2 className="text-sm font-extrabold text-white truncate group-hover:text-gold transition">
+                {startActor.name}
+              </h2>
+            </div>
+          </button>
+
+          <div className="flex items-center lg:justify-center gap-2 overflow-x-auto scrollbar-none py-1 flex-1 min-w-0">
+            {intermediateSteps.length === 0 ? (
+              <div className="flex items-center gap-2 text-xs">
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                <span className="rounded-lg border border-dashed border-gold/40 bg-gold/[0.06] px-3 py-1.5 text-xs font-semibold text-gold whitespace-nowrap">
+                  Pick a film below
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+              </div>
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-cinema-border/50 text-cinema-muted">
-                <User className="h-7 w-7" />
+              intermediateSteps.map((node, idx) => {
+                const chainIndex = idx + 1;
+                const isLast = chainIndex === chain.length - 1;
+                const isClickable = !isLast && Boolean(onStepClick);
+                const isTargetStep = targetActor && node.actor?.id === targetActor.id;
+
+                return (
+                  <div key={`${node.actor?.id || idx}-${chainIndex}`} className="flex items-center gap-2 shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                    {node.movie && (
+                      <>
+                        <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-cinema-card px-2.5 py-1 text-xs text-slate-200 max-w-[165px]">
+                          <Film className="h-3 w-3 text-gold shrink-0" />
+                          <span className="truncate font-medium">{node.movie.title}</span>
+                        </div>
+                        <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                      </>
+                    )}
+                    {!isTargetStep && (
+                      <button
+                        type="button"
+                        onClick={() => isClickable && onStepClick(chainIndex)}
+                        className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${
+                          isClickable
+                            ? 'border-white/[0.1] bg-cinema-card text-white hover:border-gold/50 hover:text-gold cursor-pointer'
+                            : 'border-gold/40 bg-gold/10 text-gold cursor-default'
+                        }`}
+                        title={isClickable ? `Click to step back to ${node.actor?.name}` : undefined}
+                      >
+                        <span className="max-w-[130px] truncate">{node.actor?.name}</span>
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {intermediateSteps.length > 0 && !targetReached && (
+              <div className="flex items-center gap-2 shrink-0">
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
+                <span className="rounded-lg border border-dashed border-gold/35 bg-gold/[0.05] px-2.5 py-1 text-[11px] font-semibold text-gold/90 whitespace-nowrap">
+                  Next film…
+                </span>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 shrink-0" />
               </div>
             )}
           </div>
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 block">
-              Origin
-            </span>
-            <h2 className="text-sm sm:text-base font-extrabold text-white truncate">
-              {startActor.name}
-            </h2>
-            <p className="text-[11px] text-slate-400 hidden sm:block truncate">Starting star</p>
+
+          <div className="flex items-center lg:justify-end gap-3 lg:text-right min-w-0 shrink-0">
+            <div className="min-w-0 order-2 lg:order-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gold block">
+                Target
+              </span>
+              <h2 className="text-sm font-extrabold text-white truncate">
+                {targetActor.name}
+              </h2>
+            </div>
+            <div className="h-11 w-11 shrink-0 order-1 lg:order-2 overflow-hidden rounded-full border-2 border-gold bg-cinema-card">
+              {targetActor.profilePath ? (
+                <img
+                  src={getTmdbImageUrl(targetActor.profilePath)}
+                  alt={targetActor.name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-cinema-muted">
+                  <User className="h-5 w-5" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="col-span-2 md:col-span-6 order-3 md:order-2 flex flex-col justify-center gap-2.5 border-t md:border-t-0 md:border-x border-cinema-border/60 pt-3 md:pt-0 md:px-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-cinema-surface/70 px-3.5 py-2">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           {isPlaying && (
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="relative shrink-0 flex items-center justify-center">
+            <>
+              <div className="shrink-0">
                 <OtaraObservingMascot
                   moves={moves}
                   optimalHops={optimalHops}
@@ -127,137 +224,78 @@ export function ChallengeHeader({
                   emotion={activeEmotion}
                   showBadge={false}
                 />
-                {activeEmotion === 'OBSERVING' && (
-                  <div className="absolute bottom-1 right-1 flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border-2 border-cinema-black" />
-                  </div>
-                )}
               </div>
-
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs font-black flex items-center gap-1 text-white">
-                    <Sparkles className="h-3.5 w-3.5 text-gold fill-gold" />
-                    {activeEmotion === 'IMPRESSED' ? (
-                      <span className="text-gold">Otara is Impressed!</span>
-                    ) : activeEmotion === 'ENCOURAGING' ? (
-                      <span className="text-indigo-300">Otara is Cheering!</span>
-                    ) : activeEmotion === 'HINT' ? (
-                      <span className="text-amber-400">Oracle Hint Active</span>
-                    ) : (
-                      'Otara is Watching'
-                    )}
-                  </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[11px] font-bold border leading-none ${
-                      activeEmotion === 'IMPRESSED'
-                        ? 'bg-gold/15 border-gold/40 text-gold'
-                        : activeEmotion === 'ENCOURAGING'
-                        ? 'bg-indigo-500/15 border-indigo-500/40 text-indigo-300'
-                        : 'bg-emerald-500/15 border-emerald-500/35 text-emerald-400'
-                    }`}
-                  >
-                    {activeEmotion === 'OBSERVING' ? 'LIVE' : activeEmotion}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-200 font-medium leading-snug line-clamp-2">
-                  {getCommentaryText()}
-                </p>
-              </div>
-            </div>
+              <p className="text-xs text-slate-300 leading-snug line-clamp-2">
+                <strong className="text-gold font-bold mr-1">Otara:</strong>
+                {getCommentaryText()}
+              </p>
+            </>
           )}
+          {!isPlaying && (
+            <span className="text-xs font-semibold text-cinema-muted">
+              Challenge completed — review your trail or inspect the optimal route.
+            </span>
+          )}
+        </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-            <div className="flex items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-black/75 px-2.5 py-1 text-xs">
-                <Footprints className="h-3.5 w-3.5 text-gold" />
-                <span className="text-slate-400">Hops:</span>
-                <strong className="text-white font-black">{moves}</strong>
-                <span className="text-slate-500">/</span>
-                <span className="text-amber-400 font-bold">Par {optimalHops}</span>
-              </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap">
+          <div className="inline-flex items-center gap-1 rounded-lg bg-cinema-card px-2.5 py-1.5 text-xs font-bold text-white tabular-nums">
+            <span>{moves}</span>
+            <span className="text-slate-500 font-normal">/ Par {optimalHops}</span>
+          </div>
 
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-black/75 px-2.5 py-1 text-xs font-mono font-bold text-slate-100">
-                <Clock className="h-3.5 w-3.5 text-gold" />
-                <span>{formattedTime}</span>
-              </div>
-            </div>
+          <div className="inline-flex items-center gap-1.5 rounded-lg bg-cinema-card px-2.5 py-1.5 text-xs font-mono font-semibold text-slate-200">
+            <Clock className="h-3.5 w-3.5 text-gold" />
+            <span>{formattedTime}</span>
+          </div>
 
-            <div className="flex items-center gap-1.5">
+          {isPlaying && (
+            <>
               <button
                 type="button"
                 onClick={onUndo}
                 disabled={!canUndo}
-                className="flex items-center gap-1 rounded-xl border border-cinema-border bg-cinema-surface px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-gold/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-                title="Step back one step or change film"
+                className="flex items-center gap-1 rounded-lg border border-white/[0.1] px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:border-white/25 hover:text-white disabled:cursor-not-allowed disabled:opacity-35"
+                title="Undo last step"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
-                <span>Back</span>
+                <span>Undo</span>
               </button>
 
-              {isPlaying && onOpenHint && (
+              {onOpenHint && (
                 <button
                   type="button"
                   onClick={handleHintClick}
-                  className="flex items-center gap-1 rounded-xl border border-gold/60 bg-gold/15 px-3 py-1.5 text-xs font-extrabold text-gold hover:bg-gold hover:text-cinema-black shadow-gold-glow transition active:scale-95"
-                  title="Ask Otara for a Cinephile Hint"
+                  className="flex items-center gap-1 rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1.5 text-xs font-bold text-gold transition hover:bg-gold hover:text-cinema-black active:scale-95"
+                  title="Ask Otara for a Hint"
                 >
-                  <Lightbulb className="h-3.5 w-3.5 fill-current" />
+                  <Lightbulb className="h-3.5 w-3.5" />
                   <span>Hint</span>
                 </button>
               )}
 
-              {isPlaying && (
-                <button
-                  type="button"
-                  onClick={onGiveUp}
-                  className="flex items-center gap-1 rounded-xl border border-rose-500/35 bg-rose-500/10 px-2.5 py-1.5 text-xs font-semibold text-rose-400 transition hover:bg-rose-500/20"
-                  title="Give up and reveal shortest path"
-                >
-                  <Flag className="h-3.5 w-3.5" />
-                  <span>Give Up</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={onGiveUp}
+                className="flex items-center gap-1 rounded-lg border border-white/[0.08] px-2.5 py-1.5 text-xs font-semibold text-rose-400 transition hover:border-rose-500/40 hover:bg-rose-500/10"
+                title="Give up and reveal shortest path"
+              >
+                <Flag className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Give Up</span>
+              </button>
+            </>
+          )}
 
-              {!isPlaying && onViewSummary && (
-                <button
-                  type="button"
-                  onClick={onViewSummary}
-                  className="flex items-center gap-1.5 rounded-xl border border-gold/50 bg-gold/15 px-3 py-1.5 text-xs font-bold text-gold transition hover:bg-gold hover:text-cinema-black shadow-sm"
-                  title="View Result Summary"
-                >
-                  <Trophy className="h-3.5 w-3.5" />
-                  <span>Results</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-1 md:col-span-3 order-2 md:order-3 flex items-center justify-end gap-3 text-right min-w-0">
-          <div className="min-w-0">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-gold block">
-              Target Goal
-            </span>
-            <h2 className="text-sm sm:text-base font-extrabold text-white truncate">
-              {targetActor.name}
-            </h2>
-            <p className="text-[11px] text-slate-400 hidden sm:block truncate">Goal destination</p>
-          </div>
-          <div className="relative h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-xl border-2 border-gold bg-cinema-surface shadow-gold-glow">
-            {targetActor.profilePath ? (
-              <img
-                src={getTmdbImageUrl(targetActor.profilePath)}
-                alt={targetActor.name}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-cinema-border/50 text-cinema-muted">
-                <User className="h-7 w-7" />
-              </div>
-            )}
-          </div>
+          {!isPlaying && onViewSummary && (
+            <button
+              type="button"
+              onClick={onViewSummary}
+              className="flex items-center gap-1.5 rounded-lg bg-gold px-3 py-1.5 text-xs font-extrabold text-cinema-black hover:bg-amber-300 transition"
+            >
+              <Trophy className="h-3.5 w-3.5" />
+              <span>Results</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -41,17 +41,34 @@ export function AuthProvider({ children }) {
             const localPro = Boolean(fullUser.isPro || hasActiveLocalPro(stored.user.id));
             const effectivePro = remotePro || localPro;
 
-            if (effectivePro !== fullUser.isPro) {
-              const updatedUser = { ...fullUser, isPro: effectivePro };
-              setUser(updatedUser);
+            const profileMetaFields = [
+              'firstName', 'lastName', 'countryCode', 'nationality', 'countryFlag',
+              'bio', 'favoriteDirector', 'favoriteMovie', 'favoriteGenre', 'avatarId', 'customAvatarUrl'
+            ];
+            let hasRemoteMetaUpdates = false;
+            const mergedUser = { ...fullUser, isPro: effectivePro };
+            for (const f of profileMetaFields) {
+              if (!mergedUser[f] && profile[f]) {
+                mergedUser[f] = profile[f];
+                hasRemoteMetaUpdates = true;
+              }
+            }
+            if (!mergedUser.username && profile.username) {
+              mergedUser.username = profile.username;
+              hasRemoteMetaUpdates = true;
+            }
+
+            if (effectivePro !== fullUser.isPro || hasRemoteMetaUpdates) {
+              setUser(mergedUser);
               const authData = getStoredAuth();
               if (authData) {
-                authData.user = updatedUser;
+                authData.user = mergedUser;
                 localStorage.setItem('reelquest_auth', JSON.stringify(authData));
               }
             }
-            if (localPro && !remotePro) {
-              syncUserProfile({ ...fullUser, isPro: true });
+            const needsSync = (localPro && !remotePro) || profileMetaFields.some(f => Boolean(fullUser[f]) && !profile[f]);
+            if (needsSync) {
+              syncUserProfile(mergedUser);
             }
             setStats(prev => {
               const localStreak = prev?.streak ?? 0;
@@ -108,6 +125,29 @@ export function AuthProvider({ children }) {
     fetchUserProfile(loggedUser.id)
       .then(profile => {
         if (profile) {
+          const profileMetaFields = [
+            'firstName', 'lastName', 'countryCode', 'nationality', 'countryFlag',
+            'bio', 'favoriteDirector', 'favoriteMovie', 'favoriteGenre', 'avatarId', 'customAvatarUrl'
+          ];
+          const mergedUser = { ...fullUser };
+          let hasRemoteMeta = false;
+          for (const f of profileMetaFields) {
+            if (!mergedUser[f] && profile[f]) {
+              mergedUser[f] = profile[f];
+              hasRemoteMeta = true;
+            }
+          }
+          if (hasRemoteMeta) {
+            setUser(mergedUser);
+            const authData = getStoredAuth();
+            if (authData) {
+              authData.user = mergedUser;
+              localStorage.setItem('reelquest_auth', JSON.stringify(authData));
+            }
+          }
+          if (profileMetaFields.some(f => Boolean(fullUser[f]) && !profile[f])) {
+            syncUserProfile(mergedUser);
+          }
           if (profile.tier === 'PRO' || fullUser.isPro || hasActiveLocalPro(loggedUser.id)) {
             setProStatus(true);
           }
@@ -200,6 +240,7 @@ export function AuthProvider({ children }) {
       } catch (err) {
         console.error('Failed to persist user profile metadata:', err);
       }
+      syncUserProfile(updated);
       return updated;
     });
   };

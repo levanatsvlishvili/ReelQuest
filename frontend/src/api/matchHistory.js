@@ -1,19 +1,16 @@
 import { fetchUserBackendHistory } from './client';
+import { notifyDailyProgressChanged } from '../utils/dailyProgress';
 
 const MATCH_STORAGE_PREFIX = 'reelquest_match_history_';
 
-/**
- * Saves a detailed match result to the user's match history.
- * Supports: Beat Otara (daily, archive, custom), 1v1 Duels, and future games.
- */
 export function saveDetailedMatch(userId, matchData) {
   const effectiveUserId = userId || 'guest';
   const storageKey = `${MATCH_STORAGE_PREFIX}${effectiveUserId}`;
 
   const matchRecord = {
     id: matchData.id || `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    gameMode: matchData.gameMode || 'six-degrees', // 'six-degrees' | 'duels' | 'quoted' | 'plot-guesser'
-    subMode: matchData.subMode || 'daily',        // 'daily' | 'archive' | 'custom' | 'duel'
+    gameMode: matchData.gameMode || 'six-degrees',
+    subMode: matchData.subMode || 'daily',
     date: matchData.date || new Date().toISOString().slice(0, 10),
     timestamp: matchData.timestamp || new Date().toISOString(),
     won: Boolean(matchData.won),
@@ -31,7 +28,6 @@ export function saveDetailedMatch(userId, matchData) {
     guesses: matchData.guesses || null,
     framesUsed: matchData.framesUsed || null,
     boxOfficeScore: typeof matchData.boxOfficeScore === 'number' ? matchData.boxOfficeScore : null,
-    // 1v1 Duel specific attributes
     opponentName: matchData.opponentName || null,
     roomCode: matchData.roomCode || null,
     duelOutcome: matchData.duelOutcome || (matchData.won ? 'VICTORY' : (matchData.forfeited ? 'FORFEITED' : 'DEFEAT'))
@@ -40,12 +36,11 @@ export function saveDetailedMatch(userId, matchData) {
   try {
     const raw = localStorage.getItem(storageKey);
     const existing = raw ? JSON.parse(raw) : [];
-    // Deduplicate if identical id exists
     const filtered = existing.filter(m => m.id !== matchRecord.id);
     filtered.unshift(matchRecord);
-    // Keep last 100 matches
     if (filtered.length > 100) filtered.length = 100;
     localStorage.setItem(storageKey, JSON.stringify(filtered));
+    notifyDailyProgressChanged();
     return filtered;
   } catch (err) {
     console.warn('Failed to save match history locally:', err);
@@ -53,9 +48,6 @@ export function saveDetailedMatch(userId, matchData) {
   }
 }
 
-/**
- * Returns locally stored matches for a user or guest.
- */
 export function getStoredMatchHistory(userId) {
   const effectiveUserId = userId || 'guest';
   const storageKey = `${MATCH_STORAGE_PREFIX}${effectiveUserId}`;
@@ -64,7 +56,6 @@ export function getStoredMatchHistory(userId) {
     if (!raw) return [];
     const list = JSON.parse(raw);
     if (!Array.isArray(list)) return [];
-    // Sanitize: remove any stale/incomplete placeholder matches
     const sanitized = list.filter(m => {
       const sName = m.startActor?.name;
       const tName = m.targetActor?.name;
@@ -83,13 +74,57 @@ export function getStoredMatchHistory(userId) {
 
 export const getDetailedMatchHistory = getStoredMatchHistory;
 
-/**
- * Fetches server history from DynamoDB and merges with local rich match history.
- * Only merges meaningful sessions that have valid actor details.
- */
-export async function fetchAndMergeUserHistory(userId) {
-  const localHistory = getStoredMatchHistory(userId);
-  if (!userId || userId.startsWith('guest')) {
+function buildMatchRecordFromSession(session) {
+  const gameMode = (session.gameMode || 'six-degrees').toLowerCase();
+  const dateStr = session.date || (session.createdAt ? String(session.createdAt).slice(0, 10) : '');
+  const moves = Number(session.moves || 0);
+  const score = Number(session.score || 0);
+  const won = score > 0 || moves > 0;
+  const optimalHops = typeof session.optimalHops === 'number'
+    ? session.optimalHops
+    : (gameMode === 'six-degrees' ? 2 : 1);
+  const matchedOtara = typeof session.matchedOtara === 'boolean'
+    ? session.matchedOtara
+    : (gameMode === 'six-degrees' && won && moves > 0 && moves <= optimalHops);
+
+  const hasStartName = Boolean(session.startActorName && !String(session.startActorName).startsWith('Actor #'));
+  const hasTargetName = Boolean(session.targetActorName && !String(session.targetActorName).startsWith('Actor #'));
+
+  const targetMovie = session.targetMovieTitle
+    ? {
+        title: session.targetMovieTitle,
+        year: session.targetMovieYear || null,
+        director: session.targetMovieDirector || null,
+        posterPath: session.targetMoviePosterPath || null
+      }
+    : null;
+
+  return {
+    id: session.sessionId || `session_${dateStr}_${gameMode}`,
+    gameMode,
+    subMode: session.subMode || 'daily',
+    date: dateStr,
+    timestamp: session.createdAt || (dateStr ? `${dateStr}T12:00:00.000Z` : new Date().toISOString()),
+    won,
+    forfeited: false,
+    hops: moves,
+    optimalHops,
+    matchedOtara,
+    durationSeconds: Number(session.durationSeconds || 0),
+    score,
+    startActor: hasStartName ? { id: session.startActorId, name: session.startActorName } : null,
+    targetActor: hasTargetName ? { id: session.targetActorId, name: session.targetActorName } : null,
+    targetMovie,
+    framesUsed: gameMode === 'frame-sleuth' ? Math.max(1, moves) : null,
+    boxOfficeScore: gameMode === 'box-office' ? moves : null,
+    undos: typeof session.undos === 'number' ? session.undos : 0,
+    usedHint: Boolean(session.usedHint)
+  };
+}
+
+export async function fetchAndMergeUserHistory(userId, persistLocal = true) {
+  const localHistory = persistLocal ? getStoredMatchHistory(userId) : [];
+  if (!userId || String(userId).startsWith('guest')) {
     return localHistory;
   }
 
@@ -99,42 +134,52 @@ export async function fetchAndMergeUserHistory(userId) {
       return localHistory;
     }
 
-    const merged = [...localHistory];
-    const existingDates = new Set(localHistory.map(m => m.date));
+    const mergedMap = new Map();
+
+    for (const localMatch of localHistory) {
+      if (!localMatch) continue;
+      const mode = (localMatch.gameMode || 'six-degrees').toLowerCase();
+      const key = (localMatch.date && localMatch.subMode !== 'custom' && mode !== 'duels')
+        ? `${mode}#${localMatch.date}`
+        : (localMatch.id || `${mode}#${localMatch.timestamp || mergedMap.size}`);
+      mergedMap.set(key, localMatch);
+    }
 
     for (const session of serverSessions) {
-      // Only include server sessions if real actor names exist (avoid synthetic "Actor #1234" placeholders)
-      const hasRealNames = session.startActorName && session.targetActorName;
-      if (hasRealNames && session.date && !existingDates.has(session.date)) {
-        merged.push({
-          id: session.sessionId || `session_${session.date}`,
-          gameMode: session.gameMode || 'six-degrees',
-          subMode: 'daily',
-          date: session.date,
-          timestamp: session.createdAt || `${session.date}T12:00:00.000Z`,
-          won: (session.score || 0) > 0 || (session.moves || 0) > 0,
-          forfeited: false,
-          hops: session.moves || 0,
-          optimalHops: 2,
-          matchedOtara: (session.moves || 0) <= 2,
-          durationSeconds: session.durationSeconds || 0,
-          startActor: { id: session.startActorId, name: session.startActorName },
-          targetActor: { id: session.targetActorId, name: session.targetActorName },
-          undos: 0,
-          usedHint: false
+      if (!session) continue;
+      const serverRecord = buildMatchRecordFromSession(session);
+      if (!serverRecord.date) continue;
+      const key = serverRecord.subMode !== 'custom' && serverRecord.gameMode !== 'duels'
+        ? `${serverRecord.gameMode}#${serverRecord.date}`
+        : serverRecord.id;
+
+      const existing = mergedMap.get(key);
+      if (!existing) {
+        mergedMap.set(key, serverRecord);
+      } else {
+        mergedMap.set(key, {
+          ...serverRecord,
+          ...existing,
+          startActor: existing.startActor?.name ? existing.startActor : serverRecord.startActor,
+          targetActor: existing.targetActor?.name ? existing.targetActor : serverRecord.targetActor,
+          targetMovie: existing.targetMovie?.title ? existing.targetMovie : serverRecord.targetMovie,
+          durationSeconds: existing.durationSeconds || serverRecord.durationSeconds,
+          score: Math.max(existing.score || 0, serverRecord.score || 0)
         });
       }
     }
 
-    // Sort descending by timestamp / date
+    const merged = Array.from(mergedMap.values());
     merged.sort((a, b) => {
-      const timeA = new Date(a.timestamp || a.date).getTime() || 0;
-      const timeB = new Date(b.timestamp || b.date).getTime() || 0;
+      const timeA = new Date(a.timestamp || a.date || 0).getTime() || 0;
+      const timeB = new Date(b.timestamp || b.date || 0).getTime() || 0;
       return timeB - timeA;
     });
 
-    const storageKey = `${MATCH_STORAGE_PREFIX}${userId}`;
-    localStorage.setItem(storageKey, JSON.stringify(merged.slice(0, 100)));
+    if (persistLocal) {
+      const storageKey = `${MATCH_STORAGE_PREFIX}${userId}`;
+      localStorage.setItem(storageKey, JSON.stringify(merged.slice(0, 100)));
+    }
     return merged;
   } catch (err) {
     console.warn('Failed to merge server history:', err);

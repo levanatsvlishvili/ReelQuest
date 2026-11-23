@@ -305,7 +305,7 @@ export function getAuthToken() {
 export const getAccessToken = getAuthToken;
 
 export async function syncUserProfile(user) {
-  if (!RESOLVED_API_BASE_URL || !user) return null;
+  if (!RESOLVED_API_BASE_URL || !user || (!user.id && !user.userId)) return null;
   try {
     const token = getAuthToken();
     const headers = { 'Content-Type': 'application/json' };
@@ -314,15 +314,25 @@ export async function syncUserProfile(user) {
     }
     const uid = user.id || user.userId;
     const effectivePro = Boolean(user.isPro || hasActiveLocalPro(uid));
+    const payload = {
+      userId: uid,
+      email: user.email,
+      username: user.username,
+      isPro: effectivePro
+    };
+    const optionalFields = [
+      'firstName', 'lastName', 'countryCode', 'nationality', 'countryFlag',
+      'bio', 'favoriteDirector', 'favoriteMovie', 'favoriteGenre', 'avatarId', 'customAvatarUrl'
+    ];
+    for (const field of optionalFields) {
+      if (field in user) {
+        payload[field] = user[field];
+      }
+    }
     const res = await fetch(`${RESOLVED_API_BASE_URL}/users/sync`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({
-        userId: uid,
-        email: user.email,
-        username: user.username,
-        isPro: effectivePro
-      })
+      body: JSON.stringify(payload)
     });
     if (res.ok) {
       return await res.json();
@@ -412,11 +422,11 @@ export function calculateStreak(dailyWins = [], todayStr = new Date().toISOStrin
   return streak;
 }
 
-export function calculateGameStreak(gameMode, userId, todayStr = new Date().toISOString().slice(0, 10)) {
-  if (!userId || userId === 'guest') return 0;
+export function calculateGameStreak(gameMode, userId, todayStr = new Date().toISOString().slice(0, 10), overrideHistory = null) {
+  if (!overrideHistory && (!userId || userId === 'guest')) return 0;
 
   try {
-    const history = getStoredMatchHistory(userId);
+    const history = Array.isArray(overrideHistory) ? overrideHistory : getStoredMatchHistory(userId);
     if (!Array.isArray(history) || history.length === 0) return 0;
 
     let targetMode = gameMode;
@@ -431,7 +441,7 @@ export function calculateGameStreak(gameMode, userId, todayStr = new Date().toIS
       .map(m => m.date)
       .filter(Boolean);
 
-    if (targetMode === 'six-degrees') {
+    if (targetMode === 'six-degrees' && !Array.isArray(overrideHistory)) {
       const stats = getUserStats(userId);
       if (Array.isArray(stats?.dailyWins)) {
         dailyWins.push(...stats.dailyWins);

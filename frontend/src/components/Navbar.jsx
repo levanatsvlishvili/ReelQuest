@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Gamepad2,
   Trophy,
   Crown,
   LogIn,
@@ -9,20 +8,28 @@ import {
   VolumeX,
   User,
   CreditCard,
-  ChevronDown
+  ChevronDown,
+  LayoutGrid
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { isSoundMuted, toggleSound, subscribeSoundMuted } from '../utils/soundEffects';
 import { getAvatarById, calculateCinemaLevel } from '../utils/cinemaLevels';
 import { getDetailedMatchHistory } from '../api/matchHistory';
+import {
+  DAILY_GAMES,
+  getDailyGamesStatus,
+  subscribeDailyProgress
+} from '../utils/dailyProgress';
 
 function isModifiedClick(e) {
   return e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
 }
 
 export function Navbar({
-  currentView = 'game',
+  currentView = 'hub',
+  activeMode = 'six-degrees',
   onNavigateHome,
+  onSelectGame,
   onOpenLeaderboard,
   isLeaderboardActive = false,
   onOpenPro,
@@ -34,11 +41,19 @@ export function Navbar({
   const { user, stats, isAuthenticated, logout } = useAuth();
   const [muted, setMuted] = useState(isSoundMuted());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dailyStatus, setDailyStatus] = useState(() => getDailyGamesStatus(user?.id));
   const menuRef = useRef(null);
 
   useEffect(() => {
     return subscribeSoundMuted((newMuted) => setMuted(newMuted));
   }, []);
+
+  useEffect(() => {
+    setDailyStatus(getDailyGamesStatus(user?.id));
+    return subscribeDailyProgress(() => {
+      setDailyStatus(getDailyGamesStatus(user?.id));
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -65,16 +80,22 @@ export function Navbar({
 
   const handleLogoClick = () => {
     setMenuOpen(false);
-    if (onNavigateHome) onNavigateHome();
+    onNavigateHome?.();
   };
 
   const userAvatar = getAvatarById(user?.avatarId);
   const matchHistory = user ? getDetailedMatchHistory(user.id) : [];
   const levelInfo = user ? calculateCinemaLevel(stats, matchHistory) : null;
 
+  const isGameItemActive = (gameId) => {
+    if (currentView !== 'game') return false;
+    if (gameId === 'six-degrees' && activeMode === 'custom-path') return true;
+    return activeMode === gameId;
+  };
+
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-cinema-border/70 bg-cinema-black/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.07] bg-cinema-black/90 backdrop-blur-md">
+      <div className="mx-auto flex h-14 sm:h-[60px] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <a
           href="/"
           onClick={(e) => {
@@ -82,22 +103,20 @@ export function Navbar({
             e.preventDefault();
             handleLogoClick();
           }}
-          className="flex items-center gap-3 cursor-pointer select-none text-left focus:outline-none group"
+          className="flex items-center gap-2.5 cursor-pointer select-none text-left focus:outline-none group shrink-0"
+          title="Today's Cinema Reel"
         >
-          <div className="relative">
-            <img
-              src="/favicon.svg"
-              alt="ReelQuest Logo"
-              className="h-10 w-10 rounded-xl shadow-gold-glow transition-transform duration-300 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 rounded-xl bg-gold/20 blur-md -z-10 opacity-70 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">
+          <img
+            src="/favicon.svg"
+            alt="ReelQuest Logo"
+            className="h-8 w-8 rounded-lg transition-transform duration-200 group-hover:scale-105"
+          />
+          <span className="text-lg font-extrabold tracking-tight text-white">
             Reel<span className="text-gold">Quest</span>
           </span>
         </a>
 
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <nav className="hidden lg:flex items-center gap-1" aria-label="Daily Games">
           <a
             href="/"
             onClick={(e) => {
@@ -105,17 +124,53 @@ export function Navbar({
               e.preventDefault();
               handleLogoClick();
             }}
-            className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
-              currentView === 'game'
-                ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
-                : 'border border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/50 hover:text-gold'
+            className={`relative flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition ${
+              currentView === 'hub'
+                ? 'bg-white/[0.06] text-white'
+                : 'text-cinema-muted hover:text-white hover:bg-white/[0.04]'
             }`}
-            title="Play Daily Cinema Games"
           >
-            <Gamepad2 className="h-4 w-4 text-gold" />
-            <span className="hidden sm:inline">Games</span>
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span>Today</span>
+            {currentView === 'hub' && (
+              <span className="absolute -bottom-[14px] left-3 right-3 h-[2px] rounded-full bg-gold" />
+            )}
           </a>
 
+          {DAILY_GAMES.map((game) => {
+            const active = isGameItemActive(game.id);
+            const done = Boolean(dailyStatus[game.id]?.done);
+            return (
+              <a
+                key={game.id}
+                href={game.path}
+                onClick={(e) => {
+                  if (isModifiedClick(e)) return;
+                  e.preventDefault();
+                  onSelectGame?.(game.id);
+                }}
+                className={`relative flex items-center gap-2 rounded-lg px-3 py-1.5 text-[13px] font-semibold transition ${
+                  active
+                    ? 'bg-white/[0.06] text-white'
+                    : 'text-cinema-muted hover:text-white hover:bg-white/[0.04]'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                    done ? 'bg-emerald-400' : 'border border-slate-500'
+                  }`}
+                  title={done ? 'Completed today' : 'Not played yet today'}
+                />
+                <span>{game.shortName}</span>
+                {active && (
+                  <span className="absolute -bottom-[14px] left-3 right-3 h-[2px] rounded-full bg-gold" />
+                )}
+              </a>
+            );
+          })}
+        </nav>
+
+        <div className="flex items-center gap-2 shrink-0">
           <a
             href="/leaderboard"
             onClick={(e) => {
@@ -123,50 +178,37 @@ export function Navbar({
               e.preventDefault();
               onOpenLeaderboard?.();
             }}
-            className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-semibold transition ${
+            className={`flex h-8 sm:h-9 items-center gap-1.5 rounded-lg px-2.5 sm:px-3 text-xs font-semibold transition border ${
               isLeaderboardActive
-                ? 'border border-gold bg-gold/15 text-gold shadow-gold-glow/20'
-                : 'border border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/50 hover:text-gold'
+                ? 'border-gold/50 bg-gold/10 text-gold'
+                : 'border-white/[0.08] bg-transparent text-slate-300 hover:border-white/20 hover:text-white'
             }`}
           >
-            <Trophy className="h-4 w-4 text-gold" />
+            <Trophy className="h-3.5 w-3.5 text-gold" />
             <span className="hidden sm:inline">Leaderboard</span>
           </a>
 
-          <button
-            type="button"
-            onClick={handleToggleSound}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-cinema-border bg-cinema-surface text-slate-300 transition hover:border-gold/50 hover:text-gold"
-            title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
-          >
-            {muted ? <VolumeX className="h-4 w-4 text-slate-400" /> : <Volume2 className="h-4 w-4 text-gold" />}
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenPro}
-            className={`flex h-9 items-center gap-1.5 rounded-xl px-3 text-xs font-bold transition ${
-              user?.isPro
-                ? 'border border-gold/50 bg-gold/15 text-gold shadow-gold-glow hover:bg-gold/25'
-                : 'bg-gradient-to-r from-gold via-amber-400 to-gold-dark text-cinema-black shadow-gold-glow hover:opacity-90'
-            }`}
-            title={user?.isPro ? 'Manage PRO Subscription' : 'Upgrade to ReelQuest PRO'}
-          >
-            <Crown className={`h-3.5 w-3.5 ${user?.isPro ? 'fill-gold text-gold' : 'fill-cinema-black text-cinema-black'}`} />
-            <span className="hidden sm:inline">{user?.isPro ? 'PRO Active' : 'PRO'}</span>
-          </button>
+          {!user?.isPro && (
+            <button
+              type="button"
+              onClick={onOpenPro}
+              className="flex h-8 sm:h-9 items-center gap-1.5 rounded-lg bg-gold px-2.5 sm:px-3 text-xs font-extrabold text-cinema-black hover:bg-amber-300 transition active:scale-95"
+              title="Upgrade to ReelQuest PRO"
+            >
+              <Crown className="h-3.5 w-3.5 fill-cinema-black text-cinema-black" />
+              <span className="hidden sm:inline">PRO</span>
+            </button>
+          )}
 
           {isAuthenticated ? (
             <div className="relative" ref={menuRef}>
               <button
                 type="button"
                 onClick={() => setMenuOpen((prev) => !prev)}
-                className={`flex h-9 items-center gap-2 rounded-xl border px-2.5 text-xs font-medium transition ${
+                className={`flex h-8 sm:h-9 items-center gap-2 rounded-full border pl-1.5 pr-2.5 text-xs font-semibold transition ${
                   isProfileActive || menuOpen
-                    ? 'border-gold bg-gold/15 text-gold shadow-gold-glow'
-                    : user?.isPro
-                    ? 'border-gold/50 bg-cinema-surface text-slate-200 shadow-gold-glow/20 hover:border-gold'
-                    : 'border-cinema-border bg-cinema-surface text-slate-200 hover:border-gold/60'
+                    ? 'border-gold/60 bg-gold/10 text-white'
+                    : 'border-white/[0.1] bg-cinema-surface text-slate-200 hover:border-white/25'
                 }`}
                 title="Account & Profile Menu"
                 aria-expanded={menuOpen}
@@ -175,35 +217,31 @@ export function Navbar({
                   <img
                     src={user.customAvatarUrl}
                     alt={user.username}
-                    className="h-6 w-6 rounded-lg object-cover border border-gold/40 shrink-0"
+                    className="h-6 w-6 rounded-full object-cover border border-white/15 shrink-0"
                   />
                 ) : (
-                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-black/40 border border-cinema-border/70 text-xs shadow-inner">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-cinema-card text-xs">
                     {userAvatar.emoji}
                   </div>
                 )}
-                <span className="max-w-[75px] sm:max-w-[110px] truncate font-bold text-white text-xs leading-none">
+                <span className="max-w-[75px] sm:max-w-[100px] truncate font-bold text-white leading-none">
                   {user.username}
                 </span>
-                <span className="rounded-md bg-gold/15 px-1.5 py-0.5 text-[11px] font-black text-gold border border-gold/30 leading-none">
-                  Lv.{levelInfo?.level || 1}
-                </span>
+                {user?.isPro && (
+                  <Crown className="h-3 w-3 fill-gold text-gold shrink-0" />
+                )}
                 <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${menuOpen ? 'rotate-180 text-gold' : ''}`} />
               </button>
 
               {menuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-cinema-border bg-cinema-card/95 backdrop-blur-xl p-1.5 shadow-2xl z-50 animate-fade-in">
-                  <div className="px-3 py-2 border-b border-cinema-border/60 mb-1">
+                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-white/10 bg-cinema-card/98 backdrop-blur-xl p-1.5 shadow-2xl z-50 animate-fade-in">
+                  <div className="px-3 py-2 border-b border-white/[0.07] mb-1">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-extrabold text-white truncate">{user.username}</span>
-                      {user?.isPro && (
-                        <span className="rounded-full bg-gold/20 border border-gold/40 px-2 py-0.5 text-[11px] font-black text-gold leading-none">
-                          PRO
-                        </span>
-                      )}
+                      <span className="text-[11px] font-bold text-gold">Lv.{levelInfo?.level || 1}</span>
                     </div>
-                    <span className="text-[11px] text-slate-400 block truncate mt-0.5">
-                      {user.email || `Level ${levelInfo?.level || 1} Cinephile`}
+                    <span className="text-[11px] text-cinema-muted block truncate mt-0.5">
+                      {user.email || 'ReelQuest Cinephile'}
                     </span>
                   </div>
 
@@ -215,7 +253,7 @@ export function Navbar({
                       setMenuOpen(false);
                       onOpenProfile?.();
                     }}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-cinema-surface hover:text-gold transition"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06] hover:text-white transition"
                   >
                     <User className="h-4 w-4 text-gold shrink-0" />
                     <span>My Profile &amp; Stats</span>
@@ -230,13 +268,25 @@ export function Navbar({
                       if (onOpenBilling) onOpenBilling();
                       else onOpenProfile?.();
                     }}
-                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-cinema-surface hover:text-gold transition"
+                    className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06] hover:text-white transition"
                   >
                     <CreditCard className="h-4 w-4 text-gold shrink-0" />
-                    <span>PRO &amp; Saved Cards</span>
+                    <span>{user?.isPro ? 'PRO Active & Billing' : 'Upgrade to PRO'}</span>
                   </a>
 
-                  <div className="my-1.5 border-t border-cinema-border/60" />
+                  <button
+                    type="button"
+                    onClick={handleToggleSound}
+                    className="w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/[0.06] hover:text-white transition"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      {muted ? <VolumeX className="h-4 w-4 text-slate-400" /> : <Volume2 className="h-4 w-4 text-gold" />}
+                      <span>Sound Effects</span>
+                    </span>
+                    <span className="text-[11px] text-cinema-muted">{muted ? 'Off' : 'On'}</span>
+                  </button>
+
+                  <div className="my-1 border-t border-white/[0.07]" />
 
                   <button
                     type="button"
@@ -253,15 +303,73 @@ export function Navbar({
               )}
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={onOpenAuth}
-              className="flex h-9 items-center gap-1.5 rounded-xl border border-cinema-border bg-cinema-surface px-3.5 text-xs font-medium text-slate-200 transition hover:border-cinema-muted hover:text-white"
-            >
-              <LogIn className="h-4 w-4 text-cinema-muted" />
-              <span>Sign In</span>
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleToggleSound}
+                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg border border-white/[0.08] text-slate-400 hover:text-white transition"
+                title={muted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+              >
+                {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4 text-gold" />}
+              </button>
+              <button
+                type="button"
+                onClick={onOpenAuth}
+                className="flex h-8 sm:h-9 items-center gap-1.5 rounded-lg border border-white/15 bg-cinema-surface px-3 text-xs font-semibold text-slate-100 transition hover:border-white/30 hover:text-white"
+              >
+                <LogIn className="h-3.5 w-3.5 text-cinema-muted" />
+                <span>Sign In</span>
+              </button>
+            </div>
           )}
+        </div>
+      </div>
+
+      <div className="lg:hidden border-t border-white/[0.05] overflow-x-auto scrollbar-none">
+        <div className="mx-auto flex items-center gap-1 px-4 py-1.5 min-w-max">
+          <a
+            href="/"
+            onClick={(e) => {
+              if (isModifiedClick(e)) return;
+              e.preventDefault();
+              handleLogoClick();
+            }}
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              currentView === 'hub'
+                ? 'bg-white/[0.08] text-white'
+                : 'text-cinema-muted hover:text-white'
+            }`}
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            <span>Today</span>
+          </a>
+          {DAILY_GAMES.map((game) => {
+            const active = isGameItemActive(game.id);
+            const done = Boolean(dailyStatus[game.id]?.done);
+            return (
+              <a
+                key={game.id}
+                href={game.path}
+                onClick={(e) => {
+                  if (isModifiedClick(e)) return;
+                  e.preventDefault();
+                  onSelectGame?.(game.id);
+                }}
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+                  active
+                    ? 'bg-white/[0.08] text-white'
+                    : 'text-cinema-muted hover:text-white'
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full shrink-0 ${
+                    done ? 'bg-emerald-400' : 'border border-slate-500'
+                  }`}
+                />
+                <span>{game.shortName}</span>
+              </a>
+            );
+          })}
         </div>
       </div>
     </header>
