@@ -20,6 +20,7 @@ import { DuelGameView } from './components/DuelGameView';
 import { OtaraHintModal } from './components/OtaraHintModal';
 import { SpotleGameView } from './components/SpotleGameView';
 import { FrameSleuthGameView } from './components/FrameSleuthGameView';
+import { TimecodeGameView } from './components/TimecodeGameView';
 import { BoxOfficeClashView } from './components/BoxOfficeClashView';
 import { CheckoutSuccessModal } from './components/CheckoutSuccessModal';
 import { useAuth } from './context/AuthContext';
@@ -51,6 +52,9 @@ function parseRouteFromLocation() {
   }
   if (path === '/frame-sleuth') {
     return { view: 'game', mode: 'frame-sleuth', duel: false, profileTab: 'overview', targetUserId: null };
+  }
+  if (path === '/timecode') {
+    return { view: 'game', mode: 'timecode', duel: false, profileTab: 'overview', targetUserId: null };
   }
   if (path === '/box-office') {
     return { view: 'game', mode: 'box-office', duel: false, profileTab: 'overview', targetUserId: null };
@@ -155,6 +159,8 @@ export default function App() {
       targetPath = '/spotle';
     } else if (activeMode === 'frame-sleuth') {
       targetPath = '/frame-sleuth';
+    } else if (activeMode === 'timecode') {
+      targetPath = '/timecode';
     } else if (activeMode === 'box-office') {
       targetPath = '/box-office';
     } else if (activeMode === 'custom-path') {
@@ -313,7 +319,7 @@ export default function App() {
             onSelectDate={(d) => loadDateChallenge(d)}
             onOpenAuth={() => setIsAuthOpen(true)}
             onPlayChallenge={(d, mode) => {
-              if (mode && ['six-degrees', 'spotle', 'frame-sleuth', 'box-office'].includes(mode)) {
+              if (mode && ['six-degrees', 'spotle', 'frame-sleuth', 'timecode', 'box-office'].includes(mode)) {
                 setActiveMode(mode);
                 setIsDuelMode(false);
               }
@@ -343,6 +349,13 @@ export default function App() {
           />
         ) : activeMode === 'frame-sleuth' ? (
           <FrameSleuthGameView
+            onOpenPro={() => setIsProModalOpen(true)}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onSelectGame={navigateToGame}
+            onOpenLeaderboard={openLeaderboardView}
+          />
+        ) : activeMode === 'timecode' ? (
+          <TimecodeGameView
             onOpenPro={() => setIsProModalOpen(true)}
             onOpenAuth={() => setIsAuthOpen(true)}
             onSelectGame={navigateToGame}

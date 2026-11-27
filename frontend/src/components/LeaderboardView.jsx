@@ -21,6 +21,7 @@ import { DailyDateNavigator } from './DailyDateNavigator';
 const GAME_MODES = [
   { id: 'six-degrees', name: 'Beat Otara', icon: Zap },
   { id: 'frame-sleuth', name: 'Frame Sleuth', icon: Image },
+  { id: 'timecode', name: 'Timecode', icon: Clock },
   { id: 'spotle', name: 'Spotle', icon: Search },
   { id: 'box-office', name: 'Box Office', icon: TrendingUp },
   { id: 'global-xp', name: 'Global XP', icon: Crown }
@@ -114,6 +115,16 @@ export function LeaderboardView({
         return (
           <div className="flex items-center gap-3 text-xs">
             <span className="font-bold text-white">{entry.metricValue || `Frame ${entry.hops || 1}`}</span>
+            <span className="flex items-center gap-1 text-cinema-muted font-mono">
+              <Clock className="h-3 w-3" />
+              {formatTime(entry.durationSeconds)}
+            </span>
+          </div>
+        );
+      case 'timecode':
+        return (
+          <div className="flex items-center gap-3 text-xs">
+            <span className="font-bold text-white">{`Probe ${entry.hops || 1}`}</span>
             <span className="flex items-center gap-1 text-cinema-muted font-mono">
               <Clock className="h-3 w-3" />
               {formatTime(entry.durationSeconds)}

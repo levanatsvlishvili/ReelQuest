@@ -9,6 +9,8 @@ function getMetricLabel(gameMode) {
       return 'Guesses';
     case 'frame-sleuth':
       return 'Frame';
+    case 'timecode':
+      return 'Probes';
     case 'box-office':
       return 'Score / Streak';
     case 'global-xp':
@@ -34,6 +36,9 @@ function formatMetricValue(item, gameMode, scope) {
   if (gameMode === 'frame-sleuth') {
     return `Frame ${hops}`;
   }
+  if (gameMode === 'timecode') {
+    return `Probe ${hops}`;
+  }
   if (gameMode === 'box-office') {
     return `${hops}/5 Correct`;
   }
@@ -48,6 +53,13 @@ function compareEntries(a, b, gameMode, scope) {
   }
   if (gameMode === 'box-office') {
     return (b.score || 0) - (a.score || 0) || (b.hops || b.moves || 0) - (a.hops || a.moves || 0) || aDur - bDur;
+  }
+  if (gameMode === 'timecode') {
+    const aRaw = (a.hops || a.moves || 0) > 0 ? (a.hops || a.moves) : 99;
+    const bRaw = (b.hops || b.moves || 0) > 0 ? (b.hops || b.moves) : 99;
+    const aEff = aRaw + (a.usedHint ? 1 : 0);
+    const bEff = bRaw + (b.usedHint ? 1 : 0);
+    return aEff - bEff || (Number(Boolean(a.usedHint)) - Number(Boolean(b.usedHint))) || aDur - bDur || (b.score || 0) - (a.score || 0);
   }
   const aHops = (a.hops || a.moves || 0) > 0 ? (a.hops || a.moves) : 99;
   const bHops = (b.hops || b.moves || 0) > 0 ? (b.hops || b.moves) : 99;
@@ -95,7 +107,9 @@ export async function syncLocalScoresToBackend(currentUser) {
         ? Math.max(100, 1000 - hops * 100)
         : mode === 'frame-sleuth'
           ? Math.max(50, 110 - hops * 15)
-          : mode === 'box-office'
+          : mode === 'timecode'
+            ? Math.max(120, 1000 - (hops - 1) * 140 - (m.usedHint ? 150 : 0))
+            : mode === 'box-office'
             ? (m.boxOfficeScore ?? hops) * 200
             : Math.max(100, 10000 - Math.max(0, hops - 1) * 1200 - Math.min(dur * 20, 4000));
       addCandidate(mode, m.date, hops, score, dur, {
@@ -139,6 +153,16 @@ export async function syncLocalScoresToBackend(currentUser) {
           const hops = parsed.guesses.length;
           const dur = parsed.timerSeconds || 30;
           addCandidate('frame-sleuth', dateStr, hops, Math.max(50, 110 - hops * 15), dur);
+        }
+      } else if (k.startsWith('reelquest_timecode_')) {
+        const dateStr = k.replace('reelquest_timecode_', '');
+        const parsed = JSON.parse(localStorage.getItem(k) || 'null');
+        if (parsed && parsed.status === 'WON') {
+          const hops = Math.max(1, (parsed.guesses || []).length, (parsed.probes || []).length);
+          const dur = parsed.timerSeconds || 35;
+          const usedHint = Boolean(parsed.everRevealedNames);
+          const score = Math.max(120, 1000 - (hops - 1) * 140 - (usedHint ? 150 : 0));
+          addCandidate('timecode', dateStr, hops, score, dur, { usedHint });
         }
       } else if (k.startsWith('reelquest_bo_daily_')) {
         const dateStr = k.replace('reelquest_bo_daily_', '');
@@ -209,6 +233,7 @@ export function recordScoreToLeaderboard(mode, entry) {
       metricValue: entry.metricValue,
       subMode: entry.subMode,
       targetMovie: entry.targetMovie,
+      usedHint: Boolean(entry.usedHint),
       isPro: Boolean(entry.isPro)
     });
   } catch (e) {
@@ -398,7 +423,9 @@ export async function fetchMultiGameLeaderboard(gameMode = 'six-degrees', scope 
           ? Math.max(100, 1000 - h * 100)
           : gameMode === 'frame-sleuth'
             ? Math.max(50, 110 - h * 15)
-            : gameMode === 'box-office'
+            : gameMode === 'timecode'
+              ? Math.max(120, 1000 - (h - 1) * 140 - (m.usedHint ? 150 : 0))
+              : gameMode === 'box-office'
               ? (m.boxOfficeScore ?? h) * 200
               : Math.max(100, 10000 - Math.max(0, h - 1) * 1200 - Math.min(d * 20, 4000));
       };

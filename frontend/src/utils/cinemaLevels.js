@@ -134,6 +134,10 @@ export function calculateCinemaLevel(stats = {}, matchHistory = []) {
       } else if (m.gameMode === 'frame-sleuth') {
         xp += 80;
         if (m.hops === 1 || m.framesUsed === 1) xp += 120;
+      } else if (m.gameMode === 'timecode') {
+        xp += 90;
+        if (!m.usedHint) xp += 60;
+        if (m.hops === 1) xp += 90;
       } else if (m.gameMode === 'box-office') {
         xp += 25 * Math.min(10, m.hops || 1);
         if (m.subMode === 'daily' && m.hops === 5) xp += 100;

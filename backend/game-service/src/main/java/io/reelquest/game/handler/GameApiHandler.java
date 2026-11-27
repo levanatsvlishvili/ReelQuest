@@ -877,7 +877,8 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                     item.containsKey("moves") ? Integer.parseInt(item.get("moves").n()) : 0,
                     item.containsKey("durationSeconds") ? Long.parseLong(item.get("durationSeconds").n()) : 0L,
                     item.containsKey("isPro") && item.get("isPro").bool() != null ? item.get("isPro").bool() : false,
-                    item.containsKey("updatedAt") ? item.get("updatedAt").s() : ""
+                    item.containsKey("updatedAt") ? item.get("updatedAt").s() : "",
+                    item.containsKey("usedHint") && Boolean.TRUE.equals(item.get("usedHint").bool())
             );
             LeaderboardEntry prev = entryMap.get(dedupKey);
             if (prev == null || isBetterLeaderboardEntry(candidate, prev, mode, isAllTime)) {
@@ -983,6 +984,17 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
             int movesCmp = Integer.compare(b.moves(), a.moves());
             if (movesCmp != 0) return movesCmp;
             return Long.compare(aDur, bDur);
+        }
+        if ("timecode".equalsIgnoreCase(mode)) {
+            int aEff = (a.moves() > 0 ? a.moves() : 9999) + (a.usedHint() ? 1 : 0);
+            int bEff = (b.moves() > 0 ? b.moves() : 9999) + (b.usedHint() ? 1 : 0);
+            int effCmp = Integer.compare(aEff, bEff);
+            if (effCmp != 0) return effCmp;
+            int hintCmp = Boolean.compare(a.usedHint(), b.usedHint());
+            if (hintCmp != 0) return hintCmp;
+            int durCmp = Long.compare(aDur, bDur);
+            if (durCmp != 0) return durCmp;
+            return Long.compare(b.score(), a.score());
         }
         int aMoves = a.moves() > 0 ? a.moves() : Integer.MAX_VALUE;
         int bMoves = b.moves() > 0 ? b.moves() : Integer.MAX_VALUE;
@@ -1219,10 +1231,12 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                 ? "LEADERBOARD#" + dateStr
                 : "LEADERBOARD#" + mode + "#" + dateStr;
 
+        boolean submittedUsedHint = bodyNode != null && bodyNode.has("usedHint") && bodyNode.get("usedHint").isBoolean() && bodyNode.get("usedHint").asBoolean();
         boolean alreadyCompletedDaily = false;
         long bestDailyScore = result.score();
         int bestDailyMoves = result.moves();
         long bestDailyDuration = submission.durationSeconds();
+        boolean bestDailyUsedHint = submittedUsedHint;
         long scoreDelta = result.score();
         int gamesDelta = 1;
 
@@ -1242,17 +1256,20 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
                     long prevScore = exDaily.containsKey("score") ? Long.parseLong(exDaily.get("score").n()) : 0L;
                     int prevMoves = exDaily.containsKey("moves") ? Integer.parseInt(exDaily.get("moves").n()) : 99;
                     long prevDur = exDaily.containsKey("durationSeconds") ? Long.parseLong(exDaily.get("durationSeconds").n()) : Long.MAX_VALUE;
-                    LeaderboardEntry prevEntry = new LeaderboardEntry(authUser.userId(), username, prevScore, prevMoves, prevDur, isPro, "");
-                    LeaderboardEntry currEntry = new LeaderboardEntry(authUser.userId(), username, result.score(), result.moves(), submission.durationSeconds(), isPro, "");
+                    boolean prevHint = exDaily.containsKey("usedHint") && Boolean.TRUE.equals(exDaily.get("usedHint").bool());
+                    LeaderboardEntry prevEntry = new LeaderboardEntry(authUser.userId(), username, prevScore, prevMoves, prevDur, isPro, "", prevHint);
+                    LeaderboardEntry currEntry = new LeaderboardEntry(authUser.userId(), username, result.score(), result.moves(), submission.durationSeconds(), isPro, "", submittedUsedHint);
                     if (isBetterLeaderboardEntry(currEntry, prevEntry, mode, false)) {
                         bestDailyScore = result.score();
                         bestDailyMoves = result.moves();
                         bestDailyDuration = submission.durationSeconds();
+                        bestDailyUsedHint = submittedUsedHint;
                         scoreDelta = Math.max(0L, result.score() - prevScore);
                     } else {
                         bestDailyScore = prevScore;
                         bestDailyMoves = prevMoves;
                         bestDailyDuration = prevDur;
+                        bestDailyUsedHint = prevHint;
                         scoreDelta = 0L;
                     }
                     gamesDelta = 0;
@@ -1360,6 +1377,7 @@ public class GameApiHandler implements RequestHandler<APIGatewayProxyRequestEven
         leaderboardItem.put("score", AttributeValue.fromN(String.valueOf(bestDailyScore)));
         leaderboardItem.put("moves", AttributeValue.fromN(String.valueOf(bestDailyMoves)));
         leaderboardItem.put("durationSeconds", AttributeValue.fromN(String.valueOf(bestDailyDuration)));
+        leaderboardItem.put("usedHint", AttributeValue.fromBool(bestDailyUsedHint));
         leaderboardItem.put("isPro", AttributeValue.fromBool(isPro));
         leaderboardItem.put("updatedAt", AttributeValue.fromS(timestamp));
 

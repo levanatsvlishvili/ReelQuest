@@ -45,8 +45,9 @@ export const ACHIEVEMENT_TIERS = {
 export const GAME_MODE_FILTERS = [
   { id: 'all', label: 'All Modes' },
   { id: 'six-degrees', label: 'Beat Otara' },
-  { id: 'spotle', label: 'Spotle' },
   { id: 'frame-sleuth', label: 'Frame Sleuth' },
+  { id: 'timecode', label: 'Timecode' },
+  { id: 'spotle', label: 'Spotle' },
   { id: 'box-office', label: 'Box Office' },
   { id: 'duels', label: '1v1 Duels' },
   { id: 'meta', label: 'Streaks & Meta' },
@@ -503,6 +504,36 @@ export const ACHIEVEMENTS = [
     maxProgress: 1,
     checkProgress: (stats, history, user) => (user?.isPro ? 1 : 0)
   },
+  {
+    id: 'tc_first_probe',
+    gameMode: 'timecode',
+    title: 'Script Reader',
+    description: 'Crack your first daily Timecode screenplay challenge.',
+    tier: 'bronze',
+    icon: 'Clock',
+    maxProgress: 1,
+    checkProgress: (stats, history) => (history.some((m) => m.gameMode === 'timecode' && m.won) ? 1 : 0)
+  },
+  {
+    id: 'tc_pure_sleuth',
+    gameMode: 'timecode',
+    title: 'Dialogue Detective',
+    description: 'Win 5 daily or archive Timecode screenplay challenges.',
+    tier: 'gold',
+    icon: 'ShieldCheck',
+    maxProgress: 5,
+    checkProgress: (stats, history) => Math.min(5, history.filter((m) => m.gameMode === 'timecode' && m.won).length)
+  },
+  {
+    id: 'tc_first_cut',
+    gameMode: 'timecode',
+    title: 'Single Timestamp Oracle',
+    description: 'Identify the secret Timecode film on your very first timestamp probe (1/6).',
+    tier: 'diamond',
+    icon: 'Sparkles',
+    maxProgress: 1,
+    checkProgress: (stats, history) => (history.some((m) => m.gameMode === 'timecode' && m.won && m.hops === 1) ? 1 : 0)
+  },
 
   // UPCOMING GAMES (Extensible Stubs)
   {
@@ -603,7 +634,7 @@ export function evaluateAchievements(userId, user, stats = {}, matchHistory = []
       }
     }
 
-    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.gameMode === 'frame-sleuth' || ach.gameMode === 'box-office' || ach.id.includes('streak') || ach.id.includes('veteran');
+    const requiresGames = ach.gameMode === 'six-degrees' || ach.gameMode === 'duels' || ach.gameMode === 'spotle' || ach.gameMode === 'frame-sleuth' || ach.gameMode === 'timecode' || ach.gameMode === 'box-office' || ach.id.includes('streak') || ach.id.includes('veteran');
     let isNowUnlocked = false;
 
     if (ach.isComingSoon) {
