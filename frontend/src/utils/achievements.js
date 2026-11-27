@@ -517,12 +517,12 @@ export const ACHIEVEMENTS = [
   {
     id: 'tc_pure_sleuth',
     gameMode: 'timecode',
-    title: 'Pure Dialogue Sleuth',
-    description: 'Win 3 Timecode challenges in Pure Mode without revealing character names.',
+    title: 'Dialogue Detective',
+    description: 'Win 5 daily or archive Timecode screenplay challenges.',
     tier: 'gold',
     icon: 'ShieldCheck',
-    maxProgress: 3,
-    checkProgress: (stats, history) => Math.min(3, history.filter((m) => m.gameMode === 'timecode' && m.won && !m.usedHint).length)
+    maxProgress: 5,
+    checkProgress: (stats, history) => Math.min(5, history.filter((m) => m.gameMode === 'timecode' && m.won).length)
   },
   {
     id: 'tc_first_cut',
@@ -532,7 +532,7 @@ export const ACHIEVEMENTS = [
     tier: 'diamond',
     icon: 'Sparkles',
     maxProgress: 1,
-    checkProgress: (stats, history) => (history.some((m) => m.gameMode === 'timecode' && m.won && m.hops === 1 && !m.usedHint) ? 1 : 0)
+    checkProgress: (stats, history) => (history.some((m) => m.gameMode === 'timecode' && m.won && m.hops === 1) ? 1 : 0)
   },
 
   // UPCOMING GAMES (Extensible Stubs)

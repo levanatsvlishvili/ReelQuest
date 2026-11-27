@@ -37,7 +37,7 @@ function formatMetricValue(item, gameMode, scope) {
     return `Frame ${hops}`;
   }
   if (gameMode === 'timecode') {
-    return `Probe ${hops}${item.usedHint ? ' (Assisted)' : ' • Pure'}`;
+    return `Probe ${hops}`;
   }
   if (gameMode === 'box-office') {
     return `${hops}/5 Correct`;

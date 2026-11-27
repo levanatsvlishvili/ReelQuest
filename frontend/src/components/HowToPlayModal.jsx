@@ -192,7 +192,7 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                     </span>
                   </div>
                   <p className="text-[11px] text-cinema-muted leading-relaxed">
-                    Enter any exact timestamp to read the screenplay dialogue spoken at that moment. Toggle character names on or off anytime.
+                    Enter any exact timestamp within the film&apos;s runtime to read the screenplay dialogue spoken at that moment across 6 probes.
                   </p>
                   <span className="text-[10px] font-bold text-gold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
                     <span>Read detailed rules</span>
@@ -358,9 +358,9 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                 <div className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3 space-y-1 text-xs">
                   <strong className="text-white block font-semibold">How It Works:</strong>
                   <ul className="space-y-1.5 text-cinema-muted pl-4 list-disc text-[11px]">
-                    <li><strong className="text-slate-200">Probe Any Scene:</strong> Type a timecode or scrub the timeline bar. Silent moments automatically snap to the nearest active dialogue scene.</li>
-                    <li><strong className="text-slate-200">Runtime Deduction:</strong> Probing beyond the end credits alerts you that the movie has already ended and narrows the timeline ceiling.</li>
-                    <li><strong className="text-slate-200">Character Names Toggle:</strong> Names are masked (`CHAR #1`) by default for <strong>Pure Mode</strong>. Toggle <strong>Names: Visible</strong> anytime if you want assistance — Pure solves rank higher on the leaderboard.</li>
+                    <li><strong className="text-slate-200">Probe Any Scene:</strong> Type a timecode within the film&apos;s length or scrub the timeline bar. Silent moments automatically snap to the nearest active dialogue scene.</li>
+                    <li><strong className="text-slate-200">Character Dialogue:</strong> Spoken lines and character names appear directly as you explore up to 6 timestamps.</li>
+                    <li><strong className="text-slate-200">Progressive Clues:</strong> Probe 3 unlocks Era &amp; Genre, and Probe 5 unlocks the Director.</li>
                   </ul>
                 </div>
               </div>

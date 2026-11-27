@@ -335,7 +335,7 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
                               ⏱️ {s.targetMovie?.title || s.targetMovieTitle || 'Daily Timecode Movie'}
                             </span>
                             <span className="text-[10px] text-slate-400">
-                              ({s.hops || s.moves || '—'}/6 probes{s.usedHint ? ' • Assisted' : ' • Pure'})
+                              ({s.hops || s.moves || '—'}/6 probes)
                             </span>
                           </div>
                         ) : s.gameMode === 'spotle' ? (

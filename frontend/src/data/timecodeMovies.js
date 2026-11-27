@@ -789,7 +789,7 @@ export const TIMECODE_MOVIES = [
     "backdropPath": "/cW5xdnBofC8yMya4oMbcN7GAstA.jpg",
     "tagline": "To enter the mind of a killer she must challenge the mind of a madman.",
     "scriptKey": "tc_7d3b0cc483e7",
-    "playableSeconds": 6926,
+    "playableSeconds": 6853,
     "characterCount": 10
   },
   {
@@ -868,7 +868,7 @@ export const TIMECODE_MOVIES = [
     "backdropPath": "/nbCt0zX7fMyEAM176vjTd4w8See.jpg",
     "tagline": "An adventure 65 million years in the making.",
     "scriptKey": "tc_c44f85da36db",
-    "playableSeconds": 7379,
+    "playableSeconds": 7174,
     "characterCount": 12
   },
   {
@@ -2539,7 +2539,7 @@ export const TIMECODE_MOVIES = [
     "backdropPath": "/uQEFAqFYZoTfsyLw7xc3kITENFn.jpg",
     "tagline": "Meet the little voices inside your head.",
     "scriptKey": "tc_25453c758bdf",
-    "playableSeconds": 5329,
+    "playableSeconds": 5319,
     "characterCount": 10
   },
   {

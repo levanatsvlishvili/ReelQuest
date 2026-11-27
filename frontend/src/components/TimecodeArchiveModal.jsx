@@ -178,7 +178,7 @@ export function TimecodeArchiveModal({ isOpen, onClose, currentDate, onSelectDat
                   {day.sessionStatus === 'WON' ? (
                     <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-black text-emerald-400 border border-emerald-500/30">
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      Solved ({day.probesUsed}/6){day.pureWin ? ' • Pure' : ''}
+                      Solved ({day.probesUsed}/6)
                     </span>
                   ) : day.sessionStatus === 'LOST' ? (
                     <span className="rounded-full bg-rose-500/15 px-2.5 py-1 text-[11px] font-black text-rose-400 border border-rose-500/30">

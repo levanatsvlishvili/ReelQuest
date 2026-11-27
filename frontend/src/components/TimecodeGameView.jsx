@@ -11,11 +11,8 @@ import {
   Flag,
   SkipForward,
   Lock,
-  Eye,
-  EyeOff,
   Play,
   Shuffle,
-  ShieldCheck,
   AlertCircle,
   FileText
 } from 'lucide-react';
@@ -36,17 +33,16 @@ import {
 } from '../utils/soundEffects';
 
 const MAX_PROBES = 6;
-const INITIAL_CEILING_SEC = 12600;
 
 const CHAR_BADGE_STYLES = [
-  'bg-amber-500/15 text-amber-300 border-amber-400/35',
-  'bg-cyan-500/15 text-cyan-300 border-cyan-400/35',
-  'bg-emerald-500/15 text-emerald-300 border-emerald-400/35',
-  'bg-violet-500/15 text-violet-300 border-violet-400/35',
-  'bg-rose-500/15 text-rose-300 border-rose-400/35',
-  'bg-sky-500/15 text-sky-300 border-sky-400/35',
-  'bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-400/35',
-  'bg-lime-500/15 text-lime-300 border-lime-400/35'
+  'bg-amber-500/15 text-amber-200 border-amber-400/35',
+  'bg-cyan-500/15 text-cyan-200 border-cyan-400/35',
+  'bg-emerald-500/15 text-emerald-200 border-emerald-400/35',
+  'bg-violet-500/15 text-violet-200 border-violet-400/35',
+  'bg-rose-500/15 text-rose-200 border-rose-400/35',
+  'bg-sky-500/15 text-sky-200 border-sky-400/35',
+  'bg-fuchsia-500/15 text-fuchsia-200 border-fuchsia-400/35',
+  'bg-lime-500/15 text-lime-200 border-lime-400/35'
 ];
 
 function formatHms(totalSeconds) {
@@ -55,6 +51,13 @@ function formatHms(totalSeconds) {
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatHmShort(totalSeconds) {
+  const sec = Math.max(0, Math.floor(totalSeconds || 0));
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 function extractSceneWindow(scriptData, targetSec) {
@@ -94,7 +97,7 @@ function extractSceneWindow(scriptData, targetSec) {
   };
 }
 
-function TokenizedDialogueLine({ rawText, showNames, chars }) {
+function TokenizedDialogueLine({ rawText }) {
   const parts = useMemo(() => {
     const tokens = [];
     const re = /\{\{(\d+)\|([^}]+)\}\}/g;
@@ -124,20 +127,12 @@ function TokenizedDialogueLine({ rawText, showNames, chars }) {
           return <React.Fragment key={idx}>{part.value}</React.Fragment>;
         }
         const style = CHAR_BADGE_STYLES[part.charIdx % CHAR_BADGE_STYLES.length];
-        const label = showNames
-          ? part.original
-          : `CHAR #${part.charIdx + 1}`;
         return (
           <span
             key={idx}
-            title={
-              showNames
-                ? `Character: ${chars?.[part.charIdx] || part.original}`
-                : 'Character name hidden (toggle Reveal Names above)'
-            }
-            className={`inline-flex items-center rounded-md border px-1.5 py-0.2 mx-0.5 text-[11px] font-bold tracking-tight align-baseline transition-all ${style}`}
+            className={`inline-flex items-center rounded-md border px-1.5 py-0.2 mx-0.5 text-[11px] font-bold tracking-tight align-baseline ${style}`}
           >
-            {label}
+            {part.original}
           </span>
         );
       })}
@@ -145,7 +140,7 @@ function TokenizedDialogueLine({ rawText, showNames, chars }) {
   );
 }
 
-export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard }) {
+export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
   const { user, isPro } = useAuth();
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -164,15 +159,10 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
   const [viewedProbeIndex, setViewedProbeIndex] = useState(0);
   const [gaveUp, setGaveUp] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
-
-  const [showCharacterNames, setShowCharacterNames] = useState(false);
-  const [everRevealedNames, setEverRevealedNames] = useState(false);
-  const [ceilingSec, setCeilingSec] = useState(INITIAL_CEILING_SEC);
-  const [freeOutOfBoundsUsed, setFreeOutOfBoundsUsed] = useState(false);
   const [timelineNotice, setTimelineNotice] = useState(null);
 
   const [hoursInput, setHoursInput] = useState('00');
-  const [minutesInput, setMinutesInput] = useState('35');
+  const [minutesInput, setMinutesInput] = useState('25');
   const [secondsInput, setSecondsInput] = useState('00');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -185,6 +175,28 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
   const [copiedShare, setCopiedShare] = useState(false);
 
   const searchInputRef = useRef(null);
+
+  const maxDurationSec = useMemo(() => {
+    const raw = scriptData?.dur || targetMovie?.playableSeconds || (targetMovie?.runtime || 110) * 60;
+    return Math.max(300, Math.floor(raw));
+  }, [scriptData, targetMovie]);
+
+  const maxHours = useMemo(() => Math.floor(maxDurationSec / 3600), [maxDurationSec]);
+
+  const quickPresets = useMemo(() => {
+    const ratios = [0.15, 0.38, 0.62, 0.85];
+    const seen = new Set();
+    const list = [];
+    for (const r of ratios) {
+      const sec = Math.max(60, Math.min(maxDurationSec - 60, Math.round((maxDurationSec * r) / 60) * 60));
+      const label = formatHmShort(sec);
+      if (!seen.has(label)) {
+        seen.add(label);
+        list.push({ label, sec });
+      }
+    }
+    return list;
+  }, [maxDurationSec]);
 
   const searchableMovies = useMemo(() => {
     const byTitle = new Map();
@@ -225,8 +237,21 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
     };
   }, [targetMovie.scriptKey]);
 
+  const syncInputsFromSeconds = (sec, limitOverride = maxDurationSec) => {
+    const clamped = Math.max(60, Math.min(limitOverride, Math.round(sec)));
+    const h = Math.floor(clamped / 3600);
+    const m = Math.floor((clamped % 3600) / 60);
+    const s = clamped % 60;
+    setHoursInput(String(h).padStart(2, '0'));
+    setMinutesInput(String(m).padStart(2, '0'));
+    setSecondsInput(String(s).padStart(2, '0'));
+  };
+
   useEffect(() => {
     setTimelineNotice(null);
+    const defaultStart = Math.max(120, Math.round(((targetMovie?.playableSeconds || 5400) * 0.3) / 60) * 60);
+    syncInputsFromSeconds(defaultStart, targetMovie?.playableSeconds || 7200);
+
     try {
       const storageKey = `reelquest_timecode_${activeDate}`;
       const raw = localStorage.getItem(storageKey);
@@ -238,10 +263,6 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
         setGameStatus(parsed.status || 'PLAYING');
         setGaveUp(Boolean(parsed.gaveUp));
         setTimerSeconds(parsed.timerSeconds || 0);
-        setEverRevealedNames(Boolean(parsed.everRevealedNames));
-        setShowCharacterNames(Boolean(parsed.showCharacterNames || parsed.status === 'WON' || parsed.status === 'LOST'));
-        setCeilingSec(parsed.ceilingSec || INITIAL_CEILING_SEC);
-        setFreeOutOfBoundsUsed(Boolean(parsed.freeOutOfBoundsUsed));
         setViewedProbeIndex(Math.max(0, savedProbes.length - 1));
         setShowResultModal(parsed.status === 'WON' || parsed.status === 'LOST');
       } else {
@@ -250,10 +271,6 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
         setGameStatus('PLAYING');
         setGaveUp(false);
         setTimerSeconds(0);
-        setEverRevealedNames(false);
-        setShowCharacterNames(false);
-        setCeilingSec(INITIAL_CEILING_SEC);
-        setFreeOutOfBoundsUsed(false);
         setViewedProbeIndex(0);
         setShowResultModal(false);
       }
@@ -263,14 +280,10 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
       setGameStatus('PLAYING');
       setGaveUp(false);
       setTimerSeconds(0);
-      setEverRevealedNames(false);
-      setShowCharacterNames(false);
-      setCeilingSec(INITIAL_CEILING_SEC);
-      setFreeOutOfBoundsUsed(false);
       setViewedProbeIndex(0);
       setShowResultModal(false);
     }
-  }, [activeDate]);
+  }, [activeDate, targetMovie]);
 
   useEffect(() => {
     if (gameStatus !== 'PLAYING') return;
@@ -289,10 +302,6 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
       status: gameStatus,
       gaveUp,
       timerSeconds: Math.max(1, timerSeconds),
-      everRevealedNames,
-      showCharacterNames,
-      ceilingSec,
-      freeOutOfBoundsUsed,
       updatedAt: new Date().toISOString(),
       ...overrides
     };
@@ -308,84 +317,23 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
   const canProbeNow = gameStatus === 'PLAYING' && !scriptLoading && scriptData && probes.length < maxAllowedProbes;
 
   const currentDialSeconds = useMemo(() => {
-    const h = Math.max(0, Math.min(4, parseInt(hoursInput || '0', 10) || 0));
+    const h = Math.max(0, Math.min(maxHours, parseInt(hoursInput || '0', 10) || 0));
     const m = Math.max(0, Math.min(59, parseInt(minutesInput || '0', 10) || 0));
     const s = Math.max(0, Math.min(59, parseInt(secondsInput || '0', 10) || 0));
-    return h * 3600 + m * 60 + s;
-  }, [hoursInput, minutesInput, secondsInput]);
-
-  const syncInputsFromSeconds = (sec) => {
-    const clamped = Math.max(60, Math.min(ceilingSec, Math.round(sec)));
-    const h = Math.floor(clamped / 3600);
-    const m = Math.floor((clamped % 3600) / 60);
-    const s = clamped % 60;
-    setHoursInput(String(h).padStart(2, '0'));
-    setMinutesInput(String(m).padStart(2, '0'));
-    setSecondsInput(String(s).padStart(2, '0'));
-  };
-
-  const handleToggleCharacterNames = () => {
-    playClick();
-    const nextVisible = !showCharacterNames;
-    const nextEver = everRevealedNames || (gameStatus === 'PLAYING' && nextVisible);
-    setShowCharacterNames(nextVisible);
-    if (nextEver !== everRevealedNames) {
-      setEverRevealedNames(true);
-    }
-    persistSession({
-      showCharacterNames: nextVisible,
-      everRevealedNames: nextEver
-    });
-  };
+    return Math.min(maxDurationSec, Math.max(60, h * 3600 + m * 60 + s));
+  }, [hoursInput, minutesInput, secondsInput, maxHours, maxDurationSec]);
 
   const handleProbeTimestamp = (explicitSec = null) => {
     if (!canProbeNow || !scriptData) return;
-    const requested = Math.max(45, explicitSec !== null ? explicitSec : currentDialSeconds);
+    const rawRequested = explicitSec !== null ? explicitSec : currentDialSeconds;
+    const requested = Math.max(45, Math.min(maxDurationSec, rawRequested));
+    syncInputsFromSeconds(requested);
 
     if (probes.some((p) => Math.abs(p.requestedSec - requested) < 15)) {
       setTimelineNotice({
         type: 'info',
         text: `You already probed near ${formatHms(requested)}. Try another moment on the timeline.`
       });
-      return;
-    }
-
-    const actualDuration = scriptData.dur || targetMovie.runtime * 60;
-    if (requested > actualDuration) {
-      playClick();
-      const newCeiling = Math.min(ceilingSec, requested);
-      setCeilingSec(newCeiling);
-      syncInputsFromSeconds(Math.max(120, newCeiling - 900));
-
-      if (!freeOutOfBoundsUsed) {
-        setFreeOutOfBoundsUsed(true);
-        setTimelineNotice({
-          type: 'warning',
-          text: `At ${formatHms(requested)} the credits have already finished! Timeline narrowed (free runtime check — probe saved).`
-        });
-        persistSession({
-          ceilingSec: newCeiling,
-          freeOutOfBoundsUsed: true
-        });
-        return;
-      }
-
-      const clampedTarget = Math.max(90, actualDuration - 180);
-      const fallbackScene = extractSceneWindow(scriptData, clampedTarget);
-      if (fallbackScene) {
-        const updatedProbes = [...probes, { ...fallbackScene, requestedSec: requested, snapped: true }];
-        setProbes(updatedProbes);
-        setViewedProbeIndex(updatedProbes.length - 1);
-        setTimelineNotice({
-          type: 'warning',
-          text: `${formatHms(requested)} exceeded runtime — jumped to the final act (${formatHms(fallbackScene.actualSec)}).`
-        });
-        playNodeConnect();
-        persistSession({
-          probes: updatedProbes,
-          ceilingSec: actualDuration
-        });
-      }
       return;
     }
 
@@ -411,10 +359,9 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
 
   const handleRandomProbe = () => {
     if (!canProbeNow || !scriptData) return;
-    const maxBound = Math.min(ceilingSec, scriptData.dur || 6600);
-    let candidate = Math.floor(180 + Math.random() * Math.max(600, maxBound - 360));
+    let candidate = Math.floor(120 + Math.random() * Math.max(300, maxDurationSec - 240));
     for (let attempt = 0; attempt < 8; attempt++) {
-      const cand = Math.floor(180 + Math.random() * Math.max(600, maxBound - 360));
+      const cand = Math.floor(120 + Math.random() * Math.max(300, maxDurationSec - 240));
       if (!probes.some((p) => Math.abs(p.actualSec - cand) < 240)) {
         candidate = cand;
         break;
@@ -453,9 +400,8 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
       ? Math.max(1, Math.max(finalGuesses.length, probes.length))
       : MAX_PROBES;
 
-    const pureScore = Math.max(200, 1000 - (probesCount - 1) * 140);
     const computedScore = won
-      ? (everRevealedNames ? Math.max(120, pureScore - 150) : pureScore)
+      ? Math.max(200, 1000 - (probesCount - 1) * 140)
       : 0;
 
     saveDetailedMatch(user?.id, {
@@ -467,7 +413,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
       forfeited,
       hops: probesCount,
       optimalHops: 1,
-      usedHint: everRevealedNames,
+      usedHint: false,
       durationSeconds: finalDuration,
       targetMovie: {
         id: targetMovie.id,
@@ -486,7 +432,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
         isPro: user.isPro,
         hops: probesCount,
         score: computedScore,
-        usedHint: everRevealedNames,
+        usedHint: false,
         durationSeconds: finalDuration,
         date: activeDate,
         subMode: isToday ? 'daily' : 'archive',
@@ -529,22 +475,18 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
 
     if (isWin) {
       playVictory();
-      setShowCharacterNames(true);
       setShowResultModal(true);
       persistSession({
         guesses: newGuesses,
-        status: 'WON',
-        showCharacterNames: true
+        status: 'WON'
       });
       finalizeMatchOutcome(true, newGuesses, false);
     } else if (isLoss) {
       playDefeat();
-      setShowCharacterNames(true);
       setShowResultModal(true);
       persistSession({
         guesses: newGuesses,
-        status: 'LOST',
-        showCharacterNames: true
+        status: 'LOST'
       });
       finalizeMatchOutcome(false, newGuesses, false);
     } else {
@@ -573,12 +515,10 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
 
     if (isLoss) {
       playDefeat();
-      setShowCharacterNames(true);
       setShowResultModal(true);
       persistSession({
         guesses: newGuesses,
-        status: 'LOST',
-        showCharacterNames: true
+        status: 'LOST'
       });
       finalizeMatchOutcome(false, newGuesses, false);
     } else {
@@ -595,12 +535,10 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
     playDefeat();
     setGaveUp(true);
     setGameStatus('LOST');
-    setShowCharacterNames(true);
     setShowResultModal(true);
     persistSession({
       status: 'LOST',
-      gaveUp: true,
-      showCharacterNames: true
+      gaveUp: true
     });
     finalizeMatchOutcome(false, guesses, true);
   };
@@ -635,9 +573,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
     const lines = [];
     lines.push(`ReelQuest Timecode #${activeDate} ⏱️`);
     if (gameStatus === 'WON') {
-      lines.push(
-        `🎬 Solved in ${solvedProbes}/${MAX_PROBES} probes ${everRevealedNames ? '(Names Revealed)' : '• Pure Mode 🕵️'}`
-      );
+      lines.push(`🎬 Solved in ${solvedProbes}/${MAX_PROBES} probes!`);
     } else {
       lines.push(`❌ Unsolved (${MAX_PROBES}/${MAX_PROBES})`);
     }
@@ -722,42 +658,17 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
             </span>
             <span className="text-xs text-cinema-muted">
               {canProbeNow
-                ? 'Dial any timestamp to inspect that moment in the film'
+                ? 'Dial any timestamp within the film to read that moment’s dialogue'
                 : gameStatus === 'PLAYING'
-                  ? 'Make a movie guess (or skip) to unlock your next probe'
-                  : `Runtime: ${formatHms(scriptData?.dur || targetMovie.runtime * 60)}`}
+                  ? 'Submit a movie guess (or skip) to unlock your next probe'
+                  : 'Screenplay timeline complete'}
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleToggleCharacterNames}
-            className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition active:scale-95 ${
-              showCharacterNames
-                ? 'border-amber-400/50 bg-amber-500/15 text-amber-200'
-                : 'border-emerald-500/35 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/60'
-            }`}
-            title="Show or hide character names across all probed scenes"
-          >
-            {showCharacterNames ? (
-              <>
-                <Eye className="h-3.5 w-3.5 text-amber-300" />
-                <span>Names: Visible</span>
-              </>
-            ) : (
-              <>
-                <EyeOff className="h-3.5 w-3.5 text-emerald-300" />
-                <span>Names: Hidden</span>
-              </>
-            )}
-            <span className={`ml-1 rounded px-1.5 py-0.2 text-[10px] font-extrabold ${
-              everRevealedNames
-                ? 'bg-amber-400/20 text-amber-200'
-                : 'bg-emerald-400/20 text-emerald-200'
-            }`}>
-              {everRevealedNames ? 'Assisted' : 'Pure'}
-            </span>
-          </button>
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-cinema-black/60 px-2.5 py-1 font-mono text-[11px] font-bold text-slate-300">
+            <span>Film Length:</span>
+            <strong className="text-gold">{formatHms(maxDurationSec)}</strong>
+          </span>
         </div>
 
         {gameStatus === 'PLAYING' && (
@@ -768,11 +679,11 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                   <input
                     type="number"
                     min={0}
-                    max={4}
+                    max={maxHours}
                     value={hoursInput}
                     disabled={!canProbeNow}
                     onChange={(e) => setHoursInput(e.target.value.slice(0, 2))}
-                    onBlur={() => setHoursInput(String(Math.max(0, Math.min(4, parseInt(hoursInput || '0', 10) || 0))).padStart(2, '0'))}
+                    onBlur={() => syncInputsFromSeconds(currentDialSeconds)}
                     aria-label="Hours"
                     className="w-8 bg-transparent text-center focus:outline-none focus:text-gold disabled:opacity-45"
                   />
@@ -784,7 +695,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                     value={minutesInput}
                     disabled={!canProbeNow}
                     onChange={(e) => setMinutesInput(e.target.value.slice(0, 2))}
-                    onBlur={() => setMinutesInput(String(Math.max(0, Math.min(59, parseInt(minutesInput || '0', 10) || 0))).padStart(2, '0'))}
+                    onBlur={() => syncInputsFromSeconds(currentDialSeconds)}
                     aria-label="Minutes"
                     className="w-8 bg-transparent text-center focus:outline-none focus:text-gold disabled:opacity-45"
                   />
@@ -796,19 +707,14 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                     value={secondsInput}
                     disabled={!canProbeNow}
                     onChange={(e) => setSecondsInput(e.target.value.slice(0, 2))}
-                    onBlur={() => setSecondsInput(String(Math.max(0, Math.min(59, parseInt(secondsInput || '0', 10) || 0))).padStart(2, '0'))}
+                    onBlur={() => syncInputsFromSeconds(currentDialSeconds)}
                     aria-label="Seconds"
                     className="w-8 bg-transparent text-center focus:outline-none focus:text-gold disabled:opacity-45"
                   />
                 </div>
 
                 <div className="hidden md:flex items-center gap-1 pl-1">
-                  {[
-                    { label: '00:10', sec: 600 },
-                    { label: '00:35', sec: 2100 },
-                    { label: '01:05', sec: 3900 },
-                    { label: '01:35', sec: 5700 }
-                  ].filter((p) => p.sec <= ceilingSec).map((preset) => (
+                  {quickPresets.map((preset) => (
                     <button
                       key={preset.label}
                       type="button"
@@ -854,10 +760,10 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                 <input
                   type="range"
                   min={60}
-                  max={ceilingSec}
+                  max={maxDurationSec}
                   step={15}
                   disabled={!canProbeNow}
-                  value={Math.min(ceilingSec, Math.max(60, currentDialSeconds))}
+                  value={Math.min(maxDurationSec, Math.max(60, currentDialSeconds))}
                   onChange={(e) => syncInputsFromSeconds(Number(e.target.value))}
                   className="w-full accent-amber-400 cursor-pointer disabled:opacity-45"
                 />
@@ -867,22 +773,14 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                 <span className="text-slate-300 font-semibold">
                   Selected: {formatHms(currentDialSeconds)}
                 </span>
-                <span>
-                  {ceilingSec < INITIAL_CEILING_SEC
-                    ? `Max < ${formatHms(ceilingSec)}`
-                    : '03:30:00?'}
-                </span>
+                <span>{formatHms(maxDurationSec)}</span>
               </div>
             </div>
           </div>
         )}
 
         {timelineNotice && (
-          <div className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-xs ${
-            timelineNotice.type === 'warning'
-              ? 'border-amber-500/35 bg-amber-500/10 text-amber-200'
-              : 'border-sky-500/30 bg-sky-500/10 text-sky-200'
-          }`}>
+          <div className="flex items-start gap-2 rounded-xl border border-sky-500/30 bg-sky-500/10 text-sky-200 px-3 py-2 text-xs">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{timelineNotice.text}</span>
           </div>
@@ -933,7 +831,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                 Pick Your Opening Timestamp
               </p>
               <p className="text-xs text-cinema-muted max-w-md mx-auto leading-relaxed">
-                Enter any exact timecode above (for example <span className="font-mono text-slate-200">00:35:00</span>) and hit <strong className="text-gold">Probe Timecode</strong> to read the dialogue spoken at that moment in today&apos;s secret film.
+                Choose any timestamp between <span className="font-mono text-slate-200">00:01:00</span> and <span className="font-mono text-slate-200">{formatHms(maxDurationSec)}</span> and hit <strong className="text-gold">Probe Timecode</strong> to read the dialogue at that moment.
               </p>
             </div>
           ) : (
@@ -950,14 +848,12 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
               <div className="space-y-2.5">
                 {activeProbe.lines.map((line, lIdx) => {
                   const spkIdx = line.speakerIdx;
-                  const hasSpeaker = typeof spkIdx === 'number' && spkIdx >= 0;
+                  const hasSpeaker = typeof spkIdx === 'number' && spkIdx >= 0 && scriptData?.chars?.[spkIdx];
                   const spkStyle = hasSpeaker
                     ? CHAR_BADGE_STYLES[spkIdx % CHAR_BADGE_STYLES.length]
                     : '';
                   const spkName = hasSpeaker
-                    ? (showCharacterNames
-                        ? (scriptData?.chars?.[spkIdx] || `CHAR #${spkIdx + 1}`).toUpperCase()
-                        : `CHAR #${spkIdx + 1}`)
+                    ? scriptData.chars[spkIdx].toUpperCase()
                     : null;
 
                   return (
@@ -974,11 +870,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                             {spkName}
                           </span>
                         )}
-                        <TokenizedDialogueLine
-                          rawText={line.text}
-                          showNames={showCharacterNames}
-                          chars={scriptData?.chars}
-                        />
+                        <TokenizedDialogueLine rawText={line.text} />
                       </div>
                     </div>
                   );
@@ -1188,21 +1080,13 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm sm:text-base font-extrabold text-white">
-                    {gameStatus === 'WON'
-                      ? `Solved in ${solvedProbesCount} of ${MAX_PROBES} Probes`
-                      : gaveUp
-                        ? 'Film Revealed'
-                        : 'Out of Probes'}
-                  </h3>
-                  {gameStatus === 'WON' && !everRevealedNames && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 px-2 py-0.5 text-[10px] font-extrabold text-emerald-300">
-                      <ShieldCheck className="h-3 w-3" />
-                      <span>Pure Mode</span>
-                    </span>
-                  )}
-                </div>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  {gameStatus === 'WON'
+                    ? `Solved in ${solvedProbesCount} of ${MAX_PROBES} Probes`
+                    : gaveUp
+                      ? 'Film Revealed'
+                      : 'Out of Probes'}
+                </h3>
                 <p className="text-xs text-slate-300">
                   <strong className="text-white">{targetMovie.title}</strong> ({targetMovie.year}) • Dir. {targetMovie.director}
                 </p>
@@ -1263,7 +1147,7 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
                         : 'Out of Probes'}
                   </h3>
                   <span className="text-xs text-cinema-muted">
-                    Timecode • {activeDate} {gameStatus === 'WON' ? (everRevealedNames ? '• Names Revealed' : '• Pure Mode') : ''}
+                    Timecode • {activeDate}
                   </span>
                 </div>
               </div>
@@ -1363,8 +1247,8 @@ export function TimecodeGameView({ onOpenPro, onSelectGame, onOpenLeaderboard })
 
             <div className="space-y-2.5 text-xs text-slate-300 leading-relaxed">
               <p><strong className="text-white">Goal:</strong> Deduce today&apos;s secret film in 6 timestamp probes or fewer.</p>
-              <p><strong className="text-white">Dial Any Moment:</strong> Enter any `HH:MM:SS` timestamp (or drag the timeline) to reveal the real dialogue spoken at that moment. If you pick a timestamp past the film&apos;s runtime, you narrow down how long the movie is!</p>
-              <p><strong className="text-white">Character Names Toggle:</strong> By default, character names are masked (`CHAR #1`) for <strong className="text-emerald-300">Pure Mode</strong>. You can toggle <strong className="text-amber-300">Names: Visible</strong> anytime if you want help — Pure solves rank higher on the daily leaderboard.</p>
+              <p><strong className="text-white">Dial Any Moment:</strong> Enter any `HH:MM:SS` timestamp within the film&apos;s runtime (or drag the timeline) to reveal the real dialogue spoken at that moment.</p>
+              <p><strong className="text-white">Progressive Clues:</strong> Probe 3 unlocks Era &amp; Genre, and Probe 5 unlocks the Director.</p>
             </div>
 
             <button

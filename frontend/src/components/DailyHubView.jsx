@@ -215,7 +215,7 @@ export function DailyHubView({
                       : game.id === 'frame-sleuth'
                         ? 'Smart 3.8× → 1.0× camera zoom'
                         : game.id === 'timecode'
-                          ? '6 timestamp probes • Pure / Assisted'
+                          ? '6 timestamp probes'
                           : 'Daily 5-Round + Endless'}
                   </span>
                 )}

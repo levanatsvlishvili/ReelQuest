@@ -109,9 +109,7 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
     status.timecode = {
       done: true,
       won,
-      summary: won
-        ? `Probe ${count}/6${timecodeSession.everRevealedNames ? '' : ' • Pure'}`
-        : 'Missed (6/6)'
+      summary: won ? `Probe ${count}/6` : 'Missed (6/6)'
     };
   }
 
@@ -150,7 +148,7 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
           summary: mode === 'frame-sleuth'
             ? (m.won ? `Frame ${m.framesUsed || m.hops || 1}/6` : 'Completed')
             : mode === 'timecode'
-              ? (m.won ? `Probe ${m.hops || 1}/6${m.usedHint ? '' : ' • Pure'}` : 'Completed')
+              ? (m.won ? `Probe ${m.hops || 1}/6` : 'Completed')
               : mode === 'spotle'
                 ? (m.won ? `Solved in ${m.hops || 1}/10` : 'Completed')
                 : mode === 'box-office'

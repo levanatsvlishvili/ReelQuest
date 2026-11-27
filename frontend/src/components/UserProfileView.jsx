@@ -1050,7 +1050,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                         ) : isTimecode ? (
                           <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-gold border border-gold/30">
                             <Clock className="h-3 w-3 text-gold" />
-                            TIMECODE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}{m.won && !m.usedHint ? ' • PURE' : ''}
+                            TIMECODE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
                           </span>
                         ) : isSpotle ? (
                           <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-300 border border-amber-500/30">
