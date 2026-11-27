@@ -248,8 +248,9 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
     const historyArg = isOwnProfile ? null : matchHistory;
     return [
       { id: 'six-degrees', label: 'Beat Otara', streak: calculateGameStreak('six-degrees', profileUser.id, todayStr, historyArg), accent: 'text-gold border-gold/30 bg-gold/10' },
-      { id: 'spotle', label: 'Spotle', streak: calculateGameStreak('spotle', profileUser.id, todayStr, historyArg), accent: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
       { id: 'frame-sleuth', label: 'Frame Sleuth', streak: calculateGameStreak('frame-sleuth', profileUser.id, todayStr, historyArg), accent: 'text-violet-300 border-violet-500/30 bg-violet-500/10' },
+      { id: 'timecode', label: 'Timecode', streak: calculateGameStreak('timecode', profileUser.id, todayStr, historyArg), accent: 'text-amber-300 border-amber-500/30 bg-amber-500/10' },
+      { id: 'spotle', label: 'Spotle', streak: calculateGameStreak('spotle', profileUser.id, todayStr, historyArg), accent: 'text-cyan-300 border-cyan-500/30 bg-cyan-500/10' },
       { id: 'box-office', label: 'Box Office', streak: calculateGameStreak('box-office', profileUser.id, todayStr, historyArg), accent: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' }
     ];
   }, [isOwnProfile, profileUser?.id, matchHistory]);
@@ -291,6 +292,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
       if (historyFilter === 'daily') return m.gameMode === 'six-degrees' && m.subMode === 'daily';
       if (historyFilter === 'spotle') return m.gameMode === 'spotle';
       if (historyFilter === 'frame-sleuth') return m.gameMode === 'frame-sleuth';
+      if (historyFilter === 'timecode') return m.gameMode === 'timecode';
       if (historyFilter === 'box-office') return m.gameMode === 'box-office';
       if (historyFilter === 'archive') return m.gameMode === 'six-degrees' && (m.subMode === 'archive' || m.subMode === 'custom');
       if (historyFilter === 'duels') return m.gameMode === 'duels';
@@ -802,6 +804,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                               <Film className="h-4 w-4 text-gold" />
                             ) : m.gameMode === 'frame-sleuth' ? (
                               <Camera className="h-4 w-4 text-violet-400" />
+                            ) : m.gameMode === 'timecode' ? (
+                              <Clock className="h-4 w-4 text-amber-300" />
                             ) : m.gameMode === 'box-office' ? (
                               <TrendingUp className="h-4 w-4 text-emerald-400" />
                             ) : (
@@ -814,6 +818,8 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                                 ? (m.targetMovie?.title ? `Spotle: ${m.targetMovie.title}` : `Spotle Daily (${m.hops || 1}/10 guesses)`)
                                 : m.gameMode === 'frame-sleuth'
                                 ? (m.targetMovie?.title ? `Frame Sleuth: ${m.targetMovie.title}` : `Frame Sleuth Daily (${m.framesUsed || m.hops || 1}/6 frames)`)
+                                : m.gameMode === 'timecode'
+                                ? (m.targetMovie?.title ? `Timecode: ${m.targetMovie.title}` : `Timecode Daily (${m.hops || 1}/6 probes)`)
                                 : m.gameMode === 'box-office'
                                 ? `Box Office Clash (${m.boxOfficeScore ?? m.hops ?? 0}/5)`
                                 : (m.startActor?.name && m.targetActor?.name
@@ -983,8 +989,9 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
               {[
                 { id: 'all', label: 'All Modes' },
                 { id: 'daily', label: 'Beat Otara Daily' },
-                { id: 'spotle', label: 'Spotle' },
                 { id: 'frame-sleuth', label: 'Frame Sleuth' },
+                { id: 'timecode', label: 'Timecode' },
+                { id: 'spotle', label: 'Spotle' },
                 { id: 'box-office', label: 'Box Office Clash' },
                 { id: 'duels', label: '1v1 Duels' },
                 { id: 'archive', label: 'Archive Runs' }
@@ -1014,6 +1021,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                 const isWin = m.won;
                 const isSpotle = m.gameMode === 'spotle';
                 const isFrameSleuth = m.gameMode === 'frame-sleuth';
+                const isTimecode = m.gameMode === 'timecode';
                 const isBoxOffice = m.gameMode === 'box-office';
                 const isDuel = m.gameMode === 'duels';
                 const isArchive = m.subMode === 'archive' || m.subMode === 'custom';
@@ -1038,6 +1046,11 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           <span className="flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-violet-300 border border-violet-500/30">
                             <Camera className="h-3 w-3 text-violet-400" />
                             FRAME SLEUTH {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}
+                          </span>
+                        ) : isTimecode ? (
+                          <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-gold border border-gold/30">
+                            <Clock className="h-3 w-3 text-gold" />
+                            TIMECODE {m.subMode === 'archive' ? 'ARCHIVE' : 'DAILY'}{m.won && !m.usedHint ? ' • PURE' : ''}
                           </span>
                         ) : isSpotle ? (
                           <span className="flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-300 border border-amber-500/30">
@@ -1096,7 +1109,7 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                           </span>
                         </div>
                       </div>
-                    ) : (isSpotle || isFrameSleuth) ? (
+                    ) : (isSpotle || isFrameSleuth || isTimecode) ? (
                       <div className="mt-3 flex items-center justify-between gap-3 bg-cinema-black/40 rounded-xl p-3 border border-cinema-border/30">
                         <div className="flex items-center gap-3 min-w-0">
                           {m.targetMovie?.posterPath ? (
@@ -1111,14 +1124,14 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
                                 ? 'bg-violet-500/20 border-violet-500/30 text-violet-400'
                                 : 'bg-amber-500/20 border-amber-500/30 text-gold'
                             }`}>
-                              {isFrameSleuth ? <Camera className="h-5 w-5" /> : <Film className="h-5 w-5" />}
+                              {isFrameSleuth ? <Camera className="h-5 w-5" /> : isTimecode ? <Clock className="h-5 w-5" /> : <Film className="h-5 w-5" />}
                             </div>
                           )}
                           <div className="min-w-0">
                             <h4 className="text-xs font-bold text-white truncate">
                               {m.targetMovie?.title
                                 ? `${m.targetMovie.title} ${m.targetMovie.year ? `(${m.targetMovie.year})` : ''}`
-                                : (isFrameSleuth ? 'Daily 6-Frame Mystery' : 'Daily Mystery Film')}
+                                : (isFrameSleuth ? 'Daily 6-Frame Mystery' : isTimecode ? 'Daily Timecode Script' : 'Daily Mystery Film')}
                             </h4>
                             {m.targetMovie?.director ? (
                               <span className="text-[11px] text-cinema-muted truncate block">
@@ -1134,10 +1147,14 @@ export function UserProfileView({ onBack, targetUser = null, onOpenPro, initialT
 
                         <div className="text-right shrink-0">
                           <span className="text-[11px] uppercase font-bold text-cinema-muted block">
-                            {isFrameSleuth ? 'Frames' : 'Guesses'}
+                            {isFrameSleuth ? 'Frames' : isTimecode ? 'Probes' : 'Guesses'}
                           </span>
                           <span className="text-xs font-black text-gold">
-                            {isFrameSleuth ? `${m.framesUsed || m.hops || 1}/6` : `${m.hops || 1}/10`}
+                            {isFrameSleuth
+                              ? `${m.framesUsed || m.hops || 1}/6`
+                              : isTimecode
+                                ? `${m.hops || 1}/6`
+                                : `${m.hops || 1}/10`}
                           </span>
                         </div>
                       </div>

@@ -147,8 +147,9 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
           >
             <option value="ALL">All Game Modes</option>
             <option value="six-degrees">Beat Otara (Six Degrees)</option>
+            <option value="frame-sleuth">Frame Sleuth (Zoom &amp; Stills)</option>
+            <option value="timecode">Timecode (Script Timeline)</option>
             <option value="spotle">Spotle (Movie Mystery)</option>
-            <option value="frame-sleuth">Frame Sleuth (6 Frames)</option>
             <option value="box-office">Box Office Clash</option>
             <option value="duel">1v1 Live Duel</option>
           </select>
@@ -280,6 +281,11 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
                             <Camera className="h-3 w-3" />
                             <span>Frame Sleuth</span>
                           </span>
+                        ) : s.gameMode === 'timecode' ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 border border-gold/35 text-gold">
+                            <Clock className="h-3 w-3" />
+                            <span>Timecode</span>
+                          </span>
                         ) : s.gameMode === 'spotle' ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-500/15 border border-amber-500/30 text-amber-300">
                             <Film className="h-3 w-3" />
@@ -321,6 +327,15 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
                             </span>
                             <span className="text-[10px] text-slate-400">
                               ({s.hops || s.framesUsed || '—'}/6 frames)
+                            </span>
+                          </div>
+                        ) : s.gameMode === 'timecode' ? (
+                          <div className="flex items-center gap-2">
+                            <span className="font-extrabold text-white text-xs">
+                              ⏱️ {s.targetMovie?.title || s.targetMovieTitle || 'Daily Timecode Movie'}
+                            </span>
+                            <span className="text-[10px] text-slate-400">
+                              ({s.hops || s.moves || '—'}/6 probes{s.usedHint ? ' • Assisted' : ' • Pure'})
                             </span>
                           </div>
                         ) : s.gameMode === 'spotle' ? (
@@ -491,8 +506,10 @@ export function GameHistory({ initialUserId = 'ALL', onInspectUser }) {
                   {selectedMatch.gameMode === 'box-office'
                     ? 'Box Office Clash (Higher / Lower)'
                     : selectedMatch.gameMode === 'frame-sleuth'
-                      ? 'Frame Sleuth (6 Frames)'
-                      : selectedMatch.gameMode === 'spotle'
+                      ? 'Frame Sleuth (Smart Zoom & Stills)'
+                      : selectedMatch.gameMode === 'timecode'
+                        ? 'Timecode (Script Timeline)'
+                        : selectedMatch.gameMode === 'spotle'
                         ? 'Spotle (Movie Mystery)'
                         : selectedMatch.gameMode === 'duel'
                           ? '1v1 Live Duel'

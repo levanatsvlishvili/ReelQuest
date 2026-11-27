@@ -9,7 +9,8 @@ import {
   Camera,
   Film,
   TrendingUp,
-  GitFork
+  GitFork,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { calculateGameStreak } from '../api/auth';
@@ -26,6 +27,7 @@ function isModifiedClick(e) {
 const MODE_ICONS = {
   'six-degrees': GitFork,
   'frame-sleuth': Camera,
+  timecode: Clock,
   spotle: Film,
   'box-office': TrendingUp
 };
@@ -48,7 +50,7 @@ export function DailyHubView({
     });
   }, [user?.id, todayStr]);
 
-  const completedCount = DAILY_GAMES.filter(g => statusMap[g.id]?.done).length;
+  const completedCount = DAILY_GAMES.filter((g) => statusMap[g.id]?.done).length;
   const formattedDate = new Date(`${todayStr}T12:00:00Z`).toLocaleDateString('en-US', {
     timeZone: 'UTC',
     weekday: 'long',
@@ -60,6 +62,7 @@ export function DailyHubView({
     stats?.streak || 0,
     calculateGameStreak('six-degrees', user?.id, todayStr),
     calculateGameStreak('frame-sleuth', user?.id, todayStr),
+    calculateGameStreak('timecode', user?.id, todayStr),
     calculateGameStreak('spotle', user?.id, todayStr),
     calculateGameStreak('box-office', user?.id, todayStr)
   );
@@ -74,16 +77,16 @@ export function DailyHubView({
           Today&apos;s Cinema Reel
         </h1>
         <p className="text-sm text-cinema-muted max-w-lg mx-auto">
-          Four quick daily movie challenges. Play solo, keep your streak alive, or duel a friend.
+          Five quick daily movie challenges. Play solo, keep your streak alive, or duel a friend.
         </p>
 
         <div className="pt-2 flex items-center justify-center">
           <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-cinema-surface px-4 py-1.5 text-xs font-semibold text-slate-200">
             <span>
-              Daily Progress: <strong className="text-white">{completedCount} of 4</strong>
+              Daily Progress: <strong className="text-white">{completedCount} of {DAILY_GAMES.length}</strong>
             </span>
             <div className="flex items-center gap-1.5">
-              {DAILY_GAMES.map(g => (
+              {DAILY_GAMES.map((g) => (
                 <span
                   key={g.id}
                   className={`h-2 w-2 rounded-full transition-colors ${
@@ -113,7 +116,7 @@ export function DailyHubView({
               key={game.id}
               className={`group relative flex flex-col justify-between rounded-2xl border p-5 sm:p-6 transition-all duration-200 hover:-translate-y-0.5 ${
                 isOtara
-                  ? 'border-gold/30 bg-gradient-to-br from-gold/[0.06] via-cinema-surface to-cinema-surface hover:border-gold/50'
+                  ? 'md:col-span-2 border-gold/30 bg-gradient-to-br from-gold/[0.06] via-cinema-surface to-cinema-surface hover:border-gold/50'
                   : 'border-white/[0.08] bg-cinema-surface hover:border-white/20'
               }`}
             >
@@ -130,6 +133,11 @@ export function DailyHubView({
                     <h2 className="text-lg font-extrabold text-white tracking-tight">
                       {game.name}
                     </h2>
+                    {game.id === 'timecode' && (
+                      <span className="rounded-full bg-gold/15 border border-gold/30 px-2 py-0.5 text-[10px] font-extrabold text-gold uppercase tracking-wider">
+                        New
+                      </span>
+                    )}
                   </div>
 
                   {isOtara && challenge?.startActor && challenge?.targetActor ? (
@@ -205,8 +213,10 @@ export function DailyHubView({
                     {game.id === 'spotle'
                       ? '5,000+ film catalog'
                       : game.id === 'frame-sleuth'
-                        ? '6 progressive stills'
-                        : 'Daily 5-Round + Endless'}
+                        ? 'Smart 3.8× → 1.0× camera zoom'
+                        : game.id === 'timecode'
+                          ? '6 timestamp probes • Pure / Assisted'
+                          : 'Daily 5-Round + Endless'}
                   </span>
                 )}
 
@@ -239,7 +249,7 @@ export function DailyHubView({
               <Trophy className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-extrabold text-white">Daily Sweep Complete (4/4)</h3>
+              <h3 className="text-sm font-extrabold text-white">Daily Sweep Complete ({DAILY_GAMES.length}/{DAILY_GAMES.length})</h3>
               <p className="text-xs text-cinema-muted">
                 You completed every ReelQuest daily challenge today. Check where you rank!
               </p>

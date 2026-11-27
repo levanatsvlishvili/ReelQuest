@@ -14,7 +14,8 @@ import {
   Crown,
   ChevronRight,
   Sparkles,
-  Info
+  Info,
+  Clock
 } from 'lucide-react';
 
 export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
@@ -25,8 +26,9 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
   const tabs = [
     { id: 'overview', label: 'About & Games', icon: Info },
     { id: 'beat-otara', label: 'Beat Otara', icon: Zap },
-    { id: 'spotle', label: 'Spotle', icon: Search },
     { id: 'frame-sleuth', label: 'Frame Sleuth', icon: Image },
+    { id: 'timecode', label: 'Timecode', icon: Clock },
+    { id: 'spotle', label: 'Spotle', icon: Search },
     { id: 'box-office', label: 'Box Office Clash', icon: TrendingUp },
     { id: 'progression', label: 'XP & Streaks', icon: Award }
   ];
@@ -174,6 +176,30 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                   </span>
                 </div>
 
+                <div
+                  onClick={() => setActiveTab('timecode')}
+                  className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3.5 space-y-2 cursor-pointer hover:border-gold/50 transition group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/20 text-gold border border-gold/30">
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <span className="font-bold text-white group-hover:text-gold transition">Timecode</span>
+                    </div>
+                    <span className="rounded bg-cinema-card px-2 py-0.5 text-[10px] text-cinema-muted font-mono">
+                      HH:MM:SS
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-cinema-muted leading-relaxed">
+                    Enter any exact timestamp to read the screenplay dialogue spoken at that moment. Toggle character names on or off anytime.
+                  </p>
+                  <span className="text-[10px] font-bold text-gold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                    <span>Read detailed rules</span>
+                    <ChevronRight className="h-3 w-3" />
+                  </span>
+                </div>
+
                 {/* Game 4: Box Office Clash */}
                 <div
                   onClick={() => setActiveTab('box-office')}
@@ -297,10 +323,10 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
             <div className="space-y-4">
               <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4">
                 <strong className="text-emerald-400 font-bold uppercase tracking-wider block mb-1">
-                  🖼️ Objective: Visual Scene Guessing
+                  🖼️ Objective: Smart Focal Pull-Back
                 </strong>
                 <p className="text-xs text-slate-200 leading-relaxed">
-                  Identify today's movie from <strong>6 chronological cinematic frame stills</strong>.
+                  Identify today&apos;s movie across <strong>6 progressive camera steps</strong> ordered strictly from hardest detail crop to iconic wide shot.
                 </p>
               </div>
 
@@ -308,10 +334,33 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                 <div className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3 space-y-1 text-xs">
                   <strong className="text-white block font-semibold">How It Works:</strong>
                   <ul className="space-y-1.5 text-cinema-muted pl-4 list-disc text-[11px]">
-                    <li><strong className="text-slate-200">Frame 1 (Challenging):</strong> An atmospheric, wide, or subtle scene with no titles or actor face giveaways.</li>
-                    <li><strong className="text-slate-200">Frames 2–5 (Progressive):</strong> Each incorrect guess or skip unlocks the next, easier scene still.</li>
-                    <li><strong className="text-slate-200">Frame 6 (Iconic):</strong> The most recognizable shot from the film.</li>
-                    <li><strong className="text-slate-200">Scoring:</strong> Guessing on Frame 1 awards 100 XP (Master Sleuth); each subsequent frame awards proportionally less.</li>
+                    <li><strong className="text-slate-200">Frame 1 (3.8× Detail Lens):</strong> Tightly zoomed onto an environment detail or prop with zero actor face giveaways.</li>
+                    <li><strong className="text-slate-200">Frames 2–5 (Camera Pull-Back):</strong> Each wrong guess or Pull Back widens the camera angle and unlocks progressive clues (Era, Genre, Tagline, Director).</li>
+                    <li><strong className="text-slate-200">Frame 6 (1.0× Full Shot):</strong> Uncropped hero shot from the film.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'timecode' && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+                <strong className="text-gold font-bold uppercase tracking-wider block mb-1">
+                  ⏱️ Objective: Deduce the Film by Timestamp
+                </strong>
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  Dial any exact <strong>HH:MM:SS</strong> timestamp to inspect the dialogue spoken at that moment in today&apos;s secret film across <strong>6 probes</strong>.
+                </p>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="rounded-xl border border-cinema-border bg-cinema-surface/60 p-3 space-y-1 text-xs">
+                  <strong className="text-white block font-semibold">How It Works:</strong>
+                  <ul className="space-y-1.5 text-cinema-muted pl-4 list-disc text-[11px]">
+                    <li><strong className="text-slate-200">Probe Any Scene:</strong> Type a timecode or scrub the timeline bar. Silent moments automatically snap to the nearest active dialogue scene.</li>
+                    <li><strong className="text-slate-200">Runtime Deduction:</strong> Probing beyond the end credits alerts you that the movie has already ended and narrows the timeline ceiling.</li>
+                    <li><strong className="text-slate-200">Character Names Toggle:</strong> Names are masked (`CHAR #1`) by default for <strong>Pure Mode</strong>. Toggle <strong>Names: Visible</strong> anytime if you want assistance — Pure solves rank higher on the leaderboard.</li>
                   </ul>
                 </div>
               </div>

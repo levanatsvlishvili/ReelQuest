@@ -13,7 +13,14 @@ export const DAILY_GAMES = [
     path: '/frame-sleuth',
     name: 'Frame Sleuth',
     shortName: 'Frame Sleuth',
-    tagline: 'Identify today’s mystery film from 6 progressive scene stills.'
+    tagline: 'Identify today’s mystery film across 6 progressive camera zoom-outs.'
+  },
+  {
+    id: 'timecode',
+    path: '/timecode',
+    name: 'Timecode',
+    shortName: 'Timecode',
+    tagline: 'Dial any timestamp to read that scene’s dialogue and deduce the film.'
   },
   {
     id: 'spotle',
@@ -63,6 +70,7 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
   const status = {
     'six-degrees': { done: false, won: false, summary: null },
     'frame-sleuth': { done: false, won: false, summary: null },
+    timecode: { done: false, won: false, summary: null },
     spotle: { done: false, won: false, summary: null },
     'box-office': { done: false, won: false, summary: null }
   };
@@ -90,6 +98,23 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
     };
   }
 
+  const timecodeSession = safeParse(`reelquest_timecode_${todayStr}`);
+  if (timecodeSession && (timecodeSession.status === 'WON' || timecodeSession.status === 'LOST')) {
+    const won = timecodeSession.status === 'WON';
+    const count = Math.max(
+      1,
+      Array.isArray(timecodeSession.guesses) ? timecodeSession.guesses.length : 0,
+      Array.isArray(timecodeSession.probes) ? timecodeSession.probes.length : 0
+    );
+    status.timecode = {
+      done: true,
+      won,
+      summary: won
+        ? `Probe ${count}/6${timecodeSession.everRevealedNames ? '' : ' • Pure'}`
+        : 'Missed (6/6)'
+    };
+  }
+
   const spotleSession = safeParse(`reelquest_spotle_${todayStr}`);
   if (spotleSession && (spotleSession.status === 'WON' || spotleSession.status === 'LOST')) {
     const won = spotleSession.status === 'WON';
@@ -105,7 +130,7 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
   if (boSession && boSession.complete) {
     const score = typeof boSession.score === 'number'
       ? boSession.score
-      : (Array.isArray(boSession.guesses) ? boSession.guesses.filter(g => g.correct).length : 0);
+      : (Array.isArray(boSession.guesses) ? boSession.guesses.filter((g) => g.correct).length : 0);
     status['box-office'] = {
       done: true,
       won: score >= 3,
@@ -124,11 +149,13 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
           won: Boolean(m.won),
           summary: mode === 'frame-sleuth'
             ? (m.won ? `Frame ${m.framesUsed || m.hops || 1}/6` : 'Completed')
-            : mode === 'spotle'
-              ? (m.won ? `Solved in ${m.hops || 1}/10` : 'Completed')
-              : mode === 'box-office'
-                ? `Score ${m.boxOfficeScore ?? m.hops ?? 0}/5`
-                : (m.won ? `Solved in ${m.hops || 2} hops` : 'Completed')
+            : mode === 'timecode'
+              ? (m.won ? `Probe ${m.hops || 1}/6${m.usedHint ? '' : ' • Pure'}` : 'Completed')
+              : mode === 'spotle'
+                ? (m.won ? `Solved in ${m.hops || 1}/10` : 'Completed')
+                : mode === 'box-office'
+                  ? `Score ${m.boxOfficeScore ?? m.hops ?? 0}/5`
+                  : (m.won ? `Solved in ${m.hops || 2} hops` : 'Completed')
         };
       }
     }
@@ -139,7 +166,7 @@ export function getDailyGamesStatus(userId = null, todayStr = new Date().toISOSt
 
 export function getNextUnplayedDailyGame(currentMode, userId = null, todayStr = new Date().toISOString().slice(0, 10)) {
   const status = getDailyGamesStatus(userId, todayStr);
-  const currentIdx = DAILY_GAMES.findIndex(g => g.id === currentMode);
+  const currentIdx = DAILY_GAMES.findIndex((g) => g.id === currentMode);
   const ordered = currentIdx >= 0
     ? [...DAILY_GAMES.slice(currentIdx + 1), ...DAILY_GAMES.slice(0, currentIdx)]
     : DAILY_GAMES;
