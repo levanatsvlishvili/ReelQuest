@@ -359,8 +359,8 @@ export function HowToPlayModal({ isOpen, onClose, initialTab = 'overview' }) {
                   <strong className="text-white block font-semibold">How It Works:</strong>
                   <ul className="space-y-1.5 text-cinema-muted pl-4 list-disc text-[11px]">
                     <li><strong className="text-slate-200">Probe Any Scene:</strong> Type a timecode within the film&apos;s length or scrub the timeline bar. Silent moments automatically snap to the nearest active dialogue scene.</li>
-                    <li><strong className="text-slate-200">Character Dialogue:</strong> Spoken lines and character names appear directly as you explore up to 6 timestamps.</li>
-                    <li><strong className="text-slate-200">Progressive Clues:</strong> Probe 3 unlocks Era &amp; Genre, and Probe 5 unlocks the Director.</li>
+                    <li><strong className="text-slate-200">Speaker Labels:</strong> Probes 1–2 label speakers as `CHARACTER #1` / `CHARACTER #2` so you can follow the conversation; real character names unlock automatically at Probe 3 (or via Reveal).</li>
+                    <li><strong className="text-slate-200">Progressive Clues:</strong> Probe 3 unlocks Character Names, Era &amp; Genre, and Probe 5 unlocks the Director.</li>
                   </ul>
                 </div>
               </div>

@@ -14,7 +14,9 @@ import {
   Play,
   Shuffle,
   AlertCircle,
-  FileText
+  FileText,
+  Eye,
+  Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getTmdbImageUrl } from '../api/client';
@@ -77,8 +79,8 @@ function extractSceneWindow(scriptData, targetSec) {
   const startIdx = Math.max(0, bestIdx - 1);
   const picked = [];
   const baseSec = cues[startIdx][0];
-  for (let i = startIdx; i < cues.length && picked.length < 7; i++) {
-    if (picked.length >= 3 && cues[i][0] - baseSec > 52) break;
+  for (let i = startIdx; i < cues.length && picked.length < 8; i++) {
+    if (picked.length >= 4 && cues[i][0] - baseSec > 50) break;
     picked.push({
       sec: cues[i][0],
       speakerIdx: cues[i][1],
@@ -97,7 +99,7 @@ function extractSceneWindow(scriptData, targetSec) {
   };
 }
 
-function TokenizedDialogueLine({ rawText }) {
+function TokenizedDialogueLine({ rawText, namesVisible }) {
   const parts = useMemo(() => {
     const tokens = [];
     const re = /\{\{(\d+)\|([^}]+)\}\}/g;
@@ -127,12 +129,13 @@ function TokenizedDialogueLine({ rawText }) {
           return <React.Fragment key={idx}>{part.value}</React.Fragment>;
         }
         const style = CHAR_BADGE_STYLES[part.charIdx % CHAR_BADGE_STYLES.length];
+        const label = namesVisible ? part.original : `CHARACTER #${part.charIdx + 1}`;
         return (
           <span
             key={idx}
-            className={`inline-flex items-center rounded-md border px-1.5 py-0.2 mx-0.5 text-[11px] font-bold tracking-tight align-baseline ${style}`}
+            className={`inline-flex items-center rounded-md border px-1.5 py-0.2 mx-0.5 text-[11px] font-bold tracking-tight align-baseline transition-all ${style}`}
           >
-            {part.original}
+            {label}
           </span>
         );
       })}
@@ -141,7 +144,7 @@ function TokenizedDialogueLine({ rawText }) {
 }
 
 export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
-  const { user, isPro } = useAuth();
+  const { user } = useAuth();
 
   const todayStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [activeDate, setActiveDate] = useState(todayStr);
@@ -159,6 +162,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
   const [viewedProbeIndex, setViewedProbeIndex] = useState(0);
   const [gaveUp, setGaveUp] = useState(false);
   const [timerSeconds, setTimerSeconds] = useState(0);
+  const [manualNamesRevealed, setManualNamesRevealed] = useState(false);
   const [timelineNotice, setTimelineNotice] = useState(null);
 
   const [hoursInput, setHoursInput] = useState('00');
@@ -263,6 +267,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
         setGameStatus(parsed.status || 'PLAYING');
         setGaveUp(Boolean(parsed.gaveUp));
         setTimerSeconds(parsed.timerSeconds || 0);
+        setManualNamesRevealed(Boolean(parsed.manualNamesRevealed));
         setViewedProbeIndex(Math.max(0, savedProbes.length - 1));
         setShowResultModal(parsed.status === 'WON' || parsed.status === 'LOST');
       } else {
@@ -271,6 +276,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
         setGameStatus('PLAYING');
         setGaveUp(false);
         setTimerSeconds(0);
+        setManualNamesRevealed(false);
         setViewedProbeIndex(0);
         setShowResultModal(false);
       }
@@ -280,6 +286,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
       setGameStatus('PLAYING');
       setGaveUp(false);
       setTimerSeconds(0);
+      setManualNamesRevealed(false);
       setViewedProbeIndex(0);
       setShowResultModal(false);
     }
@@ -302,6 +309,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
       status: gameStatus,
       gaveUp,
       timerSeconds: Math.max(1, timerSeconds),
+      manualNamesRevealed,
       updatedAt: new Date().toISOString(),
       ...overrides
     };
@@ -316,12 +324,22 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
 
   const canProbeNow = gameStatus === 'PLAYING' && !scriptLoading && scriptData && probes.length < maxAllowedProbes;
 
+  const namesVisible = gameStatus !== 'PLAYING' || guesses.length >= 2 || manualNamesRevealed;
+  const canUnlockEraGenre = gameStatus !== 'PLAYING' || guesses.length >= 2;
+  const canUnlockDirector = gameStatus !== 'PLAYING' || guesses.length >= 4;
+
   const currentDialSeconds = useMemo(() => {
     const h = Math.max(0, Math.min(maxHours, parseInt(hoursInput || '0', 10) || 0));
     const m = Math.max(0, Math.min(59, parseInt(minutesInput || '0', 10) || 0));
     const s = Math.max(0, Math.min(59, parseInt(secondsInput || '0', 10) || 0));
     return Math.min(maxDurationSec, Math.max(60, h * 3600 + m * 60 + s));
   }, [hoursInput, minutesInput, secondsInput, maxHours, maxDurationSec]);
+
+  const handleRevealNamesEarly = () => {
+    playClick();
+    setManualNamesRevealed(true);
+    persistSession({ manualNamesRevealed: true });
+  };
 
   const handleProbeTimestamp = (explicitSec = null) => {
     if (!canProbeNow || !scriptData) return;
@@ -491,9 +509,12 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
       finalizeMatchOutcome(false, newGuesses, false);
     } else {
       playClick();
+      const justUnlockedNames = newGuesses.length === 2 && !manualNamesRevealed;
       setTimelineNotice({
         type: 'info',
-        text: `Not "${movie.title}". Probe #${newGuesses.length + 1} of ${MAX_PROBES} is now unlocked — pick another timestamp!`
+        text: justUnlockedNames
+          ? `Not "${movie.title}". Probe #3 unlocked & real Character Names are now visible!`
+          : `Not "${movie.title}". Probe #${newGuesses.length + 1} of ${MAX_PROBES} is now unlocked — pick another timestamp below!`
       });
       persistSession({ guesses: newGuesses });
     }
@@ -522,9 +543,12 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
       });
       finalizeMatchOutcome(false, newGuesses, false);
     } else {
+      const justUnlockedNames = newGuesses.length === 2 && !manualNamesRevealed;
       setTimelineNotice({
         type: 'info',
-        text: `Probe #${newGuesses.length + 1} of ${MAX_PROBES} unlocked — dial a new timestamp above.`
+        text: justUnlockedNames
+          ? 'Probe #3 unlocked & real Character Names are now visible!'
+          : `Probe #${newGuesses.length + 1} of ${MAX_PROBES} unlocked — dial a new timestamp below.`
       });
       persistSession({ guesses: newGuesses });
     }
@@ -605,8 +629,6 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
   };
 
   const activeProbe = probes[viewedProbeIndex] || null;
-  const canUnlockEraGenre = isPro || gameStatus !== 'PLAYING' || guesses.length >= 2;
-  const canUnlockDirector = isPro || gameStatus !== 'PLAYING' || guesses.length >= 4;
   const formattedTimer = `${String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:${String(timerSeconds % 60).padStart(2, '0')}`;
   const solvedProbesCount = Math.max(1, Math.max(guesses.length, probes.length));
 
@@ -649,6 +671,271 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
         }
       />
 
+      {gameStatus === 'PLAYING' ? (
+        <div className="rounded-2xl border border-white/[0.1] bg-cinema-surface p-4 space-y-3 shadow-lg">
+          <div className="flex flex-col sm:flex-row gap-2 relative">
+            <div className="relative flex-1">
+              <div className="relative flex items-center rounded-xl border border-white/[0.14] bg-cinema-black/60 px-3.5 transition focus-within:border-gold/70">
+                <Search className="h-4 w-4 text-gold shrink-0 mr-2.5" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setDropdownOpen(true);
+                    setSelectedIndex(0);
+                  }}
+                  onFocus={() => setDropdownOpen(true)}
+                  onKeyDown={handleSearchKeyDown}
+                  placeholder={
+                    probes.length === 0
+                      ? 'Probe a timestamp below first, or guess the film...'
+                      : `Guess the film (Attempt ${guesses.length + 1} of ${MAX_PROBES})...`
+                  }
+                  className="w-full bg-transparent py-2.5 text-sm font-medium text-white placeholder-slate-500 focus:outline-none"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setDropdownOpen(false);
+                    }}
+                    className="p-1 text-cinema-muted hover:text-white"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {dropdownOpen && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-white/15 bg-cinema-card/98 p-1.5 shadow-2xl backdrop-blur-lg">
+                  {suggestions.map((movie, idx) => {
+                    const isSelected = idx === selectedIndex;
+                    const alreadyGuessed = guesses.some(
+                      (g) => !g.skipped && g.title.toLowerCase() === movie.title.toLowerCase()
+                    );
+
+                    return (
+                      <div
+                        key={movie.id}
+                        onClick={() => {
+                          if (!alreadyGuessed) {
+                            handleGuessMovie(movie);
+                          }
+                        }}
+                        className={`flex items-center justify-between p-2 rounded-lg transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-gold/15 text-white'
+                            : 'hover:bg-white/[0.05] text-slate-200'
+                        } ${alreadyGuessed ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="h-9 w-6 shrink-0 overflow-hidden rounded bg-black/50 border border-white/10">
+                            {movie.posterPath ? (
+                              <img
+                                src={getTmdbImageUrl(movie.posterPath)}
+                                alt={movie.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <Film className="h-full w-full p-1 text-cinema-muted" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="text-xs sm:text-sm font-semibold block truncate text-white">
+                              {movie.title}
+                            </span>
+                            <span className="text-[11px] text-cinema-muted">{movie.year}</span>
+                          </div>
+                        </div>
+
+                        {alreadyGuessed ? (
+                          <span className="text-[11px] font-semibold text-cinema-muted">Guessed</span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-gold">Select</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleSkipAttempt}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.1] bg-cinema-black/60 hover:border-white/25 hover:text-white text-slate-200 px-3.5 py-2.5 text-xs font-semibold transition active:scale-95"
+                title="Skip guess to unlock next timestamp probe"
+              >
+                <SkipForward className="h-3.5 w-3.5 text-gold" />
+                <span>Next Probe</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleGiveUp}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-cinema-black/60 hover:border-rose-500/40 hover:bg-rose-500/10 text-rose-400 px-3.5 py-2.5 text-xs font-semibold transition active:scale-95"
+                title="Give up and reveal secret movie"
+              >
+                <Flag className="h-3.5 w-3.5" />
+                <span>Give Up</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${
+                namesVisible
+                  ? 'border-gold/30 bg-gold/[0.07] text-slate-100'
+                  : 'border-white/[0.07] bg-cinema-black/45 text-cinema-muted'
+              }`}>
+                {namesVisible ? (
+                  <>
+                    <Users className="h-3 w-3 text-gold shrink-0" />
+                    <span className="font-semibold text-gold">Character Names Unlocked</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3 text-slate-500 shrink-0" />
+                    <span>Names at Probe 3</span>
+                    <button
+                      type="button"
+                      onClick={handleRevealNamesEarly}
+                      className="ml-1 inline-flex items-center gap-1 rounded bg-white/[0.07] hover:bg-gold/20 hover:text-gold px-1.5 py-0.2 text-[10px] font-bold text-slate-300 transition"
+                    >
+                      <Eye className="h-2.5 w-2.5" />
+                      <span>Reveal</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${
+                canUnlockEraGenre
+                  ? 'border-gold/30 bg-gold/[0.07] text-slate-100'
+                  : 'border-white/[0.07] bg-cinema-black/45 text-cinema-muted'
+              }`}>
+                {canUnlockEraGenre ? (
+                  <>
+                    <Sparkles className="h-3 w-3 text-gold shrink-0" />
+                    <span className="font-semibold">
+                      {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3 text-slate-500 shrink-0" />
+                    <span>Era &amp; Genre at Probe 3</span>
+                  </>
+                )}
+              </div>
+
+              <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${
+                canUnlockDirector
+                  ? 'border-gold/30 bg-gold/[0.07] text-slate-100'
+                  : 'border-white/[0.07] bg-cinema-black/45 text-cinema-muted'
+              }`}>
+                {canUnlockDirector ? (
+                  <>
+                    <Sparkles className="h-3 w-3 text-gold shrink-0" />
+                    <span className="font-semibold">Dir. {targetMovie.director}</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-3 w-3 text-slate-500 shrink-0" />
+                    <span>Director at Probe 5</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {guesses.length > 0 && (
+              <div className="flex items-center gap-1.5 flex-wrap text-xs text-cinema-muted">
+                <span>Tried:</span>
+                {guesses.map((g, i) => (
+                  <span
+                    key={i}
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                      g.skipped
+                        ? 'bg-white/[0.05] text-slate-400'
+                        : 'bg-rose-500/15 text-rose-300'
+                    }`}
+                  >
+                    {g.skipped ? `Skip #${i + 1}` : g.title}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div
+            className={`rounded-2xl border p-4 flex flex-col sm:flex-row items-center justify-between gap-4 ${
+              gameStatus === 'WON'
+                ? 'border-emerald-500/35 bg-emerald-500/[0.08]'
+                : 'border-rose-500/35 bg-rose-500/[0.08]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
+                  gameStatus === 'WON'
+                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                }`}
+              >
+                {gameStatus === 'WON' ? (
+                  <Trophy className="h-5 w-5 text-gold" />
+                ) : (
+                  <Film className="h-5 w-5 text-rose-400" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-sm sm:text-base font-extrabold text-white">
+                  {gameStatus === 'WON'
+                    ? `Solved in ${solvedProbesCount} of ${MAX_PROBES} Probes`
+                    : gaveUp
+                      ? 'Film Revealed'
+                      : 'Out of Probes'}
+                </h3>
+                <p className="text-xs text-slate-300">
+                  <strong className="text-white">{targetMovie.title}</strong> ({targetMovie.year}) • Dir. {targetMovie.director}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handleShare}
+                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-cinema-black hover:bg-amber-300 transition active:scale-95"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>{copiedShare ? 'Copied!' : 'Share'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowResultModal(true)}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-cinema-surface px-3.5 py-2 text-xs font-semibold text-white hover:border-white/30 transition"
+              >
+                <span>Film Card</span>
+              </button>
+            </div>
+          </div>
+
+          <NextDailyGameBar
+            currentMode="timecode"
+            onSelectGame={onSelectGame}
+            onOpenLeaderboard={onOpenLeaderboard}
+          />
+        </div>
+      )}
+
       <div className="rounded-2xl border border-white/[0.1] bg-cinema-surface p-4 sm:p-5 space-y-4 shadow-xl">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -658,9 +945,9 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
             </span>
             <span className="text-xs text-cinema-muted">
               {canProbeNow
-                ? 'Dial any timestamp within the film to read that moment’s dialogue'
+                ? 'Dial any timestamp within the film to read that scene'
                 : gameStatus === 'PLAYING'
-                  ? 'Submit a movie guess (or skip) to unlock your next probe'
+                  ? 'Guess above (or click Next Probe) to unlock another timestamp'
                   : 'Screenplay timeline complete'}
             </span>
           </div>
@@ -831,7 +1118,7 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
                 Pick Your Opening Timestamp
               </p>
               <p className="text-xs text-cinema-muted max-w-md mx-auto leading-relaxed">
-                Choose any timestamp between <span className="font-mono text-slate-200">00:01:00</span> and <span className="font-mono text-slate-200">{formatHms(maxDurationSec)}</span> and hit <strong className="text-gold">Probe Timecode</strong> to read the dialogue at that moment.
+                Choose any timestamp between <span className="font-mono text-slate-200">00:01:00</span> and <span className="font-mono text-slate-200">{formatHms(maxDurationSec)}</span> and hit <strong className="text-gold">Probe Timecode</strong> to read the screenplay scene at that moment.
               </p>
             </div>
           ) : (
@@ -848,29 +1135,37 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
               <div className="space-y-2.5">
                 {activeProbe.lines.map((line, lIdx) => {
                   const spkIdx = line.speakerIdx;
-                  const hasSpeaker = typeof spkIdx === 'number' && spkIdx >= 0 && scriptData?.chars?.[spkIdx];
+                  const hasSpeaker = typeof spkIdx === 'number' && spkIdx >= 0;
                   const spkStyle = hasSpeaker
                     ? CHAR_BADGE_STYLES[spkIdx % CHAR_BADGE_STYLES.length]
                     : '';
-                  const spkName = hasSpeaker
-                    ? scriptData.chars[spkIdx].toUpperCase()
+                  const realSpk = hasSpeaker ? scriptData?.chars?.[spkIdx] : null;
+                  const spkLabel = hasSpeaker
+                    ? (namesVisible && realSpk ? realSpk.toUpperCase() : `CHARACTER #${spkIdx + 1}`)
                     : null;
 
                   return (
                     <div
                       key={lIdx}
-                      className="flex items-start gap-3 rounded-lg bg-white/[0.02] px-3 py-2 border border-white/[0.04]"
+                      className="flex items-start gap-3 rounded-lg bg-white/[0.02] px-3 py-2.5 border border-white/[0.04]"
                     >
                       <span className="font-mono text-[11px] text-slate-500 shrink-0 pt-0.5">
                         {formatHms(line.sec)}
                       </span>
-                      <div className="text-xs sm:text-sm text-slate-100 leading-relaxed flex-1">
-                        {spkName && (
-                          <span className={`inline-flex items-center rounded border px-1.5 py-0.2 mr-2 text-[10px] font-extrabold uppercase tracking-wider ${spkStyle}`}>
-                            {spkName}
-                          </span>
+                      <div className="text-xs sm:text-sm text-slate-100 leading-relaxed flex-1 space-y-1">
+                        {spkLabel && (
+                          <div>
+                            <span className={`inline-flex items-center rounded border px-1.5 py-0.2 text-[10px] font-extrabold uppercase tracking-wider ${spkStyle}`}>
+                              {spkLabel}
+                            </span>
+                          </div>
                         )}
-                        <TokenizedDialogueLine rawText={line.text} />
+                        <div>
+                          <TokenizedDialogueLine
+                            rawText={line.text}
+                            namesVisible={namesVisible}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -880,245 +1175,6 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
           )}
         </div>
       </div>
-
-      {gameStatus === 'PLAYING' ? (
-        <div className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2 relative">
-            <div className="relative flex-1">
-              <div className="relative flex items-center rounded-xl border border-white/[0.14] bg-cinema-surface px-3.5 transition focus-within:border-gold/70">
-                <Search className="h-4 w-4 text-gold shrink-0 mr-2.5" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setDropdownOpen(true);
-                    setSelectedIndex(0);
-                  }}
-                  onFocus={() => setDropdownOpen(true)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder={
-                    probes.length === 0
-                      ? 'Probe a timestamp above first, or take an early shot...'
-                      : `Guess the film (Attempt ${guesses.length + 1} of ${MAX_PROBES})...`
-                  }
-                  className="w-full bg-transparent py-2.5 text-sm font-medium text-white placeholder-slate-500 focus:outline-none"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setDropdownOpen(false);
-                    }}
-                    className="p-1 text-cinema-muted hover:text-white"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {dropdownOpen && suggestions.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-40 mt-1.5 max-h-64 overflow-y-auto rounded-xl border border-white/15 bg-cinema-card/98 p-1.5 shadow-2xl backdrop-blur-lg">
-                  {suggestions.map((movie, idx) => {
-                    const isSelected = idx === selectedIndex;
-                    const alreadyGuessed = guesses.some(
-                      (g) => !g.skipped && g.title.toLowerCase() === movie.title.toLowerCase()
-                    );
-
-                    return (
-                      <div
-                        key={movie.id}
-                        onClick={() => {
-                          if (!alreadyGuessed) {
-                            handleGuessMovie(movie);
-                          }
-                        }}
-                        className={`flex items-center justify-between p-2 rounded-lg transition cursor-pointer ${
-                          isSelected
-                            ? 'bg-gold/15 text-white'
-                            : 'hover:bg-white/[0.05] text-slate-200'
-                        } ${alreadyGuessed ? 'opacity-40 cursor-not-allowed' : ''}`}
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="h-9 w-6 shrink-0 overflow-hidden rounded bg-black/50 border border-white/10">
-                            {movie.posterPath ? (
-                              <img
-                                src={getTmdbImageUrl(movie.posterPath)}
-                                alt={movie.title}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <Film className="h-full w-full p-1 text-cinema-muted" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="text-xs sm:text-sm font-semibold block truncate text-white">
-                              {movie.title}
-                            </span>
-                            <span className="text-[11px] text-cinema-muted">{movie.year}</span>
-                          </div>
-                        </div>
-
-                        {alreadyGuessed ? (
-                          <span className="text-[11px] font-semibold text-cinema-muted">Guessed</span>
-                        ) : (
-                          <span className="text-[11px] font-bold text-gold">Select</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={handleSkipAttempt}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.1] bg-cinema-surface hover:border-white/25 hover:text-white text-slate-200 px-3.5 py-2.5 text-xs font-semibold transition active:scale-95"
-                title="Skip guess to unlock next timestamp probe"
-              >
-                <SkipForward className="h-3.5 w-3.5 text-gold" />
-                <span>Next Probe</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleGiveUp}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-cinema-surface hover:border-rose-500/40 hover:bg-rose-500/10 text-rose-400 px-3.5 py-2.5 text-xs font-semibold transition active:scale-95"
-                title="Give up and reveal secret movie"
-              >
-                <Flag className="h-3.5 w-3.5" />
-                <span>Give Up</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${
-                canUnlockEraGenre
-                  ? 'border-gold/30 bg-gold/[0.07] text-slate-100'
-                  : 'border-white/[0.07] bg-cinema-surface/60 text-cinema-muted'
-              }`}>
-                {canUnlockEraGenre ? (
-                  <>
-                    <Sparkles className="h-3 w-3 text-gold shrink-0" />
-                    <span className="font-semibold">
-                      {Math.floor(targetMovie.year / 10) * 10}s • {(targetMovie.genres || []).join(', ')}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3 w-3 text-slate-500 shrink-0" />
-                    <span>Era &amp; Genre at Probe 3</span>
-                  </>
-                )}
-              </div>
-
-              <div className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 ${
-                canUnlockDirector
-                  ? 'border-gold/30 bg-gold/[0.07] text-slate-100'
-                  : 'border-white/[0.07] bg-cinema-surface/60 text-cinema-muted'
-              }`}>
-                {canUnlockDirector ? (
-                  <>
-                    <Sparkles className="h-3 w-3 text-gold shrink-0" />
-                    <span className="font-semibold">Dir. {targetMovie.director}</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3 w-3 text-slate-500 shrink-0" />
-                    <span>Director at Probe 5</span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {guesses.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap text-xs text-cinema-muted">
-                <span>Tried:</span>
-                {guesses.map((g, i) => (
-                  <span
-                    key={i}
-                    className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
-                      g.skipped
-                        ? 'bg-white/[0.05] text-slate-400'
-                        : 'bg-rose-500/15 text-rose-300'
-                    }`}
-                  >
-                    {g.skipped ? `Skip #${i + 1}` : g.title}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div
-            className={`rounded-2xl border p-4 flex flex-col sm:flex-row items-center justify-between gap-4 ${
-              gameStatus === 'WON'
-                ? 'border-emerald-500/35 bg-emerald-500/[0.08]'
-                : 'border-rose-500/35 bg-rose-500/[0.08]'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`flex h-10 w-10 items-center justify-center rounded-xl border ${
-                  gameStatus === 'WON'
-                    ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                    : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                }`}
-              >
-                {gameStatus === 'WON' ? (
-                  <Trophy className="h-5 w-5 text-gold" />
-                ) : (
-                  <Film className="h-5 w-5 text-rose-400" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-sm sm:text-base font-extrabold text-white">
-                  {gameStatus === 'WON'
-                    ? `Solved in ${solvedProbesCount} of ${MAX_PROBES} Probes`
-                    : gaveUp
-                      ? 'Film Revealed'
-                      : 'Out of Probes'}
-                </h3>
-                <p className="text-xs text-slate-300">
-                  <strong className="text-white">{targetMovie.title}</strong> ({targetMovie.year}) • Dir. {targetMovie.director}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 rounded-xl bg-gold px-4 py-2 text-xs font-extrabold text-cinema-black hover:bg-amber-300 transition active:scale-95"
-              >
-                <Share2 className="h-3.5 w-3.5" />
-                <span>{copiedShare ? 'Copied!' : 'Share'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowResultModal(true)}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-cinema-surface px-3.5 py-2 text-xs font-semibold text-white hover:border-white/30 transition"
-              >
-                <span>Film Card</span>
-              </button>
-            </div>
-          </div>
-
-          <NextDailyGameBar
-            currentMode="timecode"
-            onSelectGame={onSelectGame}
-            onOpenLeaderboard={onOpenLeaderboard}
-          />
-        </div>
-      )}
 
       {showResultModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
@@ -1247,8 +1303,8 @@ export function TimecodeGameView({ onSelectGame, onOpenLeaderboard }) {
 
             <div className="space-y-2.5 text-xs text-slate-300 leading-relaxed">
               <p><strong className="text-white">Goal:</strong> Deduce today&apos;s secret film in 6 timestamp probes or fewer.</p>
-              <p><strong className="text-white">Dial Any Moment:</strong> Enter any `HH:MM:SS` timestamp within the film&apos;s runtime (or drag the timeline) to reveal the real dialogue spoken at that moment.</p>
-              <p><strong className="text-white">Progressive Clues:</strong> Probe 3 unlocks Era &amp; Genre, and Probe 5 unlocks the Director.</p>
+              <p><strong className="text-white">Dial Any Moment:</strong> Enter any `HH:MM:SS` timestamp within the film&apos;s runtime (or drag the timeline) to read the screenplay dialogue spoken at that moment.</p>
+              <p><strong className="text-white">Speaker Labels:</strong> Probes 1–2 show `CHARACTER #1` / `CHARACTER #2` so you can follow who is speaking without spoiling famous names. Real character names unlock automatically on Probe 3 (or click `Reveal` anytime).</p>
             </div>
 
             <button
